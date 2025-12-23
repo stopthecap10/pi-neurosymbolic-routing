@@ -1,21 +1,20 @@
-<<<<<<< HEAD
-# Pi Neuro-Symbolic Routing (Phi-2 + SymPy)
+# Pi Neuro-Symbolic Routing (ISEF) — Phi-2 + SymPy (Raspberry Pi 4B)
 
-## Quickstart (Pi)
-1) Start llama-server (in terminal A):
-=======
-# Pi Neuro-Symbolic Routing (ISEF)
-
-This repo benchmarks LLM-only vs neuro-symbolic routing on a Raspberry Pi.
+This repo benchmarks **LLM-only** vs **neuro-symbolic routing** on a **Raspberry Pi 4B**.
+Main idea: route math-like problems to **SymPy** (or use SymPy to verify/fix), so you can reduce compute cost on edge devices.
 
 ## What’s included
 - `src/`: baseline + hybrid runners
 - `data/`: prompt sets (Tier2-400, Tier3-1000)
 - `grammars/`: GBNF grammars for constrained decoding
-- `outputs/`: summary CSVs + case-study CSVs used in the poster
+- `artifacts/` (optional): archived run outputs
+- `sheet_summary*.csv`: summarized results used for plots/poster
 
-## Quick start (Pi)
-1) Start llama.cpp server (Phi-2 GGUF), example:
->>>>>>> 48f1b931c6eda005b1d49513675bbbfb53ae1b79
+## Quickstart (Pi)
+
+### 0) Setup (once)
 ```bash
-~/llama.cpp/build/bin/llama-server -m ~/edge-ai/models/phi-2-Q4_K_M.gguf -t 4 -c 512 --host 127.0.0.1 --port 8080
+cd ~/isef_repo_public
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
