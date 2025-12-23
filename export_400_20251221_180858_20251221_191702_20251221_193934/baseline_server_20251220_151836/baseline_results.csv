@@ -1,0 +1,4 @@
+id,category,variant,prompt,expected_answer,final_output,correct,error_code,latency_median_s,status
+WP01,WP,phi2_server_nogrammar,Answer with only the final number. What is 17 * 24?,408,408,1,E0,5.8371,ok
+WP02,WP,phi2_server_nogrammar,"Answer with only the final number. A box has 12 apples. If you buy 4 boxes, how many apples do you have?",48,48,1,E0,14.4988,ok
+LOG01,LOG,phi2_server_nogrammar,"Answer with only Yes or No. If all bloops are razzies and all razzies are flums, are all bloops flums?",Yes,Yes,1,E0,3.6269,ok

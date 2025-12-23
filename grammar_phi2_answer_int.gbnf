@@ -1,0 +1,6 @@
+root    ::= ws? qend? "Answer:" ws? int ws?
+qend    ::= "<|question_end|>" ws?
+ws      ::= (" " | "\n" | "\t")*
+int     ::= sign? digit+
+sign    ::= "-" | "+"
+digit   ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

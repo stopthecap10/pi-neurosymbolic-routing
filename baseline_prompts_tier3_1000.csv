@@ -1,0 +1,1001 @@
+id,category,prompt,expected_answer
+T3_0192,AR,Answer with only the final number. What is 496 - 43*4?,324
+T3_0208,AR,Answer with only the final number. What is (81 * 7) + (52 * 7)?,931
+T3_0024,AR,Answer with only the final number. What is 1000 - 387?,613
+T3_0012,AR,Answer with only the final number. What is (80 * 4) + (78 * 4)?,632
+T3_0080,AR,Answer with only the final number. What is 10^4?,10000
+T3_0249,AR,Answer with only the final number. What is 56 - 35*8?,-224
+T3_0250,AR,Answer with only the final number. What is (55 * 9) / 5?,99
+T3_0144,AR,Answer with only the final number. What is (441 + 99) - 41?,499
+T3_0012,AR,Answer with only the final number. What is (80 * 4) + (78 * 4)?,632
+T3_0189,AR,Answer with only the final number. What is 58 * 78?,4524
+T3_0011,AR,Answer with only the final number. What is (155 / 5) * 5?,155
+T3_0012,AR,Answer with only the final number. What is (80 * 4) + (78 * 4)?,632
+T3_0234,AR,Answer with only the final number. What is |180 - 34|?,146
+T3_0147,AR,Answer with only the final number. What is 443 - 36*6?,227
+T3_0034,AR,Answer with only the final number. What is 14^3?,2744
+T3_0232,AR,Answer with only the final number. What is (55 * 6) + (97 * 6)?,912
+T3_0114,AR,Answer with only the final number. What is 625 / 25?,25
+T3_0024,AR,Answer with only the final number. What is 1000 - 387?,613
+T3_0147,AR,Answer with only the final number. What is 443 - 36*6?,227
+T3_0233,AR,Answer with only the final number. What is (957 + 14) - 49?,922
+T3_0113,AR,Answer with only the final number. What is |175 - 183|?,8
+T3_0193,AR,Answer with only the final number. What is (81 * 8) + (52 * 8)?,1064
+T3_0231,AR,Answer with only the final number. What is (565 + 95) - 12?,648
+T3_0024,AR,Answer with only the final number. What is 1000 - 387?,613
+T3_0134,AR,Answer with only the final number. What is 124 - 28*8?,-100
+T3_0238,AR,Answer with only the final number. What is 11^4?,14641
+T3_0239,AR,Answer with only the final number. What is 339 - 24*3?,267
+T3_0243,AR,Answer with only the final number. What is 23 * 79?,1817
+T3_0090,AR,Answer with only the final number. What is |149 - 71|?,78
+T3_0234,AR,Answer with only the final number. What is |180 - 34|?,146
+T3_0031,AR,Answer with only the final number. What is 12 * 42?,504
+T3_0250,AR,Answer with only the final number. What is (55 * 9) / 5?,99
+T3_0247,AR,Answer with only the final number. What is (732 + 18) - 75?,675
+T3_0034,AR,Answer with only the final number. What is 14^3?,2744
+T3_0080,AR,Answer with only the final number. What is 10^4?,10000
+T3_0203,AR,Answer with only the final number. What is 17 * 24?,408
+T3_0220,AR,Answer with only the final number. What is (895 + 13) - 42?,866
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0090,AR,Answer with only the final number. What is |149 - 71|?,78
+T3_0232,AR,Answer with only the final number. What is (55 * 6) + (97 * 6)?,912
+T3_0175,AR,Answer with only the final number. What is 90 * 56?,5040
+T3_0080,AR,Answer with only the final number. What is 10^4?,10000
+T3_0196,AR,Answer with only the final number. What is |42 - 172|?,130
+T3_0233,AR,Answer with only the final number. What is (957 + 14) - 49?,922
+T3_0220,AR,Answer with only the final number. What is (895 + 13) - 42?,866
+T3_0175,AR,Answer with only the final number. What is 90 * 56?,5040
+T3_0189,AR,Answer with only the final number. What is 58 * 78?,4524
+T3_0147,AR,Answer with only the final number. What is 443 - 36*6?,227
+T3_0159,AR,Answer with only the final number. What is (80 * 9) / 4?,180
+T3_0078,AR,Answer with only the final number. What is 46 / 2?,23
+T3_0086,AR,Answer with only the final number. What is 11^4?,14641
+T3_0052,AR,Answer with only the final number. What is (11 * 5) + (55 * 5)?,330
+T3_0231,AR,Answer with only the final number. What is (565 + 95) - 12?,648
+T3_0229,AR,Answer with only the final number. What is 91 * 95?,8645
+T3_0071,AR,Answer with only the final number. What is 144 / 12?,12
+T3_0236,AR,Answer with only the final number. What is 20 * 53?,1060
+T3_0180,AR,Answer with only the final number. What is (55 * 3) / 3?,55
+T3_0221,AR,Answer with only the final number. What is (57 * 5) / 3?,95
+T3_0248,AR,Answer with only the final number. What is 5^2?,25
+T3_0159,AR,Answer with only the final number. What is (80 * 9) / 4?,180
+T3_0216,AR,Answer with only the final number. What is (16 + 44) * 3?,180
+T3_0227,AR,Answer with only the final number. What is (76 + 59) * 6?,810
+T3_0177,AR,Answer with only the final number. What is (598 + 94) - 43?,649
+T3_0190,AR,Answer with only the final number. What is (13 + 30) * 7?,301
+T3_0065,AR,Answer with only the final number. What is |97 - 129|?,32
+T3_0209,AR,Answer with only the final number. What is (158 / 2) * 6?,474
+T3_0067,AR,Answer with only the final number. What is 78 * 53?,4134
+T3_0068,AR,Answer with only the final number. What is (26 * 6) + (12 * 6)?,228
+T3_0069,AR,Answer with only the final number. What is (12 + 34) * 6?,276
+T3_0219,AR,Answer with only the final number. What is (45 + 55) / 5?,20
+T3_0071,AR,Answer with only the final number. What is 144 / 12?,12
+T3_0225,AR,Answer with only the final number. What is (57 * 7) + (38 * 7)?,665
+T3_0113,AR,Answer with only the final number. What is |175 - 183|?,8
+T3_0222,AR,Answer with only the final number. What is (84 * 9) / 7?,108
+T3_0177,AR,Answer with only the final number. What is (598 + 94) - 43?,649
+T3_0216,AR,Answer with only the final number. What is (16 + 44) * 3?,180
+T3_0113,AR,Answer with only the final number. What is |175 - 183|?,8
+T3_0078,AR,Answer with only the final number. What is 46 / 2?,23
+T3_0159,AR,Answer with only the final number. What is (80 * 9) / 4?,180
+T3_0080,AR,Answer with only the final number. What is 10^4?,10000
+T3_0180,AR,Answer with only the final number. What is (55 * 3) / 3?,55
+T3_0192,AR,Answer with only the final number. What is 496 - 43*4?,324
+T3_0209,AR,Answer with only the final number. What is (158 / 2) * 6?,474
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0244,AR,Answer with only the final number. What is (606 + 90) - 39?,657
+T3_0086,AR,Answer with only the final number. What is 11^4?,14641
+T3_0087,AR,Answer with only the final number. What is (150 / 6) * 9?,225
+T3_0242,AR,Answer with only the final number. What is 6^3?,216
+T3_0172,AR,Answer with only the final number. What is (86 * 8) + (72 * 8)?,1264
+T3_0090,AR,Answer with only the final number. What is |149 - 71|?,78
+T3_0169,AR,Answer with only the final number. What is (429 + 43) - 60?,412
+T3_0174,AR,Answer with only the final number. What is 100 / 10?,10
+T3_0093,AR,Answer with only the final number. What is 81 - 9*7?,18
+T3_0231,AR,Answer with only the final number. What is (565 + 95) - 12?,648
+T3_0192,AR,Answer with only the final number. What is 496 - 43*4?,324
+T3_0228,AR,Answer with only the final number. What is 211 - 38*3?,97
+T3_0221,AR,Answer with only the final number. What is (57 * 5) / 3?,95
+T3_0236,AR,Answer with only the final number. What is 20 * 53?,1060
+T3_0249,AR,Answer with only the final number. What is 56 - 35*8?,-224
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0161,AR,Answer with only the final number. What is |130 - 22|?,108
+T3_0159,AR,Answer with only the final number. What is (80 * 9) / 4?,180
+T3_0172,AR,Answer with only the final number. What is (86 * 8) + (72 * 8)?,1264
+T3_0192,AR,Answer with only the final number. What is 496 - 43*4?,324
+T3_0237,AR,Answer with only the final number. What is (15 * 3) / 5?,9
+T3_0134,AR,Answer with only the final number. What is 124 - 28*8?,-100
+T3_0250,AR,Answer with only the final number. What is (55 * 9) / 5?,99
+T3_0169,AR,Answer with only the final number. What is (429 + 43) - 60?,412
+T3_0205,AR,Answer with only the final number. What is 343 - 31*2?,281
+T3_0222,AR,Answer with only the final number. What is (84 * 9) / 7?,108
+T3_0201,AR,Answer with only the final number. What is |121 - 77|?,44
+T3_0212,AR,Answer with only the final number. What is 9^3?,729
+T3_0113,AR,Answer with only the final number. What is |175 - 183|?,8
+T3_0114,AR,Answer with only the final number. What is 625 / 25?,25
+T3_0122,AR,Answer with only the final number. What is (19 + 68) * 8?,696
+T3_0241,AR,Answer with only the final number. What is 72 - 10*4?,32
+T3_0172,AR,Answer with only the final number. What is (86 * 8) + (72 * 8)?,1264
+T3_0219,AR,Answer with only the final number. What is (45 + 55) / 5?,20
+T3_0233,AR,Answer with only the final number. What is (957 + 14) - 49?,922
+T3_0214,AR,Answer with only the final number. What is 112 / 4?,28
+T3_0239,AR,Answer with only the final number. What is 339 - 24*3?,267
+T3_0122,AR,Answer with only the final number. What is (19 + 68) * 8?,696
+T3_0233,AR,Answer with only the final number. What is (957 + 14) - 49?,922
+T3_0243,AR,Answer with only the final number. What is 23 * 79?,1817
+T3_0146,AR,Answer with only the final number. What is 70 * 14?,980
+T3_0126,AR,Answer with only the final number. What is (66 + 58) * 9?,1116
+T3_0174,AR,Answer with only the final number. What is 100 / 10?,10
+T3_0180,AR,Answer with only the final number. What is (55 * 3) / 3?,55
+T3_0129,AR,Answer with only the final number. What is (32 * 2) / 8?,8
+T3_0229,AR,Answer with only the final number. What is 91 * 95?,8645
+T3_0144,AR,Answer with only the final number. What is (441 + 99) - 41?,499
+T3_0249,AR,Answer with only the final number. What is 56 - 35*8?,-224
+T3_0137,AR,Answer with only the final number. What is 13^2?,169
+T3_0134,AR,Answer with only the final number. What is 124 - 28*8?,-100
+T3_0221,AR,Answer with only the final number. What is (57 * 5) / 3?,95
+T3_0229,AR,Answer with only the final number. What is 91 * 95?,8645
+T3_0137,AR,Answer with only the final number. What is 13^2?,169
+T3_0140,AR,Answer with only the final number. What is (76 * 4) + (25 * 4)?,404
+T3_0232,AR,Answer with only the final number. What is (55 * 6) + (97 * 6)?,912
+T3_0140,AR,Answer with only the final number. What is (76 * 4) + (25 * 4)?,404
+T3_0241,AR,Answer with only the final number. What is 72 - 10*4?,32
+T3_0209,AR,Answer with only the final number. What is (158 / 2) * 6?,474
+T3_0250,AR,Answer with only the final number. What is (55 * 9) / 5?,99
+T3_0144,AR,Answer with only the final number. What is (441 + 99) - 41?,499
+T3_0145,AR,Answer with only the final number. What is 10^2?,100
+T3_0146,AR,Answer with only the final number. What is 70 * 14?,980
+T3_0147,AR,Answer with only the final number. What is 443 - 36*6?,227
+T3_0235,AR,Answer with only the final number. What is (153 / 9) * 8?,136
+T3_0149,AR,Answer with only the final number. What is 15^2?,225
+T3_0208,AR,Answer with only the final number. What is (81 * 7) + (52 * 7)?,931
+T3_0196,AR,Answer with only the final number. What is |42 - 172|?,130
+T3_0190,AR,Answer with only the final number. What is (13 + 30) * 7?,301
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0169,AR,Answer with only the final number. What is (429 + 43) - 60?,412
+T3_0232,AR,Answer with only the final number. What is (55 * 6) + (97 * 6)?,912
+T3_0204,AR,Answer with only the final number. What is (140 / 2) * 4?,280
+T3_0219,AR,Answer with only the final number. What is (45 + 55) / 5?,20
+T3_0158,AR,Answer with only the final number. What is |59 - 157|?,98
+T3_0159,AR,Answer with only the final number. What is (80 * 9) / 4?,180
+T3_0204,AR,Answer with only the final number. What is (140 / 2) * 4?,280
+T3_0161,AR,Answer with only the final number. What is |130 - 22|?,108
+T3_0230,AR,Answer with only the final number. What is (165 + 96) - 28?,233
+T3_0163,AR,Answer with only the final number. What is 190 / 10?,19
+T3_0227,AR,Answer with only the final number. What is (76 + 59) * 6?,810
+T3_0165,AR,Answer with only the final number. What is 38 * 7?,266
+T3_0169,AR,Answer with only the final number. What is (429 + 43) - 60?,412
+T3_0183,AR,Answer with only the final number. What is 168 / 7?,24
+T3_0208,AR,Answer with only the final number. What is (81 * 7) + (52 * 7)?,931
+T3_0169,AR,Answer with only the final number. What is (429 + 43) - 60?,412
+T3_0221,AR,Answer with only the final number. What is (57 * 5) / 3?,95
+T3_0235,AR,Answer with only the final number. What is (153 / 9) * 8?,136
+T3_0172,AR,Answer with only the final number. What is (86 * 8) + (72 * 8)?,1264
+T3_0222,AR,Answer with only the final number. What is (84 * 9) / 7?,108
+T3_0174,AR,Answer with only the final number. What is 100 / 10?,10
+T3_0175,AR,Answer with only the final number. What is 90 * 56?,5040
+T3_0208,AR,Answer with only the final number. What is (81 * 7) + (52 * 7)?,931
+T3_0177,AR,Answer with only the final number. What is (598 + 94) - 43?,649
+T3_0178,AR,Answer with only the final number. What is 11^4?,14641
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0180,AR,Answer with only the final number. What is (55 * 3) / 3?,55
+T3_0203,AR,Answer with only the final number. What is 17 * 24?,408
+T3_0183,AR,Answer with only the final number. What is 168 / 7?,24
+T3_0183,AR,Answer with only the final number. What is 168 / 7?,24
+T3_0229,AR,Answer with only the final number. What is 91 * 95?,8645
+T3_0193,AR,Answer with only the final number. What is (81 * 8) + (52 * 8)?,1064
+T3_0220,AR,Answer with only the final number. What is (895 + 13) - 42?,866
+T3_0187,AR,Answer with only the final number. What is 30 / 3?,10
+T3_0193,AR,Answer with only the final number. What is (81 * 8) + (52 * 8)?,1064
+T3_0189,AR,Answer with only the final number. What is 58 * 78?,4524
+T3_0190,AR,Answer with only the final number. What is (13 + 30) * 7?,301
+T3_0191,AR,Answer with only the final number. What is (31 * 7) / 7?,31
+T3_0192,AR,Answer with only the final number. What is 496 - 43*4?,324
+T3_0193,AR,Answer with only the final number. What is (81 * 8) + (52 * 8)?,1064
+T3_0231,AR,Answer with only the final number. What is (565 + 95) - 12?,648
+T3_0238,AR,Answer with only the final number. What is 11^4?,14641
+T3_0196,AR,Answer with only the final number. What is |42 - 172|?,130
+T3_0244,AR,Answer with only the final number. What is (606 + 90) - 39?,657
+T3_0220,AR,Answer with only the final number. What is (895 + 13) - 42?,866
+T3_0199,AR,Answer with only the final number. What is (58 + 18) * 2?,152
+T3_0234,AR,Answer with only the final number. What is |180 - 34|?,146
+T3_0201,AR,Answer with only the final number. What is |121 - 77|?,44
+T3_0230,AR,Answer with only the final number. What is (165 + 96) - 28?,233
+T3_0203,AR,Answer with only the final number. What is 17 * 24?,408
+T3_0204,AR,Answer with only the final number. What is (140 / 2) * 4?,280
+T3_0205,AR,Answer with only the final number. What is 343 - 31*2?,281
+T3_0218,AR,Answer with only the final number. What is 102 / 6?,17
+T3_0207,AR,Answer with only the final number. What is 56 * 14?,784
+T3_0208,AR,Answer with only the final number. What is (81 * 7) + (52 * 7)?,931
+T3_0209,AR,Answer with only the final number. What is (158 / 2) * 6?,474
+T3_0240,AR,Answer with only the final number. What is |161 - 120|?,41
+T3_0213,AR,Answer with only the final number. What is (77 + 82) * 7?,1113
+T3_0212,AR,Answer with only the final number. What is 9^3?,729
+T3_0213,AR,Answer with only the final number. What is (77 + 82) * 7?,1113
+T3_0214,AR,Answer with only the final number. What is 112 / 4?,28
+T3_0216,AR,Answer with only the final number. What is (16 + 44) * 3?,180
+T3_0216,AR,Answer with only the final number. What is (16 + 44) * 3?,180
+T3_0236,AR,Answer with only the final number. What is 20 * 53?,1060
+T3_0218,AR,Answer with only the final number. What is 102 / 6?,17
+T3_0219,AR,Answer with only the final number. What is (45 + 55) / 5?,20
+T3_0220,AR,Answer with only the final number. What is (895 + 13) - 42?,866
+T3_0221,AR,Answer with only the final number. What is (57 * 5) / 3?,95
+T3_0222,AR,Answer with only the final number. What is (84 * 9) / 7?,108
+T3_0224,AR,Answer with only the final number. What is (63 / 7) * 10?,90
+T3_0224,AR,Answer with only the final number. What is (63 / 7) * 10?,90
+T3_0225,AR,Answer with only the final number. What is (57 * 7) + (38 * 7)?,665
+T3_0226,AR,Answer with only the final number. What is (78 + 58) * 3?,408
+T3_0227,AR,Answer with only the final number. What is (76 + 59) * 6?,810
+T3_0228,AR,Answer with only the final number. What is 211 - 38*3?,97
+T3_0229,AR,Answer with only the final number. What is 91 * 95?,8645
+T3_0230,AR,Answer with only the final number. What is (165 + 96) - 28?,233
+T3_0231,AR,Answer with only the final number. What is (565 + 95) - 12?,648
+T3_0232,AR,Answer with only the final number. What is (55 * 6) + (97 * 6)?,912
+T3_0233,AR,Answer with only the final number. What is (957 + 14) - 49?,922
+T3_0234,AR,Answer with only the final number. What is |180 - 34|?,146
+T3_0235,AR,Answer with only the final number. What is (153 / 9) * 8?,136
+T3_0236,AR,Answer with only the final number. What is 20 * 53?,1060
+T3_0237,AR,Answer with only the final number. What is (15 * 3) / 5?,9
+T3_0238,AR,Answer with only the final number. What is 11^4?,14641
+T3_0239,AR,Answer with only the final number. What is 339 - 24*3?,267
+T3_0240,AR,Answer with only the final number. What is |161 - 120|?,41
+T3_0241,AR,Answer with only the final number. What is 72 - 10*4?,32
+T3_0242,AR,Answer with only the final number. What is 6^3?,216
+T3_0243,AR,Answer with only the final number. What is 23 * 79?,1817
+T3_0244,AR,Answer with only the final number. What is (606 + 90) - 39?,657
+T3_0245,AR,Answer with only the final number. What is (136 / 2) * 3?,204
+T3_0246,AR,Answer with only the final number. What is (192 / 4) * 8?,384
+T3_0247,AR,Answer with only the final number. What is (732 + 18) - 75?,675
+T3_0248,AR,Answer with only the final number. What is 5^2?,25
+T3_0249,AR,Answer with only the final number. What is 56 - 35*8?,-224
+T3_0250,AR,Answer with only the final number. What is (55 * 9) / 5?,99
+T3_0417,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7
+T3_0447,ALG,Answer with only the final number. Solve for x: x/7 = -13.,-91
+T3_0253,ALG,Answer with only the final number. Solve for x: 2x + 3 = 11.,4
+T3_0257,ALG,Answer with only the final number. Solve for x: 12x + -6 = -234.,-19
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0264,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 35.,15
+T3_0257,ALG,Answer with only the final number. Solve for x: 12x + -6 = -234.,-19
+T3_0258,ALG,Answer with only the final number. Solve for x: x/3 = 11.,33
+T3_0461,ALG,Answer with only the final number. Solve for x: x + 5 = 12.,7
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0471,ALG,Answer with only the final number. Solve for x: 4x + -25 = -45.,-5
+T3_0262,ALG,Answer with only the final number. Solve for x: 10x + -19 = -199.,-18
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0264,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 35.,15
+T3_0417,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7
+T3_0480,ALG,Answer with only the final number. Solve for x: 5x - 10 = 0.,2
+T3_0462,ALG,Answer with only the final number. Solve for x: (x + -10)/6 = -3.,-8
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0366,ALG,Answer with only the final number. Solve for x: 10x + 23 = -37.,-6
+T3_0394,ALG,Answer with only the final number. Solve for x: 11x + 10 = 109.,9
+T3_0459,ALG,Answer with only the final number. Solve for x: 11x + 19 = 162.,13
+T3_0495,ALG,Answer with only the final number. Solve for x: 4x + 21 = 29.,2
+T3_0453,ALG,Answer with only the final number. Solve for x: (x + -9)/8 = 0.,9
+T3_0412,ALG,Answer with only the final number. Solve for x: (x + 17)/6 = 3.,1
+T3_0479,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0486,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8
+T3_0277,ALG,Answer with only the final number. Solve for x: (x + 8)/12 = 1.,4
+T3_0279,ALG,Answer with only the final number. Solve for x: x/6 = -18.,-108
+T3_0279,ALG,Answer with only the final number. Solve for x: x/6 = -18.,-108
+T3_0282,ALG,Answer with only the final number. Solve for x: 11x + -20 = 178.,18
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0282,ALG,Answer with only the final number. Solve for x: 11x + -20 = 178.,18
+T3_0500,ALG,Answer with only the final number. Solve for x: (x + 6)/10 = -2.,-26
+T3_0348,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -19.,-12
+T3_0409,ALG,Answer with only the final number. Solve for x: (x + 0)/10 = 1.,10
+T3_0409,ALG,Answer with only the final number. Solve for x: (x + 0)/10 = 1.,10
+T3_0433,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 43.,19
+T3_0485,ALG,Answer with only the final number. Solve for x: 6x + 21 = -69.,-15
+T3_0497,ALG,Answer with only the final number. Solve for x: 9x + -16 = 20.,4
+T3_0472,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 21.,8
+T3_0500,ALG,Answer with only the final number. Solve for x: (x + 6)/10 = -2.,-26
+T3_0313,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -21.,-13
+T3_0342,ALG,Answer with only the final number. Solve for x: x/9 = 15.,135
+T3_0455,ALG,Answer with only the final number. Solve for x: 9x + 1 = 19.,2
+T3_0372,ALG,Answer with only the final number. Solve for x: 4(x + 9) = 80.,11
+T3_0427,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0399,ALG,Answer with only the final number. Solve for x: (x + -13)/11 = -2.,-9
+T3_0409,ALG,Answer with only the final number. Solve for x: (x + 0)/10 = 1.,10
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0374,ALG,Answer with only the final number. Solve for x: 2(x + 1) = -12.,-7
+T3_0342,ALG,Answer with only the final number. Solve for x: x/9 = 15.,135
+T3_0447,ALG,Answer with only the final number. Solve for x: x/7 = -13.,-91
+T3_0496,ALG,Answer with only the final number. Solve for x: x/3 = 10.,30
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0348,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -19.,-12
+T3_0348,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -19.,-12
+T3_0411,ALG,Answer with only the final number. Solve for x: x/12 = -13.,-156
+T3_0308,ALG,Answer with only the final number. Solve for x: (x + -19)/10 = -1.,9
+T3_0435,ALG,Answer with only the final number. Solve for x: (x + 19)/8 = 4.,13
+T3_0472,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 21.,8
+T3_0368,ALG,Answer with only the final number. Solve for x: x/4 = 8.,32
+T3_0459,ALG,Answer with only the final number. Solve for x: 11x + 19 = 162.,13
+T3_0313,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -21.,-13
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0469,ALG,Answer with only the final number. Solve for x: 5(x + 9) = 110.,13
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0409,ALG,Answer with only the final number. Solve for x: (x + 0)/10 = 1.,10
+T3_0455,ALG,Answer with only the final number. Solve for x: 9x + 1 = 19.,2
+T3_0427,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0479,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0474,ALG,Answer with only the final number. Solve for x: 3x = 21.,7
+T3_0456,ALG,Answer with only the final number. Solve for x: 8(x + 9) = -72.,-18
+T3_0403,ALG,Answer with only the final number. Solve for x: 8(x + 1) = -24.,-4
+T3_0394,ALG,Answer with only the final number. Solve for x: 11x + 10 = 109.,9
+T3_0333,ALG,Answer with only the final number. Solve for x: 10(x + 1) = -170.,-18
+T3_0500,ALG,Answer with only the final number. Solve for x: (x + 6)/10 = -2.,-26
+T3_0453,ALG,Answer with only the final number. Solve for x: (x + -9)/8 = 0.,9
+T3_0361,ALG,Answer with only the final number. Solve for x: 3(x + 2) = 39.,11
+T3_0412,ALG,Answer with only the final number. Solve for x: (x + 17)/6 = 3.,1
+T3_0374,ALG,Answer with only the final number. Solve for x: 2(x + 1) = -12.,-7
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0333,ALG,Answer with only the final number. Solve for x: 10(x + 1) = -170.,-18
+T3_0334,ALG,Answer with only the final number. Solve for x: x/8 = -16.,-128
+T3_0461,ALG,Answer with only the final number. Solve for x: x + 5 = 12.,7
+T3_0336,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -35.,-20
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0406,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0443,ALG,Answer with only the final number. Solve for x: 4(x + 0) = 56.,14
+T3_0472,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 21.,8
+T3_0341,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 13.,4
+T3_0342,ALG,Answer with only the final number. Solve for x: x/9 = 15.,135
+T3_0499,ALG,Answer with only the final number. Solve for x: 4(x + 3) = 8.,-1
+T3_0433,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 43.,19
+T3_0446,ALG,Answer with only the final number. Solve for x: 8(x + 6) = 184.,17
+T3_0453,ALG,Answer with only the final number. Solve for x: (x + -9)/8 = 0.,9
+T3_0478,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0348,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -19.,-12
+T3_0349,ALG,Answer with only the final number. Solve for x: (x + -9)/4 = -5.,-11
+T3_0412,ALG,Answer with only the final number. Solve for x: (x + 17)/6 = 3.,1
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0482,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -7.,-6
+T3_0468,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -31.,-18
+T3_0479,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0439,ALG,Answer with only the final number. Solve for x: 8x + -2 = 142.,18
+T3_0402,ALG,Answer with only the final number. Solve for x: 10x + -30 = -120.,-9
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0455,ALG,Answer with only the final number. Solve for x: 9x + 1 = 19.,2
+T3_0482,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -7.,-6
+T3_0361,ALG,Answer with only the final number. Solve for x: 3(x + 2) = 39.,11
+T3_0452,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0428,ALG,Answer with only the final number. Solve for x: (x + -15)/7 = -1.,8
+T3_0467,ALG,Answer with only the final number. Solve for x: 7x + 6 = -106.,-16
+T3_0365,ALG,Answer with only the final number. Solve for x: x - 8 = -3.,5
+T3_0366,ALG,Answer with only the final number. Solve for x: 10x + 23 = -37.,-6
+T3_0382,ALG,Answer with only the final number. Solve for x: 9x + -3 = 78.,9
+T3_0368,ALG,Answer with only the final number. Solve for x: x/4 = 8.,32
+T3_0417,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7
+T3_0379,ALG,Answer with only the final number. Solve for x: 12(x + -4) = -180.,-11
+T3_0417,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7
+T3_0372,ALG,Answer with only the final number. Solve for x: 4(x + 9) = 80.,11
+T3_0394,ALG,Answer with only the final number. Solve for x: 11x + 10 = 109.,9
+T3_0374,ALG,Answer with only the final number. Solve for x: 2(x + 1) = -12.,-7
+T3_0375,ALG,Answer with only the final number. Solve for x: 2x + -21 = -29.,-4
+T3_0408,ALG,Answer with only the final number. Solve for x: (x + -12)/7 = -5.,-23
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0482,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -7.,-6
+T3_0379,ALG,Answer with only the final number. Solve for x: 12(x + -4) = -180.,-11
+T3_0490,ALG,Answer with only the final number. Solve for x: 7 + x = 20.,13
+T3_0407,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0382,ALG,Answer with only the final number. Solve for x: 9x + -3 = 78.,9
+T3_0383,ALG,Answer with only the final number. Solve for x: x/11 = -4.,-44
+T3_0433,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 43.,19
+T3_0482,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -7.,-6
+T3_0408,ALG,Answer with only the final number. Solve for x: (x + -12)/7 = -5.,-23
+T3_0387,ALG,Answer with only the final number. Solve for x: 4(x + 5) = 56.,9
+T3_0402,ALG,Answer with only the final number. Solve for x: 10x + -30 = -120.,-9
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0492,ALG,Answer with only the final number. Solve for x: 7(x + 0) = -133.,-19
+T3_0495,ALG,Answer with only the final number. Solve for x: 4x + 21 = 29.,2
+T3_0446,ALG,Answer with only the final number. Solve for x: 8(x + 6) = 184.,17
+T3_0402,ALG,Answer with only the final number. Solve for x: 10x + -30 = -120.,-9
+T3_0394,ALG,Answer with only the final number. Solve for x: 11x + 10 = 109.,9
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0396,ALG,Answer with only the final number. Solve for x: 2x + 18 = 48.,15
+T3_0486,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8
+T3_0495,ALG,Answer with only the final number. Solve for x: 4x + 21 = 29.,2
+T3_0399,ALG,Answer with only the final number. Solve for x: (x + -13)/11 = -2.,-9
+T3_0432,ALG,Answer with only the final number. Solve for x: x/6 = -1.,-6
+T3_0406,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0402,ALG,Answer with only the final number. Solve for x: 10x + -30 = -120.,-9
+T3_0403,ALG,Answer with only the final number. Solve for x: 8(x + 1) = -24.,-4
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0474,ALG,Answer with only the final number. Solve for x: 3x = 21.,7
+T3_0406,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0407,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0408,ALG,Answer with only the final number. Solve for x: (x + -12)/7 = -5.,-23
+T3_0409,ALG,Answer with only the final number. Solve for x: (x + 0)/10 = 1.,10
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0411,ALG,Answer with only the final number. Solve for x: x/12 = -13.,-156
+T3_0412,ALG,Answer with only the final number. Solve for x: (x + 17)/6 = 3.,1
+T3_0452,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0486,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8
+T3_0416,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0417,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0481,ALG,Answer with only the final number. Solve for x: (x + -16)/3 = -4.,4
+T3_0443,ALG,Answer with only the final number. Solve for x: 4(x + 0) = 56.,14
+T3_0467,ALG,Answer with only the final number. Solve for x: 7x + 6 = -106.,-16
+T3_0469,ALG,Answer with only the final number. Solve for x: 5(x + 9) = 110.,13
+T3_0479,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0471,ALG,Answer with only the final number. Solve for x: 4x + -25 = -45.,-5
+T3_0432,ALG,Answer with only the final number. Solve for x: x/6 = -1.,-6
+T3_0426,ALG,Answer with only the final number. Solve for x: x/9 = -10.,-90
+T3_0427,ALG,Answer with only the final number. Solve for x: x/12 = 11.,132
+T3_0428,ALG,Answer with only the final number. Solve for x: (x + -15)/7 = -1.,8
+T3_0474,ALG,Answer with only the final number. Solve for x: 3x = 21.,7
+T3_0495,ALG,Answer with only the final number. Solve for x: 4x + 21 = 29.,2
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0432,ALG,Answer with only the final number. Solve for x: x/6 = -1.,-6
+T3_0433,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 43.,19
+T3_0496,ALG,Answer with only the final number. Solve for x: x/3 = 10.,30
+T3_0435,ALG,Answer with only the final number. Solve for x: (x + 19)/8 = 4.,13
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0475,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 23.,9
+T3_0496,ALG,Answer with only the final number. Solve for x: x/3 = 10.,30
+T3_0439,ALG,Answer with only the final number. Solve for x: 8x + -2 = 142.,18
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0478,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0442,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -1.,-3
+T3_0443,ALG,Answer with only the final number. Solve for x: 4(x + 0) = 56.,14
+T3_0444,ALG,Answer with only the final number. Solve for x: (x + -15)/11 = -3.,-18
+T3_0492,ALG,Answer with only the final number. Solve for x: 7(x + 0) = -133.,-19
+T3_0446,ALG,Answer with only the final number. Solve for x: 8(x + 6) = 184.,17
+T3_0447,ALG,Answer with only the final number. Solve for x: x/7 = -13.,-91
+T3_0492,ALG,Answer with only the final number. Solve for x: 7(x + 0) = -133.,-19
+T3_0493,ALG,Answer with only the final number. Solve for x: (x + -16)/7 = -5.,-19
+T3_0465,ALG,Answer with only the final number. Solve for x: 5(x + 10) = 5.,-9
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0452,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0453,ALG,Answer with only the final number. Solve for x: (x + -9)/8 = 0.,9
+T3_0454,ALG,Answer with only the final number. Solve for x: (x + -13)/9 = -3.,-14
+T3_0455,ALG,Answer with only the final number. Solve for x: 9x + 1 = 19.,2
+T3_0456,ALG,Answer with only the final number. Solve for x: 8(x + 9) = -72.,-18
+T3_0465,ALG,Answer with only the final number. Solve for x: 5(x + 10) = 5.,-9
+T3_0472,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 21.,8
+T3_0459,ALG,Answer with only the final number. Solve for x: 11x + 19 = 162.,13
+T3_0490,ALG,Answer with only the final number. Solve for x: 7 + x = 20.,13
+T3_0461,ALG,Answer with only the final number. Solve for x: x + 5 = 12.,7
+T3_0462,ALG,Answer with only the final number. Solve for x: (x + -10)/6 = -3.,-8
+T3_0463,ALG,Answer with only the final number. Solve for x: x/9 = 0.,0
+T3_0486,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8
+T3_0465,ALG,Answer with only the final number. Solve for x: 5(x + 10) = 5.,-9
+T3_0466,ALG,Answer with only the final number. Solve for x: x/5 = -7.,-35
+T3_0467,ALG,Answer with only the final number. Solve for x: 7x + 6 = -106.,-16
+T3_0468,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -31.,-18
+T3_0469,ALG,Answer with only the final number. Solve for x: 5(x + 9) = 110.,13
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0471,ALG,Answer with only the final number. Solve for x: 4x + -25 = -45.,-5
+T3_0472,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 21.,8
+T3_0499,ALG,Answer with only the final number. Solve for x: 4(x + 3) = 8.,-1
+T3_0474,ALG,Answer with only the final number. Solve for x: 3x = 21.,7
+T3_0475,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 23.,9
+T3_0476,ALG,Answer with only the final number. Solve for x: (x/2) + 3 = 11.,16
+T3_0477,ALG,Answer with only the final number. Solve for x: x/7 = -18.,-126
+T3_0478,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 25.,10
+T3_0479,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -27.,-16
+T3_0480,ALG,Answer with only the final number. Solve for x: 5x - 10 = 0.,2
+T3_0481,ALG,Answer with only the final number. Solve for x: (x + -16)/3 = -4.,4
+T3_0482,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -7.,-6
+T3_0483,ALG,Answer with only the final number. Solve for x: 11x + -24 = 196.,20
+T3_0484,ALG,Answer with only the final number. Solve for x: x/12 = 15.,180
+T3_0485,ALG,Answer with only the final number. Solve for x: 6x + 21 = -69.,-15
+T3_0486,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8
+T3_0490,ALG,Answer with only the final number. Solve for x: 7 + x = 20.,13
+T3_0488,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = 23.,9
+T3_0489,ALG,Answer with only the final number. Solve for x: 6(x + -1) = -42.,-6
+T3_0490,ALG,Answer with only the final number. Solve for x: 7 + x = 20.,13
+T3_0497,ALG,Answer with only the final number. Solve for x: 9x + -16 = 20.,4
+T3_0492,ALG,Answer with only the final number. Solve for x: 7(x + 0) = -133.,-19
+T3_0493,ALG,Answer with only the final number. Solve for x: (x + -16)/7 = -5.,-19
+T3_0494,ALG,Answer with only the final number. Solve for x: 2(x + -3) = 12.,9
+T3_0495,ALG,Answer with only the final number. Solve for x: 4x + 21 = 29.,2
+T3_0496,ALG,Answer with only the final number. Solve for x: x/3 = 10.,30
+T3_0497,ALG,Answer with only the final number. Solve for x: 9x + -16 = 20.,4
+T3_0498,ALG,Answer with only the final number. Solve for x: 3x - (x - 5) = -15.,-10
+T3_0499,ALG,Answer with only the final number. Solve for x: 4(x + 3) = 8.,-1
+T3_0500,ALG,Answer with only the final number. Solve for x: (x + 6)/10 = -2.,-26
+T3_0636,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0699,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0729,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0718,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0698,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0674,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0734,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0646,LOG,"Answer with only Yes or No. If today is after Monday, is it possible that today is Tuesday?",Yes
+T3_0674,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0628,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0734,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0628,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0704,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0719,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0698,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0745,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0670,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0749,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0552,LOG,"Answer with only Yes or No. If 2 statements are both true, is their conjunction true?",Yes
+T3_0700,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0673,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0644,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0682,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0556,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0642,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0726,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0673,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0646,LOG,"Answer with only Yes or No. If today is after Monday, is it possible that today is Tuesday?",Yes
+T3_0634,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0657,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0662,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0713,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0732,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0743,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0713,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0556,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0540,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0633,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0662,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0641,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0572,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0646,LOG,"Answer with only Yes or No. If today is after Monday, is it possible that today is Tuesday?",Yes
+T3_0562,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0702,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0674,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0744,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0702,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0552,LOG,"Answer with only Yes or No. If 2 statements are both true, is their conjunction true?",Yes
+T3_0670,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0688,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0616,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0556,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0557,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0721,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0616,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0618,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0633,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0562,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0742,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0748,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0657,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0566,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0647,LOG,"Answer with only Yes or No. If every cat is an animal and Felix is a cat, is Felix an animal?",Yes
+T3_0730,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0616,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0667,LOG,"Answer with only Yes or No. If all bloops are razzies and all razzies are flums, are all bloops flums?",Yes
+T3_0709,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0572,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0573,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0693,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0628,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0628,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0644,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0579,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0616,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0732,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0636,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0721,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0634,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0681,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0693,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0613,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0694,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0642,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0734,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0620,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0662,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0745,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0597,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0696,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0599,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0657,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0741,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0749,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0641,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0699,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0674,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0692,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0608,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0613,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0662,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0696,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0667,LOG,"Answer with only Yes or No. If all bloops are razzies and all razzies are flums, are all bloops flums?",Yes
+T3_0613,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0717,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0740,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0616,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0744,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0618,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0665,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0620,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0737,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0714,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0714,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0641,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0731,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0633,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0700,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0628,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0629,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0634,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0723,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0717,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0633,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0634,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0705,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0636,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0638,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0703,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0718,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0641,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0642,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0673,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0644,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0664,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0646,LOG,"Answer with only Yes or No. If today is after Monday, is it possible that today is Tuesday?",Yes
+T3_0647,LOG,"Answer with only Yes or No. If every cat is an animal and Felix is a cat, is Felix an animal?",Yes
+T3_0704,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0700,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0692,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0743,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0715,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0682,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0741,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0711,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0748,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0657,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0716,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0745,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0742,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0661,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0662,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0704,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0664,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0665,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0728,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0667,LOG,"Answer with only Yes or No. If all bloops are razzies and all razzies are flums, are all bloops flums?",Yes
+T3_0703,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0743,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0670,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0708,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0695,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0673,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0674,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0745,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0709,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0737,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0678,LOG,"Answer with only Yes or No. If no mammals lay eggs and a platypus lays eggs, is a platypus a mammal?",No
+T3_0687,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0704,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0681,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0682,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0724,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0737,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0685,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0686,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0687,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0688,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0721,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0703,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0714,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0692,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0693,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0694,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0695,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0696,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0701,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0698,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0699,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0700,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0701,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0702,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0703,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0704,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0705,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0713,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0743,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0708,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0709,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0710,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0711,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0718,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0713,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0714,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0715,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0716,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0717,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0718,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0719,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0721,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0736,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0723,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0724,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0729,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0726,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0742,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0728,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0729,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0730,LOG,"Answer with only Yes or No. If all blips are blops and all blops are blups, are all blips blups?",Yes
+T3_0731,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0732,LOG,"Answer with only Yes or No. If X implies Y and X is false, must Y be true?",No
+T3_0741,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0734,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0735,LOG,"Answer with only Yes or No. If some targs are torgs and all torgs are turgs, does it follow that some targs are turgs?",Yes
+T3_0736,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0737,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0741,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0739,LOG,"Answer with only Yes or No. If all glips are blaps and no blaps are snorps, can any glips be snorps?",No
+T3_0740,LOG,"Answer with only Yes or No. If either P or Q is true and P is false, must Q be true?",Yes
+T3_0741,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0742,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0743,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0744,LOG,"Answer with only Yes or No. If X implies Y and X is true, must Y be true?",Yes
+T3_0745,LOG,"Answer with only Yes or No. If all birds can fly and a penguin is a bird, can you conclude a penguin can fly?",Yes
+T3_0746,LOG,"Answer with only Yes or No. If all A are B and some B are C, does it follow that some A are C?",No
+T3_0747,LOG,"Answer with only Yes or No. If either P or Q is true and Q is false, must P be true?",Yes
+T3_0748,LOG,"Answer with only Yes or No. If some mips are mops and no mops are mups, does it follow that some mips are mups?",No
+T3_0749,LOG,"Answer with only Yes or No. If both P and Q are true, is P true?",Yes
+T3_0750,LOG,"Answer with only Yes or No. If all glips are glaps and no glaps are glups, can any glips be glups?",No
+T3_0751,WP,"Answer with only the final number. A box has 12 apples. If you buy 4 boxes, how many apples do you have?",48
+T3_0968,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0865,WP,Answer with only the final number. You read 6 pages per day for 12 days. How many pages total?,72
+T3_0911,WP,Answer with only the final number. There are 18 students. They form groups of 9. How many groups?,2
+T3_0769,WP,Answer with only the final number. An item costs $12. You pay with a $100 bill. How many dollars change do you get?,88
+T3_0881,WP,Answer with only the final number. A vehicle travels 180 miles in 5 hours. What is its average speed in miles per hour?,36
+T3_0981,WP,Answer with only the final number. You read 20 pages per day for 6 days. How many pages total?,120
+T3_0980,WP,Answer with only the final number. A recipe needs 4 cups of flour per batch. How many cups for 8 batches?,32
+T3_0987,WP,Answer with only the final number. A store sells 8 notebooks for $16. How much does 1 notebook cost?,2
+T3_0810,WP,Answer with only the final number. An item costs $7. You pay with a $100 bill. How many dollars change do you get?,93
+T3_0840,WP,Answer with only the final number. A tank holds 60 liters. 25% is used. How many liters remain?,45
+T3_0952,WP,Answer with only the final number. You read 11 pages per day for 17 days. How many pages total?,187
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0952,WP,Answer with only the final number. You read 11 pages per day for 17 days. How many pages total?,187
+T3_0971,WP,Answer with only the final number. A store sells 12 notebooks for $48. How much does 1 notebook cost?,4
+T3_0901,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 11 batches?,88
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0769,WP,Answer with only the final number. An item costs $12. You pay with a $100 bill. How many dollars change do you get?,88
+T3_0926,WP,Answer with only the final number. A vehicle travels 150 miles in 2 hours. What is its average speed in miles per hour?,75
+T3_0915,WP,Answer with only the final number. A recipe needs 3 cups of flour per batch. How many cups for 4 batches?,12
+T3_0852,WP,Answer with only the final number. There are 54 students. They form groups of 6. How many groups?,9
+T3_0953,WP,Answer with only the final number. A rectangle has length 27 and width 21. What is its area?,567
+T3_0990,WP,Answer with only the final number. You have 84 stickers and give away 77. How many remain?,7
+T3_0838,WP,Answer with only the final number. A rectangle has length 30 and width 12. What is its area?,360
+T3_0912,WP,Answer with only the final number. An item costs $30. You pay with a $100 bill. How many dollars change do you get?,70
+T3_0827,WP,Answer with only the final number. There are 96 students. They form groups of 6. How many groups?,16
+T3_0824,WP,Answer with only the final number. An item costs $15. You pay with a $20 bill. How many dollars change do you get?,5
+T3_0981,WP,Answer with only the final number. You read 20 pages per day for 6 days. How many pages total?,120
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0854,WP,Answer with only the final number. A pack has 13 items. How many items in 3 packs?,39
+T3_0991,WP,Answer with only the final number. A recipe needs 9 cups of flour per batch. How many cups for 7 batches?,63
+T3_0913,WP,Answer with only the final number. You have 110 stickers and give away 15. How many remain?,95
+T3_0957,WP,Answer with only the final number. A store sells 6 notebooks for $36. How much does 1 notebook cost?,6
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0935,WP,Answer with only the final number. A pack has 13 items. How many items in 14 packs?,182
+T3_0945,WP,Answer with only the final number. You have 167 stickers and give away 129. How many remain?,38
+T3_0964,WP,Answer with only the final number. A store sells 10 notebooks for $10. How much does 1 notebook cost?,1
+T3_0789,WP,Answer with only the final number. A tank holds 100 liters. 25% is used. How many liters remain?,75
+T3_0912,WP,Answer with only the final number. An item costs $30. You pay with a $100 bill. How many dollars change do you get?,70
+T3_0984,WP,Answer with only the final number. A vehicle travels 180 miles in 3 hours. What is its average speed in miles per hour?,60
+T3_0811,WP,Answer with only the final number. There are 24 students. They form groups of 6. How many groups?,4
+T3_0925,WP,Answer with only the final number. A vehicle travels 180 miles in 2 hours. What is its average speed in miles per hour?,90
+T3_0916,WP,Answer with only the final number. You read 21 pages per day for 9 days. How many pages total?,189
+T3_0920,WP,Answer with only the final number. A rectangle has length 16 and width 22. What is its area?,352
+T3_0986,WP,Answer with only the final number. A tank holds 200 liters. 10% is used. How many liters remain?,180
+T3_0970,WP,Answer with only the final number. You read 10 pages per day for 16 days. How many pages total?,160
+T3_0920,WP,Answer with only the final number. A rectangle has length 16 and width 22. What is its area?,352
+T3_0926,WP,Answer with only the final number. A vehicle travels 150 miles in 2 hours. What is its average speed in miles per hour?,75
+T3_0992,WP,Answer with only the final number. A tank holds 120 liters. 10% is used. How many liters remain?,108
+T3_0916,WP,Answer with only the final number. You read 21 pages per day for 9 days. How many pages total?,189
+T3_0989,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0911,WP,Answer with only the final number. There are 18 students. They form groups of 9. How many groups?,2
+T3_0881,WP,Answer with only the final number. A vehicle travels 180 miles in 5 hours. What is its average speed in miles per hour?,36
+T3_0973,WP,Answer with only the final number. You have 128 stickers and give away 108. How many remain?,20
+T3_0935,WP,Answer with only the final number. A pack has 13 items. How many items in 14 packs?,182
+T3_0960,WP,Answer with only the final number. A pack has 18 items. How many items in 7 packs?,126
+T3_0949,WP,Answer with only the final number. You have 30 candies and give away 12. How many remain?,18
+T3_0980,WP,Answer with only the final number. A recipe needs 4 cups of flour per batch. How many cups for 8 batches?,32
+T3_0810,WP,Answer with only the final number. An item costs $7. You pay with a $100 bill. How many dollars change do you get?,93
+T3_0811,WP,Answer with only the final number. There are 24 students. They form groups of 6. How many groups?,4
+T3_0963,WP,Answer with only the final number. A store sells 8 notebooks for $8. How much does 1 notebook cost?,1
+T3_0952,WP,Answer with only the final number. You read 11 pages per day for 17 days. How many pages total?,187
+T3_0894,WP,Answer with only the final number. A vehicle travels 120 miles in 3 hours. What is its average speed in miles per hour?,40
+T3_0876,WP,Answer with only the final number. A train moves 90 km in 3 hours. What is its speed in km/h?,30
+T3_0898,WP,Answer with only the final number. An item costs $15. You pay with a $100 bill. How many dollars change do you get?,85
+T3_0894,WP,Answer with only the final number. A vehicle travels 120 miles in 3 hours. What is its average speed in miles per hour?,40
+T3_0870,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 5 batches?,10
+T3_0911,WP,Answer with only the final number. There are 18 students. They form groups of 9. How many groups?,2
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0955,WP,Answer with only the final number. A rectangle has length 11 and width 8. What is its area?,88
+T3_0856,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 5 batches?,40
+T3_0949,WP,Answer with only the final number. You have 30 candies and give away 12. How many remain?,18
+T3_0824,WP,Answer with only the final number. An item costs $15. You pay with a $20 bill. How many dollars change do you get?,5
+T3_0889,WP,Answer with only the final number. An item costs $15. You pay with a $50 bill. How many dollars change do you get?,35
+T3_0942,WP,Answer with only the final number. A pack has 20 items. How many items in 6 packs?,120
+T3_0827,WP,Answer with only the final number. There are 96 students. They form groups of 6. How many groups?,16
+T3_0960,WP,Answer with only the final number. A pack has 18 items. How many items in 7 packs?,126
+T3_0915,WP,Answer with only the final number. A recipe needs 3 cups of flour per batch. How many cups for 4 batches?,12
+T3_0843,WP,Answer with only the final number. A store sells 6 notebooks for $36. How much does 1 notebook cost?,6
+T3_0913,WP,Answer with only the final number. You have 110 stickers and give away 15. How many remain?,95
+T3_0986,WP,Answer with only the final number. A tank holds 200 liters. 10% is used. How many liters remain?,180
+T3_0912,WP,Answer with only the final number. An item costs $30. You pay with a $100 bill. How many dollars change do you get?,70
+T3_0969,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0973,WP,Answer with only the final number. You have 128 stickers and give away 108. How many remain?,20
+T3_0864,WP,Answer with only the final number. You read 17 pages per day for 4 days. How many pages total?,68
+T3_0959,WP,Answer with only the final number. A tank holds 50 liters. 30% is used. How many liters remain?,35
+T3_0838,WP,Answer with only the final number. A rectangle has length 30 and width 12. What is its area?,360
+T3_0840,WP,Answer with only the final number. A tank holds 60 liters. 25% is used. How many liters remain?,45
+T3_0840,WP,Answer with only the final number. A tank holds 60 liters. 25% is used. How many liters remain?,45
+T3_0980,WP,Answer with only the final number. A recipe needs 4 cups of flour per batch. How many cups for 8 batches?,32
+T3_0946,WP,Answer with only the final number. A rectangle has length 8 and width 12. What is its area?,96
+T3_0843,WP,Answer with only the final number. A store sells 6 notebooks for $36. How much does 1 notebook cost?,6
+T3_0898,WP,Answer with only the final number. An item costs $15. You pay with a $100 bill. How many dollars change do you get?,85
+T3_0845,WP,Answer with only the final number. A pack has 10 items. How many items in 11 packs?,110
+T3_0972,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0883,WP,Answer with only the final number. A vehicle travels 150 miles in 6 hours. What is its average speed in miles per hour?,25
+T3_0958,WP,Answer with only the final number. A store sells 6 notebooks for $6. How much does 1 notebook cost?,1
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0972,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0851,WP,Answer with only the final number. A vehicle travels 150 miles in 6 hours. What is its average speed in miles per hour?,25
+T3_0852,WP,Answer with only the final number. There are 54 students. They form groups of 6. How many groups?,9
+T3_0916,WP,Answer with only the final number. You read 21 pages per day for 9 days. How many pages total?,189
+T3_0854,WP,Answer with only the final number. A pack has 13 items. How many items in 3 packs?,39
+T3_0946,WP,Answer with only the final number. A rectangle has length 8 and width 12. What is its area?,96
+T3_0856,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 5 batches?,40
+T3_0857,WP,Answer with only the final number. You read 15 pages per day for 8 days. How many pages total?,120
+T3_0991,WP,Answer with only the final number. A recipe needs 9 cups of flour per batch. How many cups for 7 batches?,63
+T3_0983,WP,Answer with only the final number. You read 13 pages per day for 7 days. How many pages total?,91
+T3_0860,WP,Answer with only the final number. A pack has 11 items. How many items in 4 packs?,44
+T3_0955,WP,Answer with only the final number. A rectangle has length 11 and width 8. What is its area?,88
+T3_0883,WP,Answer with only the final number. A vehicle travels 150 miles in 6 hours. What is its average speed in miles per hour?,25
+T3_0969,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0864,WP,Answer with only the final number. You read 17 pages per day for 4 days. How many pages total?,68
+T3_0865,WP,Answer with only the final number. You read 6 pages per day for 12 days. How many pages total?,72
+T3_0866,WP,Answer with only the final number. A tank holds 150 liters. 60% is used. How many liters remain?,60
+T3_0994,WP,Answer with only the final number. There are 72 students. They form groups of 8. How many groups?,9
+T3_0979,WP,Answer with only the final number. A recipe needs 5 cups of flour per batch. How many cups for 7 batches?,35
+T3_0913,WP,Answer with only the final number. You have 110 stickers and give away 15. How many remain?,95
+T3_0870,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 5 batches?,10
+T3_0963,WP,Answer with only the final number. A store sells 8 notebooks for $8. How much does 1 notebook cost?,1
+T3_0981,WP,Answer with only the final number. You read 20 pages per day for 6 days. How many pages total?,120
+T3_0964,WP,Answer with only the final number. A store sells 10 notebooks for $10. How much does 1 notebook cost?,1
+T3_0957,WP,Answer with only the final number. A store sells 6 notebooks for $36. How much does 1 notebook cost?,6
+T3_0959,WP,Answer with only the final number. A tank holds 50 liters. 30% is used. How many liters remain?,35
+T3_0876,WP,Answer with only the final number. A train moves 90 km in 3 hours. What is its speed in km/h?,30
+T3_0877,WP,Answer with only the final number. A store sells 4 notebooks for $12. How much does 1 notebook cost?,3
+T3_0945,WP,Answer with only the final number. You have 167 stickers and give away 129. How many remain?,38
+T3_0926,WP,Answer with only the final number. A vehicle travels 150 miles in 2 hours. What is its average speed in miles per hour?,75
+T3_0932,WP,Answer with only the final number. A rectangle has length 8 and width 5. What is its area?,40
+T3_0881,WP,Answer with only the final number. A vehicle travels 180 miles in 5 hours. What is its average speed in miles per hour?,36
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0883,WP,Answer with only the final number. A vehicle travels 150 miles in 6 hours. What is its average speed in miles per hour?,25
+T3_0901,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 11 batches?,88
+T3_1000,WP,Answer with only the final number. There are 54 students. They form groups of 9. How many groups?,6
+T3_0886,WP,Answer with only the final number. A rectangle has length 14 and width 24. What is its area?,336
+T3_0970,WP,Answer with only the final number. You read 10 pages per day for 16 days. How many pages total?,160
+T3_0888,WP,Answer with only the final number. A pack has 12 items. How many items in 4 packs?,48
+T3_0889,WP,Answer with only the final number. An item costs $15. You pay with a $50 bill. How many dollars change do you get?,35
+T3_0901,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 11 batches?,88
+T3_0891,WP,Answer with only the final number. You have 136 stickers and give away 118. How many remain?,18
+T3_0902,WP,Answer with only the final number. A vehicle travels 240 miles in 2 hours. What is its average speed in miles per hour?,120
+T3_0933,WP,Answer with only the final number. There are 36 students. They form groups of 9. How many groups?,4
+T3_0894,WP,Answer with only the final number. A vehicle travels 120 miles in 3 hours. What is its average speed in miles per hour?,40
+T3_0971,WP,Answer with only the final number. A store sells 12 notebooks for $48. How much does 1 notebook cost?,4
+T3_0914,WP,Answer with only the final number. You read 13 pages per day for 15 days. How many pages total?,195
+T3_0981,WP,Answer with only the final number. You read 20 pages per day for 6 days. How many pages total?,120
+T3_0898,WP,Answer with only the final number. An item costs $15. You pay with a $100 bill. How many dollars change do you get?,85
+T3_0988,WP,Answer with only the final number. A rectangle has length 7 and width 14. What is its area?,98
+T3_0912,WP,Answer with only the final number. An item costs $30. You pay with a $100 bill. How many dollars change do you get?,70
+T3_0901,WP,Answer with only the final number. A recipe needs 8 cups of flour per batch. How many cups for 11 batches?,88
+T3_0902,WP,Answer with only the final number. A vehicle travels 240 miles in 2 hours. What is its average speed in miles per hour?,120
+T3_0991,WP,Answer with only the final number. A recipe needs 9 cups of flour per batch. How many cups for 7 batches?,63
+T3_0971,WP,Answer with only the final number. A store sells 12 notebooks for $48. How much does 1 notebook cost?,4
+T3_0920,WP,Answer with only the final number. A rectangle has length 16 and width 22. What is its area?,352
+T3_0955,WP,Answer with only the final number. A rectangle has length 11 and width 8. What is its area?,88
+T3_0950,WP,Answer with only the final number. A rectangle has length 25 and width 6. What is its area?,150
+T3_0989,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0948,WP,Answer with only the final number. A tank holds 60 liters. 25% is used. How many liters remain?,45
+T3_0955,WP,Answer with only the final number. A rectangle has length 11 and width 8. What is its area?,88
+T3_0911,WP,Answer with only the final number. There are 18 students. They form groups of 9. How many groups?,2
+T3_0912,WP,Answer with only the final number. An item costs $30. You pay with a $100 bill. How many dollars change do you get?,70
+T3_0913,WP,Answer with only the final number. You have 110 stickers and give away 15. How many remain?,95
+T3_0914,WP,Answer with only the final number. You read 13 pages per day for 15 days. How many pages total?,195
+T3_0915,WP,Answer with only the final number. A recipe needs 3 cups of flour per batch. How many cups for 4 batches?,12
+T3_0916,WP,Answer with only the final number. You read 21 pages per day for 9 days. How many pages total?,189
+T3_0926,WP,Answer with only the final number. A vehicle travels 150 miles in 2 hours. What is its average speed in miles per hour?,75
+T3_0918,WP,Answer with only the final number. A car travels 60 miles in 2 hours. What is its average speed in miles per hour?,30
+T3_0919,WP,Answer with only the final number. A vehicle travels 90 miles in 2 hours. What is its average speed in miles per hour?,45
+T3_0920,WP,Answer with only the final number. A rectangle has length 16 and width 22. What is its area?,352
+T3_0984,WP,Answer with only the final number. A vehicle travels 180 miles in 3 hours. What is its average speed in miles per hour?,60
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0986,WP,Answer with only the final number. A tank holds 200 liters. 10% is used. How many liters remain?,180
+T3_0968,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0925,WP,Answer with only the final number. A vehicle travels 180 miles in 2 hours. What is its average speed in miles per hour?,90
+T3_0926,WP,Answer with only the final number. A vehicle travels 150 miles in 2 hours. What is its average speed in miles per hour?,75
+T3_0989,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0994,WP,Answer with only the final number. There are 72 students. They form groups of 8. How many groups?,9
+T3_0969,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0989,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0940,WP,Answer with only the final number. A rectangle has length 16 and width 28. What is its area?,448
+T3_0932,WP,Answer with only the final number. A rectangle has length 8 and width 5. What is its area?,40
+T3_0933,WP,Answer with only the final number. There are 36 students. They form groups of 9. How many groups?,4
+T3_0997,WP,Answer with only the final number. A store sells 8 notebooks for $40. How much does 1 notebook cost?,5
+T3_0935,WP,Answer with only the final number. A pack has 13 items. How many items in 14 packs?,182
+T3_0942,WP,Answer with only the final number. A pack has 20 items. How many items in 6 packs?,120
+T3_0990,WP,Answer with only the final number. You have 84 stickers and give away 77. How many remain?,7
+T3_0938,WP,Answer with only the final number. You have 191 stickers and give away 181. How many remain?,10
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0940,WP,Answer with only the final number. A rectangle has length 16 and width 28. What is its area?,448
+T3_0992,WP,Answer with only the final number. A tank holds 120 liters. 10% is used. How many liters remain?,108
+T3_0942,WP,Answer with only the final number. A pack has 20 items. How many items in 6 packs?,120
+T3_0983,WP,Answer with only the final number. You read 13 pages per day for 7 days. How many pages total?,91
+T3_0960,WP,Answer with only the final number. A pack has 18 items. How many items in 7 packs?,126
+T3_0945,WP,Answer with only the final number. You have 167 stickers and give away 129. How many remain?,38
+T3_0946,WP,Answer with only the final number. A rectangle has length 8 and width 12. What is its area?,96
+T3_0947,WP,Answer with only the final number. You have 180 stickers and give away 49. How many remain?,131
+T3_0948,WP,Answer with only the final number. A tank holds 60 liters. 25% is used. How many liters remain?,45
+T3_0949,WP,Answer with only the final number. You have 30 candies and give away 12. How many remain?,18
+T3_0950,WP,Answer with only the final number. A rectangle has length 25 and width 6. What is its area?,150
+T3_0998,WP,Answer with only the final number. A tank holds 50 liters. 40% is used. How many liters remain?,30
+T3_0952,WP,Answer with only the final number. You read 11 pages per day for 17 days. How many pages total?,187
+T3_0953,WP,Answer with only the final number. A rectangle has length 27 and width 21. What is its area?,567
+T3_0983,WP,Answer with only the final number. You read 13 pages per day for 7 days. How many pages total?,91
+T3_0955,WP,Answer with only the final number. A rectangle has length 11 and width 8. What is its area?,88
+T3_0972,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0957,WP,Answer with only the final number. A store sells 6 notebooks for $36. How much does 1 notebook cost?,6
+T3_0958,WP,Answer with only the final number. A store sells 6 notebooks for $6. How much does 1 notebook cost?,1
+T3_0959,WP,Answer with only the final number. A tank holds 50 liters. 30% is used. How many liters remain?,35
+T3_0960,WP,Answer with only the final number. A pack has 18 items. How many items in 7 packs?,126
+T3_0966,WP,Answer with only the final number. A pack has 17 items. How many items in 10 packs?,170
+T3_0993,WP,Answer with only the final number. A tank holds 40 liters. 10% is used. How many liters remain?,36
+T3_0963,WP,Answer with only the final number. A store sells 8 notebooks for $8. How much does 1 notebook cost?,1
+T3_0964,WP,Answer with only the final number. A store sells 10 notebooks for $10. How much does 1 notebook cost?,1
+T3_0980,WP,Answer with only the final number. A recipe needs 4 cups of flour per batch. How many cups for 8 batches?,32
+T3_0966,WP,Answer with only the final number. A pack has 17 items. How many items in 10 packs?,170
+T3_0967,WP,Answer with only the final number. You have 74 stickers and give away 26. How many remain?,48
+T3_0968,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0969,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0970,WP,Answer with only the final number. You read 10 pages per day for 16 days. How many pages total?,160
+T3_0971,WP,Answer with only the final number. A store sells 12 notebooks for $48. How much does 1 notebook cost?,4
+T3_0972,WP,Answer with only the final number. An item costs $9. You pay with a $50 bill. How many dollars change do you get?,41
+T3_0973,WP,Answer with only the final number. You have 128 stickers and give away 108. How many remain?,20
+T3_0999,WP,Answer with only the final number. An item costs $15. You pay with a $50 bill. How many dollars change do you get?,35
+T3_0979,WP,Answer with only the final number. A recipe needs 5 cups of flour per batch. How many cups for 7 batches?,35
+T3_0990,WP,Answer with only the final number. You have 84 stickers and give away 77. How many remain?,7
+T3_0997,WP,Answer with only the final number. A store sells 8 notebooks for $40. How much does 1 notebook cost?,5
+T3_0978,WP,Answer with only the final number. A pack has 17 items. How many items in 15 packs?,255
+T3_0979,WP,Answer with only the final number. A recipe needs 5 cups of flour per batch. How many cups for 7 batches?,35
+T3_0980,WP,Answer with only the final number. A recipe needs 4 cups of flour per batch. How many cups for 8 batches?,32
+T3_0981,WP,Answer with only the final number. You read 20 pages per day for 6 days. How many pages total?,120
+T3_0992,WP,Answer with only the final number. A tank holds 120 liters. 10% is used. How many liters remain?,108
+T3_0983,WP,Answer with only the final number. You read 13 pages per day for 7 days. How many pages total?,91
+T3_0984,WP,Answer with only the final number. A vehicle travels 180 miles in 3 hours. What is its average speed in miles per hour?,60
+T3_0997,WP,Answer with only the final number. A store sells 8 notebooks for $40. How much does 1 notebook cost?,5
+T3_0986,WP,Answer with only the final number. A tank holds 200 liters. 10% is used. How many liters remain?,180
+T3_0987,WP,Answer with only the final number. A store sells 8 notebooks for $16. How much does 1 notebook cost?,2
+T3_0988,WP,Answer with only the final number. A rectangle has length 7 and width 14. What is its area?,98
+T3_0989,WP,Answer with only the final number. A recipe needs 2 cups of flour per batch. How many cups for 11 batches?,22
+T3_0990,WP,Answer with only the final number. You have 84 stickers and give away 77. How many remain?,7
+T3_0991,WP,Answer with only the final number. A recipe needs 9 cups of flour per batch. How many cups for 7 batches?,63
+T3_0992,WP,Answer with only the final number. A tank holds 120 liters. 10% is used. How many liters remain?,108
+T3_0993,WP,Answer with only the final number. A tank holds 40 liters. 10% is used. How many liters remain?,36
+T3_0994,WP,Answer with only the final number. There are 72 students. They form groups of 8. How many groups?,9
+T3_0995,WP,Answer with only the final number. There are 72 students. They form groups of 6. How many groups?,12
+T3_0996,WP,Answer with only the final number. You have 165 stickers and give away 35. How many remain?,130
+T3_0997,WP,Answer with only the final number. A store sells 8 notebooks for $40. How much does 1 notebook cost?,5
+T3_0998,WP,Answer with only the final number. A tank holds 50 liters. 40% is used. How many liters remain?,30
+T3_0999,WP,Answer with only the final number. An item costs $15. You pay with a $50 bill. How many dollars change do you get?,35
+T3_1000,WP,Answer with only the final number. There are 54 students. They form groups of 9. How many groups?,6

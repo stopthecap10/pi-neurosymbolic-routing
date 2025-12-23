@@ -1,0 +1,10 @@
+id,category,variant,trial,expected_answer,final_output,correct,error_code,latency_s
+WP01,WP,phi2_server_nogrammar,1,408,408,1,E0,5.8643
+WP01,WP,phi2_server_nogrammar,2,408,408,1,E0,5.8371
+WP01,WP,phi2_server_nogrammar,3,408,408,1,E0,5.8357
+WP02,WP,phi2_server_nogrammar,1,48,48,1,E0,18.1114
+WP02,WP,phi2_server_nogrammar,2,48,48,1,E0,14.4988
+WP02,WP,phi2_server_nogrammar,3,48,48,1,E0,14.4557
+LOG01,LOG,phi2_server_nogrammar,1,Yes,Yes,1,E0,9.8333
+LOG01,LOG,phi2_server_nogrammar,2,Yes,Yes,1,E0,3.6228
+LOG01,LOG,phi2_server_nogrammar,3,Yes,Yes,1,E0,3.6269

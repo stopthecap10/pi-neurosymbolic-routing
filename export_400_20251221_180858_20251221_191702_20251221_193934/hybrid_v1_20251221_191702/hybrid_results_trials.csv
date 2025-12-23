@@ -1,0 +1,401 @@
+id,category,route,trial,status,expected_answer,final_output,correct,error_code,latency_wall_s,sym_expr,sym_output,log_file
+AR01,AR,SYM,1,ok,408,408,1,E0,0.0025,17 * 24,408,runs_hybrid_v1/20251221_191702/logs/AR01__SYM__t1.json
+AR02,AR,SYM,1,ok,266,266,1,E0,0.0019,38 * 7,266,runs_hybrid_v1/20251221_191702/logs/AR02__SYM__t1.json
+AR03,AR,SYM,1,ok,784,784,1,E0,0.0020,56 * 14,784,runs_hybrid_v1/20251221_191702/logs/AR03__SYM__t1.json
+AR04,AR,SYM,1,ok,613,613,1,E0,0.0020,1000 - 387,613,runs_hybrid_v1/20251221_191702/logs/AR04__SYM__t1.json
+AR05,AR,SYM,1,ok,25,25,1,E0,0.0020,625 / 25,25,runs_hybrid_v1/20251221_191702/logs/AR05__SYM__t1.json
+AR06,AR,SYM,1,ok,12,12,1,E0,0.0020,144 / 12,12,runs_hybrid_v1/20251221_191702/logs/AR06__SYM__t1.json
+AR07,AR,SYM,1,ok,225,225,1,E0,0.0026,15^2,225,runs_hybrid_v1/20251221_191702/logs/AR07__SYM__t1.json
+AR08,AR,SYM,1,ok,729,729,1,E0,0.0027,9^3,729,runs_hybrid_v1/20251221_191702/logs/AR08__SYM__t1.json
+AR09,AR,SYM,1,ok,20,20,1,E0,0.0022,(45 + 55) / 5,20,runs_hybrid_v1/20251221_191702/logs/AR09__SYM__t1.json
+AR10,AR,SYM,1,ok,18,18,1,E0,0.0020,81 - 9*7,18,runs_hybrid_v1/20251221_191702/logs/AR10__SYM__t1.json
+ALG01,ALG,SYM,1,ok,7,7,1,E0,0.0959,x + 5 = 12,7,runs_hybrid_v1/20251221_191702/logs/ALG01__SYM__t1.json
+ALG02,ALG,SYM,1,ok,7,7,1,E0,0.0118,3x = 21,7,runs_hybrid_v1/20251221_191702/logs/ALG02__SYM__t1.json
+ALG03,ALG,SYM,1,ok,4,4,1,E0,0.0122,2x + 3 = 11,4,runs_hybrid_v1/20251221_191702/logs/ALG03__SYM__t1.json
+ALG04,ALG,SYM,1,ok,24,24,1,E0,0.0118,x/4 = 6,24,runs_hybrid_v1/20251221_191702/logs/ALG04__SYM__t1.json
+ALG05,ALG,SYM,1,ok,2,2,1,E0,0.0113,5x - 10 = 0,2,runs_hybrid_v1/20251221_191702/logs/ALG05__SYM__t1.json
+ALG06,ALG,SYM,1,ok,13,13,1,E0,0.0079,7 + x = 20,13,runs_hybrid_v1/20251221_191702/logs/ALG06__SYM__t1.json
+ALG07,ALG,SYM,1,ok,2,2,1,E0,0.0120,9x + 1 = 19,2,runs_hybrid_v1/20251221_191702/logs/ALG07__SYM__t1.json
+ALG08,ALG,SYM,1,ok,5,5,1,E0,0.0074,x - 8 = -3,5,runs_hybrid_v1/20251221_191702/logs/ALG08__SYM__t1.json
+ALG09,ALG,SYM,1,ok,7,7,1,E0,0.0115,4(x - 2) = 20,7,runs_hybrid_v1/20251221_191702/logs/ALG09__SYM__t1.json
+ALG10,ALG,SYM,1,ok,16,16,1,E0,0.0146,(x/2) + 3 = 11,16,runs_hybrid_v1/20251221_191702/logs/ALG10__SYM__t1.json
+LOG01,LOG,LLM,1,ok,Yes,Yes,1,E0,3.6787,,,runs_hybrid_v1/20251221_191702/logs/LOG01__LLM__t1.json
+LOG02,LOG,LLM,1,ok,No,Yes,0,E2,8.7124,,,runs_hybrid_v1/20251221_191702/logs/LOG02__LLM__t1.json
+LOG03,LOG,LLM,1,ok,No,Yes,0,E2,3.8113,,,runs_hybrid_v1/20251221_191702/logs/LOG03__LLM__t1.json
+LOG04,LOG,LLM,1,ok,Yes,Yes,1,E0,1.4514,,,runs_hybrid_v1/20251221_191702/logs/LOG04__LLM__t1.json
+LOG05,LOG,LLM,1,ok,Yes,Yes,1,E0,1.4403,,,runs_hybrid_v1/20251221_191702/logs/LOG05__LLM__t1.json
+LOG06,LOG,LLM,1,ok,Yes,Yes,1,E0,3.7958,,,runs_hybrid_v1/20251221_191702/logs/LOG06__LLM__t1.json
+LOG07,LOG,LLM,1,ok,No,No,1,E0,3.8168,,,runs_hybrid_v1/20251221_191702/logs/LOG07__LLM__t1.json
+LOG08,LOG,LLM,1,ok,No,Yes,0,E2,10.5484,,,runs_hybrid_v1/20251221_191702/logs/LOG08__LLM__t1.json
+LOG09,LOG,LLM,1,ok,No,No,1,E0,3.8345,,,runs_hybrid_v1/20251221_191702/logs/LOG09__LLM__t1.json
+LOG10,LOG,LLM,1,ok,Yes,No,0,E2,3.8305,,,runs_hybrid_v1/20251221_191702/logs/LOG10__LLM__t1.json
+WP01,WP,LLM,1,ok,48,48,1,E0,1.4598,,,runs_hybrid_v1/20251221_191702/logs/WP01__LLM__t1.json
+WP02,WP,LLM,1,ok,40,40,1,E0,5.3865,,,runs_hybrid_v1/20251221_191702/logs/WP02__LLM__t1.json
+WP03,WP,LLM,1,ok,18,18,1,E0,7.1407,,,runs_hybrid_v1/20251221_191702/logs/WP03__LLM__t1.json
+WP04,WP,LLM,1,ok,30,30,1,E0,1.4562,,,runs_hybrid_v1/20251221_191702/logs/WP04__LLM__t1.json
+WP05,WP,LLM,1,ok,2,2,1,E0,8.1490,,,runs_hybrid_v1/20251221_191702/logs/WP05__LLM__t1.json
+WP06,WP,LLM,1,ok,10,10,1,E0,8.2552,,,runs_hybrid_v1/20251221_191702/logs/WP06__LLM__t1.json
+WP07,WP,LLM,1,ok,4,4,1,E0,7.9909,,,runs_hybrid_v1/20251221_191702/logs/WP07__LLM__t1.json
+WP08,WP,LLM,1,ok,35,35,1,E0,8.7796,,,runs_hybrid_v1/20251221_191702/logs/WP08__LLM__t1.json
+WP09,WP,LLM,1,ok,30,30,1,E0,1.5050,,,runs_hybrid_v1/20251221_191702/logs/WP09__LLM__t1.json
+WP10,WP,LLM,1,ok,120,120,1,E0,8.2865,,,runs_hybrid_v1/20251221_191702/logs/WP10__LLM__t1.json
+AR11,AR,SYM,1,ok,180,180,1,E0,0.0025,(16 + 44) * 3,180,runs_hybrid_v1/20251221_191702/logs/AR11__SYM__t1.json
+AR12,AR,SYM,1,ok,227,227,1,E0,0.0023,443 - 36*6,227,runs_hybrid_v1/20251221_191702/logs/AR12__SYM__t1.json
+AR13,AR,SYM,1,ok,23,23,1,E0,0.0022,46 / 2,23,runs_hybrid_v1/20251221_191702/logs/AR13__SYM__t1.json
+AR14,AR,SYM,1,ok,4524,4524,1,E0,0.0021,58 * 78,4524,runs_hybrid_v1/20251221_191702/logs/AR14__SYM__t1.json
+AR15,AR,SYM,1,ok,931,931,1,E0,0.0025,(81 * 7) + (52 * 7),931,runs_hybrid_v1/20251221_191702/logs/AR15__SYM__t1.json
+AR16,AR,SYM,1,ok,25,25,1,E0,0.0020,5^2,25,runs_hybrid_v1/20251221_191702/logs/AR16__SYM__t1.json
+AR17,AR,SYM,1,ok,90,90,1,E0,0.0024,(63 / 7) * 10,90,runs_hybrid_v1/20251221_191702/logs/AR17__SYM__t1.json
+AR18,AR,SYM,1,ok,499,499,1,E0,0.0023,(441 + 99) - 41,499,runs_hybrid_v1/20251221_191702/logs/AR18__SYM__t1.json
+AR19,AR,SYM,1,ok,8,8,1,E0,0.0020,(32 * 2) / 8,8,runs_hybrid_v1/20251221_191702/logs/AR19__SYM__t1.json
+AR20,AR,SYM,1,err,130,,0,E8,0.0017,,,runs_hybrid_v1/20251221_191702/logs/AR20__SYM__t1.json
+AR21,AR,SYM,1,ok,152,152,1,E0,0.0024,(58 + 18) * 2,152,runs_hybrid_v1/20251221_191702/logs/AR21__SYM__t1.json
+AR22,AR,SYM,1,ok,97,97,1,E0,0.0022,211 - 38*3,97,runs_hybrid_v1/20251221_191702/logs/AR22__SYM__t1.json
+AR23,AR,SYM,1,ok,10,10,1,E0,0.0021,30 / 3,10,runs_hybrid_v1/20251221_191702/logs/AR23__SYM__t1.json
+AR24,AR,SYM,1,ok,2660,2660,1,E0,0.0020,95 * 28,2660,runs_hybrid_v1/20251221_191702/logs/AR24__SYM__t1.json
+AR25,AR,SYM,1,ok,228,228,1,E0,0.0023,(26 * 6) + (12 * 6),228,runs_hybrid_v1/20251221_191702/logs/AR25__SYM__t1.json
+AR26,AR,SYM,1,ok,14641,14641,1,E0,0.0024,11^4,14641,runs_hybrid_v1/20251221_191702/logs/AR26__SYM__t1.json
+AR27,AR,SYM,1,ok,225,225,1,E0,0.0020,(150 / 6) * 9,225,runs_hybrid_v1/20251221_191702/logs/AR27__SYM__t1.json
+AR28,AR,SYM,1,ok,922,922,1,E0,0.0021,(957 + 14) - 49,922,runs_hybrid_v1/20251221_191702/logs/AR28__SYM__t1.json
+AR29,AR,SYM,1,ok,99,99,1,E0,0.0024,(55 * 9) / 5,99,runs_hybrid_v1/20251221_191702/logs/AR29__SYM__t1.json
+AR30,AR,SYM,1,err,8,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR30__SYM__t1.json
+AR31,AR,SYM,1,ok,1113,1113,1,E0,0.0022,(77 + 82) * 7,1113,runs_hybrid_v1/20251221_191702/logs/AR31__SYM__t1.json
+AR32,AR,SYM,1,ok,-224,-224,1,E0,0.0021,56 - 35*8,-224,runs_hybrid_v1/20251221_191702/logs/AR32__SYM__t1.json
+AR33,AR,SYM,1,ok,19,19,1,E0,0.0020,190 / 10,19,runs_hybrid_v1/20251221_191702/logs/AR33__SYM__t1.json
+AR34,AR,SYM,1,ok,8645,8645,1,E0,0.0020,91 * 95,8645,runs_hybrid_v1/20251221_191702/logs/AR34__SYM__t1.json
+AR35,AR,SYM,1,ok,1264,1264,1,E0,0.0023,(86 * 8) + (72 * 8),1264,runs_hybrid_v1/20251221_191702/logs/AR35__SYM__t1.json
+AR36,AR,SYM,1,ok,10000,10000,1,E0,0.0025,10^4,10000,runs_hybrid_v1/20251221_191702/logs/AR36__SYM__t1.json
+AR37,AR,SYM,1,ok,27,27,1,E0,0.0023,(36 / 4) * 3,27,runs_hybrid_v1/20251221_191702/logs/AR37__SYM__t1.json
+AR38,AR,SYM,1,ok,649,649,1,E0,0.0023,(598 + 94) - 43,649,runs_hybrid_v1/20251221_191702/logs/AR38__SYM__t1.json
+AR39,AR,SYM,1,ok,31,31,1,E0,0.0023,(31 * 7) / 7,31,runs_hybrid_v1/20251221_191702/logs/AR39__SYM__t1.json
+AR40,AR,SYM,1,err,41,,0,E8,0.0017,,,runs_hybrid_v1/20251221_191702/logs/AR40__SYM__t1.json
+AR41,AR,SYM,1,ok,696,696,1,E0,0.0023,(19 + 68) * 8,696,runs_hybrid_v1/20251221_191702/logs/AR41__SYM__t1.json
+AR42,AR,SYM,1,ok,281,281,1,E0,0.0022,343 - 31*2,281,runs_hybrid_v1/20251221_191702/logs/AR42__SYM__t1.json
+AR43,AR,SYM,1,ok,22,22,1,E0,0.0022,66 / 3,22,runs_hybrid_v1/20251221_191702/logs/AR43__SYM__t1.json
+AR44,AR,SYM,1,ok,5040,5040,1,E0,0.0022,90 * 56,5040,runs_hybrid_v1/20251221_191702/logs/AR44__SYM__t1.json
+AR45,AR,SYM,1,ok,330,330,1,E0,0.0025,(11 * 5) + (55 * 5),330,runs_hybrid_v1/20251221_191702/logs/AR45__SYM__t1.json
+AR46,AR,SYM,1,ok,14641,14641,1,E0,0.0019,11^4,14641,runs_hybrid_v1/20251221_191702/logs/AR46__SYM__t1.json
+AR47,AR,SYM,1,ok,474,474,1,E0,0.0024,(158 / 2) * 6,474,runs_hybrid_v1/20251221_191702/logs/AR47__SYM__t1.json
+AR48,AR,SYM,1,ok,657,657,1,E0,0.0022,(606 + 90) - 39,657,runs_hybrid_v1/20251221_191702/logs/AR48__SYM__t1.json
+AR49,AR,SYM,1,ok,180,180,1,E0,0.0020,(80 * 9) / 4,180,runs_hybrid_v1/20251221_191702/logs/AR49__SYM__t1.json
+AR50,AR,SYM,1,err,98,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR50__SYM__t1.json
+AR51,AR,SYM,1,ok,1116,1116,1,E0,0.0021,(66 + 58) * 9,1116,runs_hybrid_v1/20251221_191702/logs/AR51__SYM__t1.json
+AR52,AR,SYM,1,ok,32,32,1,E0,0.0020,72 - 10*4,32,runs_hybrid_v1/20251221_191702/logs/AR52__SYM__t1.json
+AR53,AR,SYM,1,ok,27,27,1,E0,0.0018,135 / 5,27,runs_hybrid_v1/20251221_191702/logs/AR53__SYM__t1.json
+AR54,AR,SYM,1,ok,504,504,1,E0,0.0020,12 * 42,504,runs_hybrid_v1/20251221_191702/logs/AR54__SYM__t1.json
+AR55,AR,SYM,1,ok,912,912,1,E0,0.0023,(55 * 6) + (97 * 6),912,runs_hybrid_v1/20251221_191702/logs/AR55__SYM__t1.json
+AR56,AR,SYM,1,ok,14641,14641,1,E0,0.0018,11^4,14641,runs_hybrid_v1/20251221_191702/logs/AR56__SYM__t1.json
+AR57,AR,SYM,1,ok,204,204,1,E0,0.0022,(136 / 2) * 3,204,runs_hybrid_v1/20251221_191702/logs/AR57__SYM__t1.json
+AR58,AR,SYM,1,ok,675,675,1,E0,0.0022,(732 + 18) - 75,675,runs_hybrid_v1/20251221_191702/logs/AR58__SYM__t1.json
+AR59,AR,SYM,1,ok,55,55,1,E0,0.0022,(55 * 3) / 3,55,runs_hybrid_v1/20251221_191702/logs/AR59__SYM__t1.json
+AR60,AR,SYM,1,err,108,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR60__SYM__t1.json
+AR61,AR,SYM,1,ok,408,408,1,E0,0.0019,(78 + 58) * 3,408,runs_hybrid_v1/20251221_191702/logs/AR61__SYM__t1.json
+AR62,AR,SYM,1,ok,259,259,1,E0,0.0020,329 - 35*2,259,runs_hybrid_v1/20251221_191702/logs/AR62__SYM__t1.json
+AR63,AR,SYM,1,ok,17,17,1,E0,0.0020,102 / 6,17,runs_hybrid_v1/20251221_191702/logs/AR63__SYM__t1.json
+AR64,AR,SYM,1,ok,980,980,1,E0,0.0019,70 * 14,980,runs_hybrid_v1/20251221_191702/logs/AR64__SYM__t1.json
+AR65,AR,SYM,1,ok,1064,1064,1,E0,0.0023,(81 * 8) + (52 * 8),1064,runs_hybrid_v1/20251221_191702/logs/AR65__SYM__t1.json
+AR66,AR,SYM,1,ok,100,100,1,E0,0.0021,10^2,100,runs_hybrid_v1/20251221_191702/logs/AR66__SYM__t1.json
+AR67,AR,SYM,1,ok,384,384,1,E0,0.0021,(192 / 4) * 8,384,runs_hybrid_v1/20251221_191702/logs/AR67__SYM__t1.json
+AR68,AR,SYM,1,ok,233,233,1,E0,0.0021,(165 + 96) - 28,233,runs_hybrid_v1/20251221_191702/logs/AR68__SYM__t1.json
+AR69,AR,SYM,1,ok,95,95,1,E0,0.0022,(57 * 5) / 3,95,runs_hybrid_v1/20251221_191702/logs/AR69__SYM__t1.json
+AR70,AR,SYM,1,err,146,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR70__SYM__t1.json
+AR71,AR,SYM,1,ok,810,810,1,E0,0.0021,(76 + 59) * 6,810,runs_hybrid_v1/20251221_191702/logs/AR71__SYM__t1.json
+AR72,AR,SYM,1,ok,-100,-100,1,E0,0.0020,124 - 28*8,-100,runs_hybrid_v1/20251221_191702/logs/AR72__SYM__t1.json
+AR73,AR,SYM,1,ok,28,28,1,E0,0.0020,112 / 4,28,runs_hybrid_v1/20251221_191702/logs/AR73__SYM__t1.json
+AR74,AR,SYM,1,ok,4134,4134,1,E0,0.0020,78 * 53,4134,runs_hybrid_v1/20251221_191702/logs/AR74__SYM__t1.json
+AR75,AR,SYM,1,ok,404,404,1,E0,0.0023,(76 * 4) + (25 * 4),404,runs_hybrid_v1/20251221_191702/logs/AR75__SYM__t1.json
+AR76,AR,SYM,1,ok,2744,2744,1,E0,0.0024,14^3,2744,runs_hybrid_v1/20251221_191702/logs/AR76__SYM__t1.json
+AR77,AR,SYM,1,ok,280,280,1,E0,0.0022,(140 / 2) * 4,280,runs_hybrid_v1/20251221_191702/logs/AR77__SYM__t1.json
+AR78,AR,SYM,1,ok,648,648,1,E0,0.0021,(565 + 95) - 12,648,runs_hybrid_v1/20251221_191702/logs/AR78__SYM__t1.json
+AR79,AR,SYM,1,ok,54,54,1,E0,0.0021,(54 * 9) / 9,54,runs_hybrid_v1/20251221_191702/logs/AR79__SYM__t1.json
+AR80,AR,SYM,1,err,32,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR80__SYM__t1.json
+AR81,AR,SYM,1,ok,301,301,1,E0,0.0021,(13 + 30) * 7,301,runs_hybrid_v1/20251221_191702/logs/AR81__SYM__t1.json
+AR82,AR,SYM,1,ok,324,324,1,E0,0.0020,496 - 43*4,324,runs_hybrid_v1/20251221_191702/logs/AR82__SYM__t1.json
+AR83,AR,SYM,1,ok,10,10,1,E0,0.0018,100 / 10,10,runs_hybrid_v1/20251221_191702/logs/AR83__SYM__t1.json
+AR84,AR,SYM,1,ok,1817,1817,1,E0,0.0020,23 * 79,1817,runs_hybrid_v1/20251221_191702/logs/AR84__SYM__t1.json
+AR85,AR,SYM,1,ok,665,665,1,E0,0.0023,(57 * 7) + (38 * 7),665,runs_hybrid_v1/20251221_191702/logs/AR85__SYM__t1.json
+AR86,AR,SYM,1,ok,216,216,1,E0,0.0024,6^3,216,runs_hybrid_v1/20251221_191702/logs/AR86__SYM__t1.json
+AR87,AR,SYM,1,ok,155,155,1,E0,0.0022,(155 / 5) * 5,155,runs_hybrid_v1/20251221_191702/logs/AR87__SYM__t1.json
+AR88,AR,SYM,1,ok,412,412,1,E0,0.0021,(429 + 43) - 60,412,runs_hybrid_v1/20251221_191702/logs/AR88__SYM__t1.json
+AR89,AR,SYM,1,ok,9,9,1,E0,0.0019,(15 * 3) / 5,9,runs_hybrid_v1/20251221_191702/logs/AR89__SYM__t1.json
+AR90,AR,SYM,1,err,78,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR90__SYM__t1.json
+AR91,AR,SYM,1,ok,276,276,1,E0,0.0021,(12 + 34) * 6,276,runs_hybrid_v1/20251221_191702/logs/AR91__SYM__t1.json
+AR92,AR,SYM,1,ok,267,267,1,E0,0.0020,339 - 24*3,267,runs_hybrid_v1/20251221_191702/logs/AR92__SYM__t1.json
+AR93,AR,SYM,1,ok,24,24,1,E0,0.0018,168 / 7,24,runs_hybrid_v1/20251221_191702/logs/AR93__SYM__t1.json
+AR94,AR,SYM,1,ok,1060,1060,1,E0,0.0019,20 * 53,1060,runs_hybrid_v1/20251221_191702/logs/AR94__SYM__t1.json
+AR95,AR,SYM,1,ok,632,632,1,E0,0.0023,(80 * 4) + (78 * 4),632,runs_hybrid_v1/20251221_191702/logs/AR95__SYM__t1.json
+AR96,AR,SYM,1,ok,169,169,1,E0,0.0023,13^2,169,runs_hybrid_v1/20251221_191702/logs/AR96__SYM__t1.json
+AR97,AR,SYM,1,ok,136,136,1,E0,0.0022,(153 / 9) * 8,136,runs_hybrid_v1/20251221_191702/logs/AR97__SYM__t1.json
+AR98,AR,SYM,1,ok,866,866,1,E0,0.0021,(895 + 13) - 42,866,runs_hybrid_v1/20251221_191702/logs/AR98__SYM__t1.json
+AR99,AR,SYM,1,ok,108,108,1,E0,0.0022,(84 * 9) / 7,108,runs_hybrid_v1/20251221_191702/logs/AR99__SYM__t1.json
+AR100,AR,SYM,1,err,44,,0,E8,0.0016,,,runs_hybrid_v1/20251221_191702/logs/AR100__SYM__t1.json
+ALG11,ALG,SYM,1,ok,9,9,1,E0,0.0083,9x + -3 = 78,9,runs_hybrid_v1/20251221_191702/logs/ALG11__SYM__t1.json
+ALG12,ALG,SYM,1,ok,-18,-18,1,E0,0.0125,8(x + 9) = -72,-18,runs_hybrid_v1/20251221_191702/logs/ALG12__SYM__t1.json
+ALG13,ALG,SYM,1,ok,10,10,1,E0,0.0107,(x + 0)/10 = 1,10,runs_hybrid_v1/20251221_191702/logs/ALG13__SYM__t1.json
+ALG14,ALG,SYM,1,ok,30,30,1,E0,0.0112,x/3 = 10,30,runs_hybrid_v1/20251221_191702/logs/ALG14__SYM__t1.json
+ALG15,ALG,SYM,1,ok,9,9,1,E0,0.0077,3x - (x - 5) = 23,9,runs_hybrid_v1/20251221_191702/logs/ALG15__SYM__t1.json
+ALG16,ALG,SYM,1,ok,-4,-4,1,E0,0.0077,2x + -21 = -29,-4,runs_hybrid_v1/20251221_191702/logs/ALG16__SYM__t1.json
+ALG17,ALG,SYM,1,ok,-8,-8,1,E0,0.0085,4(x + -5) = -52,-8,runs_hybrid_v1/20251221_191702/logs/ALG17__SYM__t1.json
+ALG18,ALG,SYM,1,ok,13,13,1,E0,0.0112,(x + 19)/8 = 4,13,runs_hybrid_v1/20251221_191702/logs/ALG18__SYM__t1.json
+ALG19,ALG,SYM,1,ok,180,180,1,E0,0.0111,x/12 = 15,180,runs_hybrid_v1/20251221_191702/logs/ALG19__SYM__t1.json
+ALG20,ALG,SYM,1,ok,10,10,1,E0,0.0066,3x - (x - 5) = 25,10,runs_hybrid_v1/20251221_191702/logs/ALG20__SYM__t1.json
+ALG21,ALG,SYM,1,ok,-16,-16,1,E0,0.0117,7x + 6 = -106,-16,runs_hybrid_v1/20251221_191702/logs/ALG21__SYM__t1.json
+ALG22,ALG,SYM,1,ok,-18,-18,1,E0,0.0117,10(x + 1) = -170,-18,runs_hybrid_v1/20251221_191702/logs/ALG22__SYM__t1.json
+ALG23,ALG,SYM,1,ok,2,2,1,E0,0.0120,(x + -8)/6 = -1,2,runs_hybrid_v1/20251221_191702/logs/ALG23__SYM__t1.json
+ALG24,ALG,SYM,1,ok,32,32,1,E0,0.0067,x/4 = 8,32,runs_hybrid_v1/20251221_191702/logs/ALG24__SYM__t1.json
+ALG25,ALG,SYM,1,ok,-12,-12,1,E0,0.0074,3x - (x - 5) = -19,-12,runs_hybrid_v1/20251221_191702/logs/ALG25__SYM__t1.json
+ALG26,ALG,SYM,1,ok,20,20,1,E0,0.0118,12x + -7 = 233,20,runs_hybrid_v1/20251221_191702/logs/ALG26__SYM__t1.json
+ALG27,ALG,SYM,1,ok,-19,-19,1,E0,0.0072,7(x + 0) = -133,-19,runs_hybrid_v1/20251221_191702/logs/ALG27__SYM__t1.json
+ALG28,ALG,SYM,1,ok,1,1,1,E0,0.0094,(x + 17)/6 = 3,1,runs_hybrid_v1/20251221_191702/logs/ALG28__SYM__t1.json
+ALG29,ALG,SYM,1,ok,33,33,1,E0,0.0072,x/3 = 11,33,runs_hybrid_v1/20251221_191702/logs/ALG29__SYM__t1.json
+ALG30,ALG,SYM,1,ok,15,15,1,E0,0.0066,3x - (x - 5) = 35,15,runs_hybrid_v1/20251221_191702/logs/ALG30__SYM__t1.json
+ALG31,ALG,SYM,1,ok,9,9,1,E0,0.0115,11x + 10 = 109,9,runs_hybrid_v1/20251221_191702/logs/ALG31__SYM__t1.json
+ALG32,ALG,SYM,1,ok,9,9,1,E0,0.0064,2(x + -3) = 12,9,runs_hybrid_v1/20251221_191702/logs/ALG32__SYM__t1.json
+ALG33,ALG,SYM,1,ok,-14,-14,1,E0,0.0122,(x + -13)/9 = -3,-14,runs_hybrid_v1/20251221_191702/logs/ALG33__SYM__t1.json
+ALG34,ALG,SYM,1,ok,-35,-35,1,E0,0.0107,x/5 = -7,-35,runs_hybrid_v1/20251221_191702/logs/ALG34__SYM__t1.json
+ALG35,ALG,SYM,1,ok,-3,-3,1,E0,0.0066,3x - (x - 5) = -1,-3,runs_hybrid_v1/20251221_191702/logs/ALG35__SYM__t1.json
+ALG36,ALG,SYM,1,ok,13,13,1,E0,0.0080,11x + 19 = 162,13,runs_hybrid_v1/20251221_191702/logs/ALG36__SYM__t1.json
+ALG37,ALG,SYM,1,ok,14,14,1,E0,0.0070,4(x + 0) = 56,14,runs_hybrid_v1/20251221_191702/logs/ALG37__SYM__t1.json
+ALG38,ALG,SYM,1,ok,-11,-11,1,E0,0.0117,(x + -9)/4 = -5,-11,runs_hybrid_v1/20251221_191702/logs/ALG38__SYM__t1.json
+ALG39,ALG,SYM,1,ok,-6,-6,1,E0,0.0096,x/6 = -1,-6,runs_hybrid_v1/20251221_191702/logs/ALG39__SYM__t1.json
+ALG40,ALG,SYM,1,ok,9,9,1,E0,0.0048,3x - (x - 5) = 23,9,runs_hybrid_v1/20251221_191702/logs/ALG40__SYM__t1.json
+ALG41,ALG,SYM,1,ok,-9,-9,1,E0,0.0078,10x + -30 = -120,-9,runs_hybrid_v1/20251221_191702/logs/ALG41__SYM__t1.json
+ALG42,ALG,SYM,1,ok,-19,-19,1,E0,0.0079,2(x + -10) = -58,-19,runs_hybrid_v1/20251221_191702/logs/ALG42__SYM__t1.json
+ALG43,ALG,SYM,1,ok,-8,-8,1,E0,0.0083,(x + -10)/6 = -3,-8,runs_hybrid_v1/20251221_191702/logs/ALG43__SYM__t1.json
+ALG44,ALG,SYM,1,ok,-91,-91,1,E0,0.0108,x/7 = -13,-91,runs_hybrid_v1/20251221_191702/logs/ALG44__SYM__t1.json
+ALG45,ALG,SYM,1,ok,-16,-16,1,E0,0.0065,3x - (x - 5) = -27,-16,runs_hybrid_v1/20251221_191702/logs/ALG45__SYM__t1.json
+ALG46,ALG,SYM,1,ok,4,4,1,E0,0.0077,9x + -16 = 20,4,runs_hybrid_v1/20251221_191702/logs/ALG46__SYM__t1.json
+ALG47,ALG,SYM,1,ok,-6,-6,1,E0,0.0114,6(x + -1) = -42,-6,runs_hybrid_v1/20251221_191702/logs/ALG47__SYM__t1.json
+ALG48,ALG,SYM,1,ok,4,4,1,E0,0.0118,(x + -16)/3 = -4,4,runs_hybrid_v1/20251221_191702/logs/ALG48__SYM__t1.json
+ALG49,ALG,SYM,1,ok,-128,-128,1,E0,0.0107,x/8 = -16,-128,runs_hybrid_v1/20251221_191702/logs/ALG49__SYM__t1.json
+ALG50,ALG,SYM,1,ok,-20,-20,1,E0,0.0071,3x - (x - 5) = -35,-20,runs_hybrid_v1/20251221_191702/logs/ALG50__SYM__t1.json
+ALG51,ALG,SYM,1,ok,15,15,1,E0,0.0066,2x + 18 = 48,15,runs_hybrid_v1/20251221_191702/logs/ALG51__SYM__t1.json
+ALG52,ALG,SYM,1,ok,-7,-7,1,E0,0.0072,2(x + 1) = -12,-7,runs_hybrid_v1/20251221_191702/logs/ALG52__SYM__t1.json
+ALG53,ALG,SYM,1,ok,-26,-26,1,E0,0.0132,(x + 6)/10 = -2,-26,runs_hybrid_v1/20251221_191702/logs/ALG53__SYM__t1.json
+ALG54,ALG,SYM,1,ok,-44,-44,1,E0,0.0108,x/11 = -4,-44,runs_hybrid_v1/20251221_191702/logs/ALG54__SYM__t1.json
+ALG55,ALG,SYM,1,ok,8,8,1,E0,0.0064,3x - (x - 5) = 21,8,runs_hybrid_v1/20251221_191702/logs/ALG55__SYM__t1.json
+ALG56,ALG,SYM,1,ok,-15,-15,1,E0,0.0077,6x + 21 = -69,-15,runs_hybrid_v1/20251221_191702/logs/ALG56__SYM__t1.json
+ALG57,ALG,SYM,1,ok,13,13,1,E0,0.0081,5(x + 9) = 110,13,runs_hybrid_v1/20251221_191702/logs/ALG57__SYM__t1.json
+ALG58,ALG,SYM,1,ok,9,9,1,E0,0.0085,(x + -19)/10 = -1,9,runs_hybrid_v1/20251221_191702/logs/ALG58__SYM__t1.json
+ALG59,ALG,SYM,1,ok,132,132,1,E0,0.0069,x/12 = 11,132,runs_hybrid_v1/20251221_191702/logs/ALG59__SYM__t1.json
+ALG60,ALG,SYM,1,ok,-13,-13,1,E0,0.0064,3x - (x - 5) = -21,-13,runs_hybrid_v1/20251221_191702/logs/ALG60__SYM__t1.json
+ALG61,ALG,SYM,1,ok,18,18,1,E0,0.0076,11x + -20 = 178,18,runs_hybrid_v1/20251221_191702/logs/ALG61__SYM__t1.json
+ALG62,ALG,SYM,1,ok,11,11,1,E0,0.0074,3(x + 2) = 39,11,runs_hybrid_v1/20251221_191702/logs/ALG62__SYM__t1.json
+ALG63,ALG,SYM,1,ok,9,9,1,E0,0.0066,(x + -9)/8 = 0,9,runs_hybrid_v1/20251221_191702/logs/ALG63__SYM__t1.json
+ALG64,ALG,SYM,1,ok,60,60,1,E0,0.0072,x/6 = 10,60,runs_hybrid_v1/20251221_191702/logs/ALG64__SYM__t1.json
+ALG65,ALG,SYM,1,ok,10,10,1,E0,0.0049,3x - (x - 5) = 25,10,runs_hybrid_v1/20251221_191702/logs/ALG65__SYM__t1.json
+ALG66,ALG,SYM,1,ok,-6,-6,1,E0,0.0077,10x + 23 = -37,-6,runs_hybrid_v1/20251221_191702/logs/ALG66__SYM__t1.json
+ALG67,ALG,SYM,1,ok,9,9,1,E0,0.0075,4(x + 5) = 56,9,runs_hybrid_v1/20251221_191702/logs/ALG67__SYM__t1.json
+ALG68,ALG,SYM,1,ok,8,8,1,E0,0.0114,(x + -15)/7 = -1,8,runs_hybrid_v1/20251221_191702/logs/ALG68__SYM__t1.json
+ALG69,ALG,SYM,1,ok,-156,-156,1,E0,0.0071,x/12 = -13,-156,runs_hybrid_v1/20251221_191702/logs/ALG69__SYM__t1.json
+ALG70,ALG,SYM,1,ok,-16,-16,1,E0,0.0049,3x - (x - 5) = -27,-16,runs_hybrid_v1/20251221_191702/logs/ALG70__SYM__t1.json
+ALG71,ALG,SYM,1,ok,20,20,1,E0,0.0077,11x + -24 = 196,20,runs_hybrid_v1/20251221_191702/logs/ALG71__SYM__t1.json
+ALG72,ALG,SYM,1,ok,-1,-1,1,E0,0.0077,4(x + 3) = 8,-1,runs_hybrid_v1/20251221_191702/logs/ALG72__SYM__t1.json
+ALG73,ALG,SYM,1,ok,-23,-23,1,E0,0.0088,(x + -12)/7 = -5,-23,runs_hybrid_v1/20251221_191702/logs/ALG73__SYM__t1.json
+ALG74,ALG,SYM,1,ok,-108,-108,1,E0,0.0069,x/6 = -18,-108,runs_hybrid_v1/20251221_191702/logs/ALG74__SYM__t1.json
+ALG75,ALG,SYM,1,ok,-6,-6,1,E0,0.0064,3x - (x - 5) = -7,-6,runs_hybrid_v1/20251221_191702/logs/ALG75__SYM__t1.json
+ALG76,ALG,SYM,1,ok,-19,-19,1,E0,0.0078,12x + -6 = -234,-19,runs_hybrid_v1/20251221_191702/logs/ALG76__SYM__t1.json
+ALG77,ALG,SYM,1,ok,-11,-11,1,E0,0.0083,12(x + -4) = -180,-11,runs_hybrid_v1/20251221_191702/logs/ALG77__SYM__t1.json
+ALG78,ALG,SYM,1,ok,-18,-18,1,E0,0.0116,(x + -15)/11 = -3,-18,runs_hybrid_v1/20251221_191702/logs/ALG78__SYM__t1.json
+ALG79,ALG,SYM,1,ok,-90,-90,1,E0,0.0106,x/9 = -10,-90,runs_hybrid_v1/20251221_191702/logs/ALG79__SYM__t1.json
+ALG80,ALG,SYM,1,ok,10,10,1,E0,0.0049,3x - (x - 5) = 25,10,runs_hybrid_v1/20251221_191702/logs/ALG80__SYM__t1.json
+ALG81,ALG,SYM,1,ok,-18,-18,1,E0,0.0065,10x + -19 = -199,-18,runs_hybrid_v1/20251221_191702/logs/ALG81__SYM__t1.json
+ALG82,ALG,SYM,1,ok,-9,-9,1,E0,0.0079,5(x + 10) = 5,-9,runs_hybrid_v1/20251221_191702/logs/ALG82__SYM__t1.json
+ALG83,ALG,SYM,1,ok,-9,-9,1,E0,0.0086,(x + -13)/11 = -2,-9,runs_hybrid_v1/20251221_191702/logs/ALG83__SYM__t1.json
+ALG84,ALG,SYM,1,ok,132,132,1,E0,0.0046,x/12 = 11,132,runs_hybrid_v1/20251221_191702/logs/ALG84__SYM__t1.json
+ALG85,ALG,SYM,1,ok,19,19,1,E0,0.0070,3x - (x - 5) = 43,19,runs_hybrid_v1/20251221_191702/logs/ALG85__SYM__t1.json
+ALG86,ALG,SYM,1,ok,2,2,1,E0,0.0070,4x + 21 = 29,2,runs_hybrid_v1/20251221_191702/logs/ALG86__SYM__t1.json
+ALG87,ALG,SYM,1,ok,11,11,1,E0,0.0076,4(x + 9) = 80,11,runs_hybrid_v1/20251221_191702/logs/ALG87__SYM__t1.json
+ALG88,ALG,SYM,1,ok,-19,-19,1,E0,0.0082,(x + -16)/7 = -5,-19,runs_hybrid_v1/20251221_191702/logs/ALG88__SYM__t1.json
+ALG89,ALG,SYM,1,ok,-126,-126,1,E0,0.0071,x/7 = -18,-126,runs_hybrid_v1/20251221_191702/logs/ALG89__SYM__t1.json
+ALG90,ALG,SYM,1,ok,4,4,1,E0,0.0056,3x - (x - 5) = 13,4,runs_hybrid_v1/20251221_191702/logs/ALG90__SYM__t1.json
+ALG91,ALG,SYM,1,ok,-5,-5,1,E0,0.0075,4x + -25 = -45,-5,runs_hybrid_v1/20251221_191702/logs/ALG91__SYM__t1.json
+ALG92,ALG,SYM,1,ok,17,17,1,E0,0.0084,8(x + 6) = 184,17,runs_hybrid_v1/20251221_191702/logs/ALG92__SYM__t1.json
+ALG93,ALG,SYM,1,ok,4,4,1,E0,0.0104,(x + 8)/12 = 1,4,runs_hybrid_v1/20251221_191702/logs/ALG93__SYM__t1.json
+ALG94,ALG,SYM,1,ok,135,135,1,E0,0.0070,x/9 = 15,135,runs_hybrid_v1/20251221_191702/logs/ALG94__SYM__t1.json
+ALG95,ALG,SYM,1,ok,-18,-18,1,E0,0.0065,3x - (x - 5) = -31,-18,runs_hybrid_v1/20251221_191702/logs/ALG95__SYM__t1.json
+ALG96,ALG,SYM,1,ok,18,18,1,E0,0.0077,8x + -2 = 142,18,runs_hybrid_v1/20251221_191702/logs/ALG96__SYM__t1.json
+ALG97,ALG,SYM,1,ok,-4,-4,1,E0,0.0071,8(x + 1) = -24,-4,runs_hybrid_v1/20251221_191702/logs/ALG97__SYM__t1.json
+ALG98,ALG,SYM,1,ok,-16,-16,1,E0,0.0085,(x + 4)/6 = -2,-16,runs_hybrid_v1/20251221_191702/logs/ALG98__SYM__t1.json
+ALG99,ALG,SYM,1,ok,0,0,1,E0,0.0049,x/9 = 0,0,runs_hybrid_v1/20251221_191702/logs/ALG99__SYM__t1.json
+ALG100,ALG,SYM,1,ok,-10,-10,1,E0,0.0064,3x - (x - 5) = -15,-10,runs_hybrid_v1/20251221_191702/logs/ALG100__SYM__t1.json
+LOG11,LOG,LLM,1,ok,Yes,Yes,1,E0,3.8734,,,runs_hybrid_v1/20251221_191702/logs/LOG11__LLM__t1.json
+LOG12,LOG,LLM,1,ok,No,Yes,0,E2,13.2518,,,runs_hybrid_v1/20251221_191702/logs/LOG12__LLM__t1.json
+LOG13,LOG,LLM,1,ok,Yes,Yes,1,E0,4.1091,,,runs_hybrid_v1/20251221_191702/logs/LOG13__LLM__t1.json
+LOG14,LOG,LLM,1,ok,No,Yes,0,E2,4.1649,,,runs_hybrid_v1/20251221_191702/logs/LOG14__LLM__t1.json
+LOG15,LOG,LLM,1,ok,Yes,Yes,1,E0,4.1261,,,runs_hybrid_v1/20251221_191702/logs/LOG15__LLM__t1.json
+LOG16,LOG,LLM,1,ok,No,No,1,E0,4.1529,,,runs_hybrid_v1/20251221_191702/logs/LOG16__LLM__t1.json
+LOG17,LOG,LLM,1,ok,Yes,No,0,E2,4.2292,,,runs_hybrid_v1/20251221_191702/logs/LOG17__LLM__t1.json
+LOG18,LOG,LLM,1,ok,Yes,Yes,1,E0,1.5310,,,runs_hybrid_v1/20251221_191702/logs/LOG18__LLM__t1.json
+LOG19,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6015,,,runs_hybrid_v1/20251221_191702/logs/LOG19__LLM__t1.json
+LOG20,LOG,LLM,1,ok,Yes,No,0,E2,4.3043,,,runs_hybrid_v1/20251221_191702/logs/LOG20__LLM__t1.json
+LOG21,LOG,LLM,1,ok,Yes,Yes,1,E0,4.2565,,,runs_hybrid_v1/20251221_191702/logs/LOG21__LLM__t1.json
+LOG22,LOG,LLM,1,ok,No,Yes,0,E2,4.2766,,,runs_hybrid_v1/20251221_191702/logs/LOG22__LLM__t1.json
+LOG23,LOG,LLM,1,ok,Yes,Yes,1,E0,4.2612,,,runs_hybrid_v1/20251221_191702/logs/LOG23__LLM__t1.json
+LOG24,LOG,LLM,1,ok,No,Yes,0,E2,4.2637,,,runs_hybrid_v1/20251221_191702/logs/LOG24__LLM__t1.json
+LOG25,LOG,LLM,1,ok,Yes,Yes,1,E0,4.2385,,,runs_hybrid_v1/20251221_191702/logs/LOG25__LLM__t1.json
+LOG26,LOG,LLM,1,ok,No,No,1,E0,4.3459,,,runs_hybrid_v1/20251221_191702/logs/LOG26__LLM__t1.json
+LOG27,LOG,LLM,1,ok,Yes,No,0,E2,4.3503,,,runs_hybrid_v1/20251221_191702/logs/LOG27__LLM__t1.json
+LOG28,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6069,,,runs_hybrid_v1/20251221_191702/logs/LOG28__LLM__t1.json
+LOG29,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6133,,,runs_hybrid_v1/20251221_191702/logs/LOG29__LLM__t1.json
+LOG30,LOG,LLM,1,ok,Yes,No,0,E2,4.3440,,,runs_hybrid_v1/20251221_191702/logs/LOG30__LLM__t1.json
+LOG31,LOG,LLM,1,ok,Yes,Yes,1,E0,4.3805,,,runs_hybrid_v1/20251221_191702/logs/LOG31__LLM__t1.json
+LOG32,LOG,LLM,1,ok,No,Yes,0,E2,4.2844,,,runs_hybrid_v1/20251221_191702/logs/LOG32__LLM__t1.json
+LOG33,LOG,LLM,1,ok,Yes,Yes,1,E0,4.2814,,,runs_hybrid_v1/20251221_191702/logs/LOG33__LLM__t1.json
+LOG34,LOG,LLM,1,ok,No,Yes,0,E2,4.4235,,,runs_hybrid_v1/20251221_191702/logs/LOG34__LLM__t1.json
+LOG35,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4241,,,runs_hybrid_v1/20251221_191702/logs/LOG35__LLM__t1.json
+LOG36,LOG,LLM,1,ok,No,No,1,E0,4.3087,,,runs_hybrid_v1/20251221_191702/logs/LOG36__LLM__t1.json
+LOG37,LOG,LLM,1,ok,Yes,No,0,E2,4.3447,,,runs_hybrid_v1/20251221_191702/logs/LOG37__LLM__t1.json
+LOG38,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6512,,,runs_hybrid_v1/20251221_191702/logs/LOG38__LLM__t1.json
+LOG39,LOG,LLM,1,ok,Yes,Yes,1,E0,1.5985,,,runs_hybrid_v1/20251221_191702/logs/LOG39__LLM__t1.json
+LOG40,LOG,LLM,1,ok,Yes,No,0,E2,4.3806,,,runs_hybrid_v1/20251221_191702/logs/LOG40__LLM__t1.json
+LOG41,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4233,,,runs_hybrid_v1/20251221_191702/logs/LOG41__LLM__t1.json
+LOG42,LOG,LLM,1,ok,No,Yes,0,E2,4.3306,,,runs_hybrid_v1/20251221_191702/logs/LOG42__LLM__t1.json
+LOG43,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4295,,,runs_hybrid_v1/20251221_191702/logs/LOG43__LLM__t1.json
+LOG44,LOG,LLM,1,ok,No,Yes,0,E2,4.4217,,,runs_hybrid_v1/20251221_191702/logs/LOG44__LLM__t1.json
+LOG45,LOG,LLM,1,ok,Yes,Yes,1,E0,4.3222,,,runs_hybrid_v1/20251221_191702/logs/LOG45__LLM__t1.json
+LOG46,LOG,LLM,1,ok,No,No,1,E0,4.4232,,,runs_hybrid_v1/20251221_191702/logs/LOG46__LLM__t1.json
+LOG47,LOG,LLM,1,ok,Yes,No,0,E2,4.3790,,,runs_hybrid_v1/20251221_191702/logs/LOG47__LLM__t1.json
+LOG48,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6445,,,runs_hybrid_v1/20251221_191702/logs/LOG48__LLM__t1.json
+LOG49,LOG,LLM,1,ok,Yes,Yes,1,E0,1.7006,,,runs_hybrid_v1/20251221_191702/logs/LOG49__LLM__t1.json
+LOG50,LOG,LLM,1,ok,Yes,No,0,E2,4.4103,,,runs_hybrid_v1/20251221_191702/logs/LOG50__LLM__t1.json
+LOG51,LOG,LLM,1,ok,Yes,Yes,1,E0,4.3401,,,runs_hybrid_v1/20251221_191702/logs/LOG51__LLM__t1.json
+LOG52,LOG,LLM,1,ok,No,Yes,0,E2,4.4218,,,runs_hybrid_v1/20251221_191702/logs/LOG52__LLM__t1.json
+LOG53,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5893,,,runs_hybrid_v1/20251221_191702/logs/LOG53__LLM__t1.json
+LOG54,LOG,LLM,1,ok,No,Yes,0,E2,4.4182,,,runs_hybrid_v1/20251221_191702/logs/LOG54__LLM__t1.json
+LOG55,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4706,,,runs_hybrid_v1/20251221_191702/logs/LOG55__LLM__t1.json
+LOG56,LOG,LLM,1,ok,No,No,1,E0,4.3995,,,runs_hybrid_v1/20251221_191702/logs/LOG56__LLM__t1.json
+LOG57,LOG,LLM,1,ok,Yes,No,0,E2,4.3811,,,runs_hybrid_v1/20251221_191702/logs/LOG57__LLM__t1.json
+LOG58,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6473,,,runs_hybrid_v1/20251221_191702/logs/LOG58__LLM__t1.json
+LOG59,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6792,,,runs_hybrid_v1/20251221_191702/logs/LOG59__LLM__t1.json
+LOG60,LOG,LLM,1,ok,Yes,No,0,E2,4.5028,,,runs_hybrid_v1/20251221_191702/logs/LOG60__LLM__t1.json
+LOG61,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4310,,,runs_hybrid_v1/20251221_191702/logs/LOG61__LLM__t1.json
+LOG62,LOG,LLM,1,ok,No,Yes,0,E2,4.4193,,,runs_hybrid_v1/20251221_191702/logs/LOG62__LLM__t1.json
+LOG63,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5006,,,runs_hybrid_v1/20251221_191702/logs/LOG63__LLM__t1.json
+LOG64,LOG,LLM,1,ok,No,Yes,0,E2,4.4641,,,runs_hybrid_v1/20251221_191702/logs/LOG64__LLM__t1.json
+LOG65,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4658,,,runs_hybrid_v1/20251221_191702/logs/LOG65__LLM__t1.json
+LOG66,LOG,LLM,1,ok,No,No,1,E0,4.4724,,,runs_hybrid_v1/20251221_191702/logs/LOG66__LLM__t1.json
+LOG67,LOG,LLM,1,ok,Yes,No,0,E2,4.5255,,,runs_hybrid_v1/20251221_191702/logs/LOG67__LLM__t1.json
+LOG68,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6759,,,runs_hybrid_v1/20251221_191702/logs/LOG68__LLM__t1.json
+LOG69,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6445,,,runs_hybrid_v1/20251221_191702/logs/LOG69__LLM__t1.json
+LOG70,LOG,LLM,1,ok,Yes,No,0,E2,4.4351,,,runs_hybrid_v1/20251221_191702/logs/LOG70__LLM__t1.json
+LOG71,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5186,,,runs_hybrid_v1/20251221_191702/logs/LOG71__LLM__t1.json
+LOG72,LOG,LLM,1,ok,No,Yes,0,E2,4.5436,,,runs_hybrid_v1/20251221_191702/logs/LOG72__LLM__t1.json
+LOG73,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5210,,,runs_hybrid_v1/20251221_191702/logs/LOG73__LLM__t1.json
+LOG74,LOG,LLM,1,ok,No,Yes,0,E2,4.3627,,,runs_hybrid_v1/20251221_191702/logs/LOG74__LLM__t1.json
+LOG75,LOG,LLM,1,ok,Yes,Yes,1,E0,4.6345,,,runs_hybrid_v1/20251221_191702/logs/LOG75__LLM__t1.json
+LOG76,LOG,LLM,1,ok,No,No,1,E0,4.5209,,,runs_hybrid_v1/20251221_191702/logs/LOG76__LLM__t1.json
+LOG77,LOG,LLM,1,ok,Yes,No,0,E2,4.5576,,,runs_hybrid_v1/20251221_191702/logs/LOG77__LLM__t1.json
+LOG78,LOG,LLM,1,ok,Yes,Yes,1,E0,1.7152,,,runs_hybrid_v1/20251221_191702/logs/LOG78__LLM__t1.json
+LOG79,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6520,,,runs_hybrid_v1/20251221_191702/logs/LOG79__LLM__t1.json
+LOG80,LOG,LLM,1,ok,Yes,No,0,E2,4.5340,,,runs_hybrid_v1/20251221_191702/logs/LOG80__LLM__t1.json
+LOG81,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4930,,,runs_hybrid_v1/20251221_191702/logs/LOG81__LLM__t1.json
+LOG82,LOG,LLM,1,ok,No,Yes,0,E2,4.4976,,,runs_hybrid_v1/20251221_191702/logs/LOG82__LLM__t1.json
+LOG83,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4985,,,runs_hybrid_v1/20251221_191702/logs/LOG83__LLM__t1.json
+LOG84,LOG,LLM,1,ok,No,Yes,0,E2,4.5014,,,runs_hybrid_v1/20251221_191702/logs/LOG84__LLM__t1.json
+LOG85,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5194,,,runs_hybrid_v1/20251221_191702/logs/LOG85__LLM__t1.json
+LOG86,LOG,LLM,1,ok,No,No,1,E0,4.4739,,,runs_hybrid_v1/20251221_191702/logs/LOG86__LLM__t1.json
+LOG87,LOG,LLM,1,ok,Yes,No,0,E2,4.5863,,,runs_hybrid_v1/20251221_191702/logs/LOG87__LLM__t1.json
+LOG88,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6486,,,runs_hybrid_v1/20251221_191702/logs/LOG88__LLM__t1.json
+LOG89,LOG,LLM,1,ok,Yes,Yes,1,E0,1.7789,,,runs_hybrid_v1/20251221_191702/logs/LOG89__LLM__t1.json
+LOG90,LOG,LLM,1,ok,Yes,No,0,E2,4.4914,,,runs_hybrid_v1/20251221_191702/logs/LOG90__LLM__t1.json
+LOG91,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5630,,,runs_hybrid_v1/20251221_191702/logs/LOG91__LLM__t1.json
+LOG92,LOG,LLM,1,ok,No,Yes,0,E2,4.5379,,,runs_hybrid_v1/20251221_191702/logs/LOG92__LLM__t1.json
+LOG93,LOG,LLM,1,ok,Yes,Yes,1,E0,4.4217,,,runs_hybrid_v1/20251221_191702/logs/LOG93__LLM__t1.json
+LOG94,LOG,LLM,1,ok,No,Yes,0,E2,4.5507,,,runs_hybrid_v1/20251221_191702/logs/LOG94__LLM__t1.json
+LOG95,LOG,LLM,1,ok,Yes,Yes,1,E0,4.5054,,,runs_hybrid_v1/20251221_191702/logs/LOG95__LLM__t1.json
+LOG96,LOG,LLM,1,ok,No,No,1,E0,4.3372,,,runs_hybrid_v1/20251221_191702/logs/LOG96__LLM__t1.json
+LOG97,LOG,LLM,1,ok,Yes,No,0,E2,4.5650,,,runs_hybrid_v1/20251221_191702/logs/LOG97__LLM__t1.json
+LOG98,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6868,,,runs_hybrid_v1/20251221_191702/logs/LOG98__LLM__t1.json
+LOG99,LOG,LLM,1,ok,Yes,Yes,1,E0,1.6979,,,runs_hybrid_v1/20251221_191702/logs/LOG99__LLM__t1.json
+LOG100,LOG,LLM,1,ok,Yes,No,0,E2,4.4650,,,runs_hybrid_v1/20251221_191702/logs/LOG100__LLM__t1.json
+WP11,WP,LLM,1,ok,182,182,1,E0,8.6927,,,runs_hybrid_v1/20251221_191702/logs/WP11__LLM__t1.json
+WP12,WP,LLM,1,ok,150,150,1,E0,8.5299,,,runs_hybrid_v1/20251221_191702/logs/WP12__LLM__t1.json
+WP13,WP,LLM,1,ok,130,130,1,E0,9.2120,,,runs_hybrid_v1/20251221_191702/logs/WP13__LLM__t1.json
+WP14,WP,LLM,1,ok,25,25,1,E0,10.8243,,,runs_hybrid_v1/20251221_191702/logs/WP14__LLM__t1.json
+WP15,WP,LLM,1,ok,6,6,1,E0,10.3451,,,runs_hybrid_v1/20251221_191702/logs/WP15__LLM__t1.json
+WP16,WP,LLM,1,ok,35,35,1,E0,10.1868,,,runs_hybrid_v1/20251221_191702/logs/WP16__LLM__t1.json
+WP17,WP,LLM,1,ok,16,16,1,E0,9.5966,,,runs_hybrid_v1/20251221_191702/logs/WP17__LLM__t1.json
+WP18,WP,LLM,1,ok,75,75,1,E0,10.6446,,,runs_hybrid_v1/20251221_191702/logs/WP18__LLM__t1.json
+WP19,WP,LLM,1,ok,168,168,1,E0,9.8126,,,runs_hybrid_v1/20251221_191702/logs/WP19__LLM__t1.json
+WP20,WP,LLM,1,ok,35,35,1,E0,9.5200,,,runs_hybrid_v1/20251221_191702/logs/WP20__LLM__t1.json
+WP21,WP,LLM,1,ok,110,110,1,E0,8.5637,,,runs_hybrid_v1/20251221_191702/logs/WP21__LLM__t1.json
+WP22,WP,LLM,1,ok,360,360,1,E0,8.6361,,,runs_hybrid_v1/20251221_191702/logs/WP22__LLM__t1.json
+WP23,WP,LLM,1,ok,18,18,1,E0,8.8936,,,runs_hybrid_v1/20251221_191702/logs/WP23__LLM__t1.json
+WP24,WP,LLM,1,ok,60,60,1,E0,10.9032,,,runs_hybrid_v1/20251221_191702/logs/WP24__LLM__t1.json
+WP25,WP,LLM,1,ok,5,5,1,E0,10.2495,,,runs_hybrid_v1/20251221_191702/logs/WP25__LLM__t1.json
+WP26,WP,LLM,1,ok,40,40,1,E0,10.1694,,,runs_hybrid_v1/20251221_191702/logs/WP26__LLM__t1.json
+WP27,WP,LLM,1,ok,2,2,1,E0,9.6412,,,runs_hybrid_v1/20251221_191702/logs/WP27__LLM__t1.json
+WP28,WP,LLM,1,ok,180,180,1,E0,10.3970,,,runs_hybrid_v1/20251221_191702/logs/WP28__LLM__t1.json
+WP29,WP,LLM,1,ok,187,187,1,E0,9.7892,,,runs_hybrid_v1/20251221_191702/logs/WP29__LLM__t1.json
+WP30,WP,LLM,1,ok,35,35,1,E0,2.2084,,,runs_hybrid_v1/20251221_191702/logs/WP30__LLM__t1.json
+WP31,WP,LLM,1,ok,120,120,1,E0,8.7066,,,runs_hybrid_v1/20251221_191702/logs/WP31__LLM__t1.json
+WP32,WP,LLM,1,ok,88,88,1,E0,8.8356,,,runs_hybrid_v1/20251221_191702/logs/WP32__LLM__t1.json
+WP33,WP,LLM,1,ok,20,20,1,E0,8.8645,,,runs_hybrid_v1/20251221_191702/logs/WP33__LLM__t1.json
+WP34,WP,LLM,1,ok,90,90,1,E0,9.8636,,,runs_hybrid_v1/20251221_191702/logs/WP34__LLM__t1.json
+WP35,WP,LLM,1,ok,4,4,1,E0,10.3199,,,runs_hybrid_v1/20251221_191702/logs/WP35__LLM__t1.json
+WP36,WP,LLM,1,ok,22,22,1,E0,10.0961,,,runs_hybrid_v1/20251221_191702/logs/WP36__LLM__t1.json
+WP37,WP,LLM,1,ok,12,12,1,E0,10.0140,,,runs_hybrid_v1/20251221_191702/logs/WP37__LLM__t1.json
+WP38,WP,LLM,1,ok,30,30,1,E0,10.8885,,,runs_hybrid_v1/20251221_191702/logs/WP38__LLM__t1.json
+WP39,WP,LLM,1,ok,72,72,1,E0,9.7902,,,runs_hybrid_v1/20251221_191702/logs/WP39__LLM__t1.json
+WP40,WP,LLM,1,ok,41,41,1,E0,12.4658,,,runs_hybrid_v1/20251221_191702/logs/WP40__LLM__t1.json
+WP41,WP,LLM,1,ok,255,255,1,E0,8.7268,,,runs_hybrid_v1/20251221_191702/logs/WP41__LLM__t1.json
+WP42,WP,LLM,1,ok,352,352,1,E0,8.9033,,,runs_hybrid_v1/20251221_191702/logs/WP42__LLM__t1.json
+WP43,WP,LLM,1,ok,48,48,1,E0,9.3149,,,runs_hybrid_v1/20251221_191702/logs/WP43__LLM__t1.json
+WP44,WP,LLM,1,ok,75,75,1,E0,11.6210,,,runs_hybrid_v1/20251221_191702/logs/WP44__LLM__t1.json
+WP45,WP,LLM,1,ok,1,1,1,E0,10.4843,,,runs_hybrid_v1/20251221_191702/logs/WP45__LLM__t1.json
+WP46,WP,LLM,1,ok,22,22,1,E0,1.6413,,,runs_hybrid_v1/20251221_191702/logs/WP46__LLM__t1.json
+WP47,WP,LLM,1,ok,6,6,1,E0,9.8351,,,runs_hybrid_v1/20251221_191702/logs/WP47__LLM__t1.json
+WP48,WP,LLM,1,ok,35,35,1,E0,8.9806,,,runs_hybrid_v1/20251221_191702/logs/WP48__LLM__t1.json
+WP49,WP,LLM,1,ok,189,189,1,E0,9.8399,,,runs_hybrid_v1/20251221_191702/logs/WP49__LLM__t1.json
+WP50,WP,LLM,1,ok,88,88,1,E0,12.2604,,,runs_hybrid_v1/20251221_191702/logs/WP50__LLM__t1.json
+WP51,WP,LLM,1,ok,39,39,1,E0,8.6582,,,runs_hybrid_v1/20251221_191702/logs/WP51__LLM__t1.json
+WP52,WP,LLM,1,ok,567,567,1,E0,9.3125,,,runs_hybrid_v1/20251221_191702/logs/WP52__LLM__t1.json
+WP53,WP,LLM,1,ok,10,10,1,E0,9.3842,,,runs_hybrid_v1/20251221_191702/logs/WP53__LLM__t1.json
+WP54,WP,LLM,1,ok,36,36,1,E0,11.1171,,,runs_hybrid_v1/20251221_191702/logs/WP54__LLM__t1.json
+WP55,WP,LLM,1,ok,1,1,1,E0,10.2356,,,runs_hybrid_v1/20251221_191702/logs/WP55__LLM__t1.json
+WP56,WP,LLM,1,ok,88,88,1,E0,10.1886,,,runs_hybrid_v1/20251221_191702/logs/WP56__LLM__t1.json
+WP57,WP,LLM,1,ok,3,3,1,E0,9.8674,,,runs_hybrid_v1/20251221_191702/logs/WP57__LLM__t1.json
+WP58,WP,LLM,1,ok,45,45,1,E0,10.4622,,,runs_hybrid_v1/20251221_191702/logs/WP58__LLM__t1.json
+WP59,WP,LLM,1,ok,160,160,1,E0,9.7250,,,runs_hybrid_v1/20251221_191702/logs/WP59__LLM__t1.json
+WP60,WP,LLM,1,ok,70,70,1,E0,12.3239,,,runs_hybrid_v1/20251221_191702/logs/WP60__LLM__t1.json
+WP61,WP,LLM,1,ok,126,126,1,E0,8.6158,,,runs_hybrid_v1/20251221_191702/logs/WP61__LLM__t1.json
+WP62,WP,LLM,1,ok,98,98,1,E0,8.8048,,,runs_hybrid_v1/20251221_191702/logs/WP62__LLM__t1.json
+WP63,WP,LLM,1,ok,131,131,1,E0,9.1028,,,runs_hybrid_v1/20251221_191702/logs/WP63__LLM__t1.json
+WP64,WP,LLM,1,ok,45,45,1,E0,11.2003,,,runs_hybrid_v1/20251221_191702/logs/WP64__LLM__t1.json
+WP65,WP,LLM,1,ok,3,3,1,E0,11.1399,,,runs_hybrid_v1/20251221_191702/logs/WP65__LLM__t1.json
+WP66,WP,LLM,1,ok,40,40,1,E0,10.2186,,,runs_hybrid_v1/20251221_191702/logs/WP66__LLM__t1.json
+WP67,WP,LLM,1,ok,4,4,1,E0,9.9905,,,runs_hybrid_v1/20251221_191702/logs/WP67__LLM__t1.json
+WP68,WP,LLM,1,ok,36,36,1,E0,10.6502,,,runs_hybrid_v1/20251221_191702/logs/WP68__LLM__t1.json
+WP69,WP,LLM,1,ok,120,120,1,E0,9.8995,,,runs_hybrid_v1/20251221_191702/logs/WP69__LLM__t1.json
+WP70,WP,LLM,1,ok,93,93,1,E0,12.2826,,,runs_hybrid_v1/20251221_191702/logs/WP70__LLM__t1.json
+WP71,WP,LLM,1,ok,170,170,1,E0,8.7473,,,runs_hybrid_v1/20251221_191702/logs/WP71__LLM__t1.json
+WP72,WP,LLM,1,ok,448,448,1,E0,8.6714,,,runs_hybrid_v1/20251221_191702/logs/WP72__LLM__t1.json
+WP73,WP,LLM,1,ok,95,95,1,E0,9.0803,,,runs_hybrid_v1/20251221_191702/logs/WP73__LLM__t1.json
+WP74,WP,LLM,1,ok,25,25,1,E0,10.8476,,,runs_hybrid_v1/20251221_191702/logs/WP74__LLM__t1.json
+WP75,WP,LLM,1,ok,1,1,1,E0,10.9288,,,runs_hybrid_v1/20251221_191702/logs/WP75__LLM__t1.json
+WP76,WP,LLM,1,ok,63,63,1,E0,10.8644,,,runs_hybrid_v1/20251221_191702/logs/WP76__LLM__t1.json
+WP77,WP,LLM,1,ok,9,9,1,E0,9.9556,,,runs_hybrid_v1/20251221_191702/logs/WP77__LLM__t1.json
+WP78,WP,LLM,1,ok,45,45,1,E0,10.7798,,,runs_hybrid_v1/20251221_191702/logs/WP78__LLM__t1.json
+WP79,WP,LLM,1,ok,195,195,1,E0,10.0112,,,runs_hybrid_v1/20251221_191702/logs/WP79__LLM__t1.json
+WP80,WP,LLM,1,ok,5,5,1,E0,12.3515,,,runs_hybrid_v1/20251221_191702/logs/WP80__LLM__t1.json
+WP81,WP,LLM,1,ok,44,44,1,E0,8.7981,,,runs_hybrid_v1/20251221_191702/logs/WP81__LLM__t1.json
+WP82,WP,LLM,1,ok,336,336,1,E0,8.5485,,,runs_hybrid_v1/20251221_191702/logs/WP82__LLM__t1.json
+WP83,WP,LLM,1,ok,38,38,1,E0,9.1138,,,runs_hybrid_v1/20251221_191702/logs/WP83__LLM__t1.json
+WP84,WP,LLM,1,ok,40,40,1,E0,10.9791,,,runs_hybrid_v1/20251221_191702/logs/WP84__LLM__t1.json
+WP85,WP,LLM,1,ok,6,6,1,E0,9.0124,,,runs_hybrid_v1/20251221_191702/logs/WP85__LLM__t1.json
+WP86,WP,LLM,1,ok,12,12,1,E0,10.1120,,,runs_hybrid_v1/20251221_191702/logs/WP86__LLM__t1.json
+WP87,WP,LLM,1,ok,9,9,1,E0,9.9972,,,runs_hybrid_v1/20251221_191702/logs/WP87__LLM__t1.json
+WP88,WP,LLM,1,ok,60,90,0,E1,10.6860,,,runs_hybrid_v1/20251221_191702/logs/WP88__LLM__t1.json
+WP89,WP,LLM,1,ok,91,91,1,E0,7.9007,,,runs_hybrid_v1/20251221_191702/logs/WP89__LLM__t1.json
+WP90,WP,LLM,1,ok,41,41,1,E0,12.2719,,,runs_hybrid_v1/20251221_191702/logs/WP90__LLM__t1.json
+WP91,WP,LLM,1,ok,48,48,1,E0,8.7983,,,runs_hybrid_v1/20251221_191702/logs/WP91__LLM__t1.json
+WP92,WP,LLM,1,ok,96,96,1,E0,8.9486,,,runs_hybrid_v1/20251221_191702/logs/WP92__LLM__t1.json
+WP93,WP,LLM,1,ok,7,7,1,E0,9.3384,,,runs_hybrid_v1/20251221_191702/logs/WP93__LLM__t1.json
+WP94,WP,LLM,1,ok,120,120,1,E0,10.9783,,,runs_hybrid_v1/20251221_191702/logs/WP94__LLM__t1.json
+WP95,WP,LLM,1,ok,2,2,1,E0,10.3767,,,runs_hybrid_v1/20251221_191702/logs/WP95__LLM__t1.json
+WP96,WP,LLM,1,ok,32,32,1,E0,10.1028,,,runs_hybrid_v1/20251221_191702/logs/WP96__LLM__t1.json
+WP97,WP,LLM,1,ok,2,2,1,E0,9.8954,,,runs_hybrid_v1/20251221_191702/logs/WP97__LLM__t1.json
+WP98,WP,LLM,1,ok,108,108,1,E0,10.5938,,,runs_hybrid_v1/20251221_191702/logs/WP98__LLM__t1.json
+WP99,WP,LLM,1,ok,68,68,1,E0,10.0378,,,runs_hybrid_v1/20251221_191702/logs/WP99__LLM__t1.json
+WP100,WP,LLM,1,ok,85,85,1,E0,12.2671,,,runs_hybrid_v1/20251221_191702/logs/WP100__LLM__t1.json

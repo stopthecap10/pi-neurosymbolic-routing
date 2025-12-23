@@ -1,0 +1,6 @@
+id,category,prompt,expected_answer,output_raw,latency_s,status
+WP01,WP,Answer with only the final number. What is 17 * 24?,408,"Answer with only the final number. What is 17 * 24?
+<|question_end|>Answer: 408
+ [end of text]",10.031,ok
+WP02,WP,"Answer with only the final number. A box has 12 apples. If you buy 4 boxes, how many apples do you have?",48,,20.123,timeout
+LOG01,LOG,"Answer with only Yes or No. If all bloops are razzies and all razzies are flums, are all bloops flums?",Yes,,20.126,timeout

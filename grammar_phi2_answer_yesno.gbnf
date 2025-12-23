@@ -1,0 +1,3 @@
+root    ::= ws? qend? "Answer:" ws? ( "Yes" | "No" ) ws?
+qend    ::= "<|question_end|>" ws?
+ws      ::= (" " | "\n" | "\t")*

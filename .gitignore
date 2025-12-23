@@ -1,0 +1,23 @@
+# models / weights
+models/
+*.gguf
+
+# runs + logs
+runs/
+runs*/
+runs_server/
+runs_hybrid_v1/
+runs_hybrid_v2/
+logs/
+*.json
+
+# env / caches
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# exports
+*.numbers
+*.xlsx
+*.tmp

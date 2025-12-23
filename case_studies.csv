@@ -1,0 +1,5 @@
+id,category,prompt,expected_answer,baseline_variant,baseline_majority_correct,hybrid_v1_output,hybrid_v1_route,hybrid_v2_llm_answer,hybrid_v2_sym_expr,hybrid_v2_sym_output,hybrid_v2_final_output,hybrid_v2_route,hybrid_v2_correct,notes
+AR09,AR,Answer with only the final number. What is (45 + 55) / 5?,20,phi2_server_grammar,0,20,SYM,56,(45 + 55) / 5,20,20,mixed,1,"Baseline wrong, Hybrid V2 correct (good for poster case study)"
+AR10,AR,Answer with only the final number. What is 81 - 9*7?,18,phi2_server_grammar,0,18,SYM,-54,81 - 9*7,18,18,mixed,1,"Baseline wrong, Hybrid V2 correct (good for poster case study)"
+ALG09,ALG,Answer with only the final number. Solve for x: 4(x - 2) = 20.,7,phi2_server_grammar,0,7,SYM,8,4(x - 2) = 20,7,7,mixed,1,"Baseline wrong, Hybrid V2 correct (good for poster case study)"
+ALG17,ALG,Answer with only the final number. Solve for x: 4(x + -5) = -52.,-8,phi2_server_grammar,0,-8,SYM,-3,4(x + -5) = -52,-8,-8,mixed,1,"Baseline wrong, Hybrid V2 correct (good for poster case study)"
