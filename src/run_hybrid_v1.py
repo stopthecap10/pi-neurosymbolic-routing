@@ -13,7 +13,7 @@ from sympy.parsing.sympy_parser import (
 )
 
 SERVER_URL = "http://127.0.0.1:8080/completion"
-PROMPTS_CSV = "baseline_prompts.csv"
+PROMPTS_CSV = "data/baseline_prompts.csv"
 
 TIMEOUT_S = 90
 REPEATS = 1   # dev fast; later set 3-5 for real stats

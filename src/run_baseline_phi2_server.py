@@ -5,7 +5,7 @@ from statistics import median
 import requests
 
 SERVER_URL = "http://127.0.0.1:8080/completion"
-PROMPTS_CSV = "baseline_prompts.csv"
+PROMPTS_CSV = "data/baseline_prompts.csv"
 
 TIMEOUT_S = 90
 REPEATS = 1
@@ -17,7 +17,7 @@ N_PRED_LOG = 8
 # Make prompts consistent (Phi-2 likes this)
 PROMPT_SUFFIX = "\n<|question_end|>Answer:"
 
-GRAMMAR_YESNO_ONLY_FILE = "grammar_yesno_only.gbnf"
+GRAMMAR_YESNO_ONLY_FILE = "grammars/grammar_yesno_only.gbnf"
 
 RUN_TAG = datetime.now().strftime("%Y%m%d_%H%M%S")
 RUN_DIR = Path("runs_server") / RUN_TAG

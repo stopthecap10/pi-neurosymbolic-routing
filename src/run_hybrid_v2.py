@@ -14,7 +14,7 @@ from sympy.parsing.sympy_parser import (
 
 # ========= CONFIG =========
 SERVER_URL = "http://127.0.0.1:8080/completion"
-PROMPTS_CSV = "baseline_prompts.csv"
+PROMPTS_CSV = "data/baseline_prompts.csv"
 
 TIMEOUT_S = 120
 REPEATS = 1           # later: 3
@@ -26,7 +26,7 @@ TEMP = 0
 
 PROMPT_SUFFIX = "\n<|question_end|>Answer:"
 
-GRAMMAR_YESNO_FILE = "grammar_yesno.gbnf"
+GRAMMAR_YESNO_FILE = "grammars/grammar_yesno.gbnf"
 USE_YESNO_GRAMMAR = True
 
 RUN_TAG = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -10,7 +10,7 @@ from statistics import median
 BIN   = str(Path.home() / "llama.cpp/build/bin/llama-completion")
 MODEL = str(Path.home() / "edge-ai/models/phi-2-Q4_K_M.gguf")
 
-PROMPTS_CSV = "baseline_prompts.csv"
+PROMPTS_CSV = "data/baseline_prompts.csv"
 
 TIMEOUT_S = 60
 THREADS = 4
@@ -23,8 +23,8 @@ REPEATS = 3
 N_PRED_NUM = 32   # AR/ALG/WP
 N_PRED_LOG = 8    # LOG
 
-GRAMMAR_YESNO = "grammar_yesno.gbnf"
-GRAMMAR_INT   = "grammar_phi2_answer_int.gbnf"
+GRAMMAR_YESNO = "grammars/grammar_yesno.gbnf"
+GRAMMAR_INT   = "grammars/grammar_phi2_answer_int.gbnf"
 
 # If llama-completion supports --no-warmup, we use it
 AUTO_NO_WARMUP = True
