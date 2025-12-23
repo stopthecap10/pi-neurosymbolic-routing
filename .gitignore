@@ -18,3 +18,7 @@ artifacts/
 
 # OS
 .DS_Store
+
+# generated outputs
+sheet_summary.csv
+outputs/
