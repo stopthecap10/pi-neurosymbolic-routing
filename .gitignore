@@ -1,23 +1,20 @@
-# models / weights
-models/
-*.gguf
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# runs + logs
-runs/
+# local runs + logs
 runs*/
 runs_server/
 runs_hybrid_v1/
 runs_hybrid_v2/
-logs/
-*.json
+*/logs/
+*.log
 
-# env / caches
-.venv/
-__pycache__/
-*.pyc
+# big artifacts / exports
+artifacts/
+*.tar.gz
+
+# OS
 .DS_Store
-
-# exports
-*.numbers
-*.xlsx
-*.tmp
