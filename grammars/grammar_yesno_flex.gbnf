@@ -1,0 +1,3 @@
+root ::= sp? answer sp?
+sp   ::= [ \n\t]*
+answer ::= "Yes" | "yes" | "YES" | "No" | "no" | "NO"
