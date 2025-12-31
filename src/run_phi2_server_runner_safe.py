@@ -8,6 +8,40 @@ INT_RE = re.compile(r"[-+]?\d+")
 def load_text(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
+def is_degenerate_pattern(s: str) -> bool:
+    """Detect if string has repetitive patterns (e.g., 050505, 000000, 170005000)."""
+    if len(s) < 6:
+        return False
+
+    # Check for repeating single char (000000)
+    for i in range(len(s) - 5):
+        if len(set(s[i:i+6])) == 1:  # 6 identical chars in a row
+            return True
+
+    # Check for repeating 2-char patterns anywhere in string (050505)
+    if len(s) >= 6:
+        for i in range(len(s) - 5):
+            pattern = s[i:i+2]
+            # Check if this 2-char pattern repeats at least 3 times consecutively
+            if s[i:i+6] == pattern * 3:
+                return True
+
+    # Check for repeating 3-char patterns (000500050005)
+    if len(s) >= 9:
+        for i in range(len(s) - 8):
+            pattern = s[i:i+3]
+            if s[i:i+9] == pattern * 3:  # Same 3-char pattern repeated 3 times
+                return True
+
+    # Check for repeating 4-char patterns (00050005)
+    if len(s) >= 8:
+        for i in range(len(s) - 7):
+            pattern = s[i:i+4]
+            if s[i:i+8] == pattern * 2:  # Same 4-char pattern repeated 2 times
+                return True
+
+    return False
+
 def extract_last_int(text: str) -> str:
     """Extract last integer from text, stripping whitespace and removing commas."""
     if not text:
@@ -68,10 +102,11 @@ def main():
     ap.add_argument("--timeout_s", type=float, default=60.0)
     ap.add_argument("--repeats", type=int, default=3)
     ap.add_argument("--warmup_per_prompt", type=int, default=0)
-    ap.add_argument("--n_pred_num", type=int, default=32)
-    ap.add_argument("--n_pred_log", type=int, default=8)
-    ap.add_argument("--num_grammar_file", default="grammars/grammar_int_tight.gbnf")
-    ap.add_argument("--yesno_grammar_file", default="grammars/grammar_yesno_tight.gbnf")
+    ap.add_argument("--n_pred_num", type=int, default=12)
+    ap.add_argument("--n_pred_log", type=int, default=6)
+    ap.add_argument("--num_grammar_file", default="grammars/grammar_phi2_answer_int_strict_final.gbnf")
+    ap.add_argument("--yesno_grammar_file", default="grammars/grammar_phi2_answer_yesno_strict_final.gbnf")
+    ap.add_argument("--debug", action="store_true", help="Enable debug output")
     args = ap.parse_args()
 
     # Validate grammar files exist
@@ -154,22 +189,41 @@ def main():
                 pred = extract_yesno(raw)
             else:
                 pred = extract_last_int(raw)
+                # Debug: detect "Answer:" + whitespace only (no digits)
+                if args.debug and not pred and raw.strip().startswith("Answer:"):
+                    # Check if raw has "Answer:" but no digits
+                    after_answer = raw.split("Answer:", 1)[-1] if "Answer:" in raw else ""
+                    if after_answer and not any(c.isdigit() for c in after_answer):
+                        print(f"DEBUG: Answer+whitespace only for {pid} {cat}, content={repr(raw)}, len={len(raw)}", file=sys.stderr, flush=True)
 
-            # Degeneracy guard: if numeric answer exceeds 18 digits, treat as runaway loop (E7)
+            # Degeneracy guard: detect runaway loops
             degenerate = False
-            if cat.upper() != "LOG" and len(pred) > 18:
-                degenerate = True
+            if cat.upper() != "LOG":
+                # Check 1: Answer too long (>18 digits)
+                if len(pred) > 18:
+                    degenerate = True
+                # Check 2: Repetitive pattern detected (e.g., 050505, 00050000)
+                elif is_degenerate_pattern(pred):
+                    degenerate = True
+                # Check 3: Suspiciously long (>10 digits) - most real answers are shorter
+                elif len(pred) > 10:
+                    degenerate = True
 
             e = err_code(cat, pred, expected, timed_out, degenerate)
 
             # Debug output for E7s
-            if e == "E7":
+            if args.debug and e == "E7":
                 debug_parts = [
                     f"E7: {pid} {cat}",
                     f"wall_time={dt:.3f}s",
                 ]
                 if degenerate:
-                    debug_parts.append(f"DEGENERACY: {len(pred)} digits")
+                    if len(pred) > 18:
+                        debug_parts.append(f"DEGENERACY: {len(pred)} digits (>18)")
+                    elif is_degenerate_pattern(pred):
+                        debug_parts.append(f"DEGENERACY: pattern '{pred}'")
+                    elif len(pred) > 10:
+                        debug_parts.append(f"DEGENERACY: {len(pred)} digits (>10)")
                 if tokens_predicted is not None:
                     debug_parts.append(f"tokens_pred={tokens_predicted}")
                 if tokens_evaluated is not None:
@@ -179,7 +233,7 @@ def main():
                 print(" ".join(debug_parts), file=sys.stderr, flush=True)
 
             # Debug output for E8 extraction failures
-            if e == "E8":
+            if args.debug and e == "E8":
                 print(f"E8: {pid} {cat} content={repr(raw[:120])} error={repr(error_field)}", file=sys.stderr, flush=True)
 
             # Required single-line print (no extra jargon)
@@ -206,8 +260,9 @@ def main():
         ok = 1 if majority == expected else 0
         # Check degeneracy for summary
         degenerate_sum = False
-        if cat.upper() != "LOG" and len(majority) > 18:
-            degenerate_sum = True
+        if cat.upper() != "LOG":
+            if len(majority) > 18 or is_degenerate_pattern(majority) or len(majority) > 10:
+                degenerate_sum = True
         e_sum = err_code(cat, majority, expected, timed_out=False, degenerate=degenerate_sum)
 
         summaries.append({
