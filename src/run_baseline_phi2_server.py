@@ -1,203 +1,425 @@
-import csv, json, re, time
-from pathlib import Path
-from datetime import datetime
-from statistics import median
+import argparse
+import csv
+import statistics
+import time
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
+
+import re
+INT_RE = re.compile(r"[-+]?\d+")
+
+
+def extract_final_answer(category: str, raw_text: str) -> str:
+    """
+    Returns the comparable final answer string.
+    LOG -> "Yes" or "No" (if present)
+    AR/ALG/WP -> last integer in the text (supports "Answer: 408")
+    """
+    cat = (category or "").strip().upper()
+    t = (raw_text or "").strip()
+
+    if cat == "LOG":
+        # tolerate variants like "Answer: Yes"
+        if "Yes" in t:
+            return "Yes"
+        if "No" in t:
+            return "No"
+        return t.strip()
+
+    # numeric: last integer token
+    nums = INT_RE.findall(t.replace(",", ""))
+    return nums[-1] if nums else t.strip()
+
+    if cat == "LOG":
+        # tolerate "Answer: Yes" etc.
+        if "Yes" in t:
+            return "Yes"
+        if "No" in t:
+            return "No"
+        return t
+
+    # numeric categories: pull last integer
+    nums = INT_RE.findall(t.replace(",", ""))
+    return nums[-1] if nums else t
+
 import requests
 
-SERVER_URL = "http://127.0.0.1:8080/completion"
-PROMPTS_CSV = "data/baseline_prompts.csv"
+DEFAULT_SERVER_URL = "http://127.0.0.1:8080/completion"
+DEFAULT_TIMEOUT_S = 20.0
 
-TIMEOUT_S = 90
-REPEATS = 1
-WARMUP_PER_PROMPT = 0
+DEFAULT_YESNO_GRAMMAR = "grammars/grammar_yesno_only.gbnf"
+DEFAULT_NUM_GRAMMAR = "grammars/grammar_phi2_final_int.gbnf"
 
-N_PRED_NUM = 32
-N_PRED_LOG = 8
-
-# Make prompts consistent (Phi-2 likes this)
-PROMPT_SUFFIX = "\n<|question_end|>Answer:"
-
-GRAMMAR_YESNO_ONLY_FILE = "grammars/grammar_yesno_only.gbnf"
-
-RUN_TAG = datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = Path("runs_server") / RUN_TAG
-LOG_DIR = RUN_DIR / "logs"
-RUN_DIR.mkdir(parents=True, exist_ok=True)
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-YESNO_ANY = re.compile(r"\b(Yes|No)\b", re.IGNORECASE)
-INT_ANY = re.compile(r"[-+]?\d+")
+DEFAULT_N_PRED_NUM = 32
+DEFAULT_N_PRED_LOG = 8
 
 def read_text(path: str) -> str:
-    return Path(path).read_text(encoding="utf-8")
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
-def normalize_prompt(p: str) -> str:
-    p = p.replace("\r\n", "\n").rstrip()
-    # strip any accidental existing suffixes
-    for s in ["\n<|question_end|>Answer:", "<|question_end|>Answer:", "\nAnswer:", "Answer:"]:
-        if p.endswith(s):
-            p = p[:-len(s)].rstrip()
-    return p + PROMPT_SUFFIX
+def extract_answer(content: str) -> str:
+    return (content or "").strip()
 
-def call_completion(prompt: str, n_predict: int, grammar_text: str):
-    payload = {
-        "prompt": prompt,
-        "n_predict": n_predict,
-        "temperature": 0,
-        # IMPORTANT: always send grammar, even if empty, to avoid "sticky" server state
-        "grammar": grammar_text,
-    }
-    t0 = time.time()
-    r = requests.post(SERVER_URL, json=payload, timeout=TIMEOUT_S)
-    wall_s = time.time() - t0
-
-    status = "ok" if r.ok else f"http_{r.status_code}"
-    try:
-        j = r.json()
-    except Exception:
-        j = {"content": r.text}
-
-    content = j.get("content", "")
-    timings = j.get("timings", {}) or {}
-    # compute time: prompt_ms + predicted_ms (if provided)
-    compute_s = ""
-    if isinstance(timings, dict):
-        pm = timings.get("prompt_ms")
-        gm = timings.get("predicted_ms")
-        if isinstance(pm, (int, float)) and isinstance(gm, (int, float)):
-            compute_s = (pm + gm) / 1000.0
-
-    return status, wall_s, compute_s, content, j
-
-def extract_answer(category: str, content: str) -> str:
+def validate_format(category: str, ans: str) -> bool:
+    a = (ans or "").strip()
     if category.upper() == "LOG":
-        m = YESNO_ANY.search(content)
-        return (m.group(1).title() if m else "").strip()
-    m = INT_ANY.search(content)
-    return (m.group(0) if m else "").strip()
+        return a in ("Yes", "No")
+    if not a:
+        return False
+    if a[0] == "-":
+        a = a[1:]
+    return a.isdigit()
 
-def main():
-    # load prompts
-    prompts = []
-    with open(PROMPTS_CSV, newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            prompts.append(r)
+def error_taxonomy(exc: Optional[BaseException], category: str, out_text: str, expected: str, mode: str) -> str:
+    """
+    Returns locked E-codes:
+      E0 OK
+      E1 AR computation error
+      E2 LOG inference error
+      E3 ALG manipulation error
+      E4 Hallucinated step (rare here; final-answer-only baseline)
+      E5 Partial reasoning (default for WP wrong)
+      E6 Instruction following failure (mostly no-grammar)
+      E7 Timeout
+      E8 Parse failure / malformed output
+    """
+    cat = (category or "").strip().upper()
+    got = (out_text or "").strip()
+    exp = (expected or "").strip()
+    m = (mode or "").strip().lower()
 
-    yesno_grammar = read_text(GRAMMAR_YESNO_ONLY_FILE)
+    # Exception-based
+    if exc is not None:
+        if isinstance(exc, (requests.exceptions.ReadTimeout, requests.exceptions.Timeout)):
+            return "E7"
+        # Server/connect/HTTP issues: treat as malformed/failure class
+        return "E8"
 
-    variants = [
-        ("phi2_server_nogrammar", False),
-        ("phi2_server_grammar", True),
-    ]
+    # No exception: output presence + format
+    if not got:
+        return "E8"
 
-    trial_rows = []
-    summary_rows = []
+    if cat == "LOG":
+        if got not in ("Yes", "No"):
+            return "E6" if m == "nogrammar" else "E8"
+    else:
+        g = got[1:] if got.startswith("-") else got
+        if not g.isdigit():
+            return "E6" if m == "nogrammar" else "E8"
 
-    def flush_csvs():
-        if trial_rows:
-            tpath = RUN_DIR / "baseline_results_trials.csv"
-            with open(tpath, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(trial_rows[0].keys()))
-                w.writeheader()
-                w.writerows(trial_rows)
+    # Well-formed: correctness
+    if got == exp:
+        return "E0"
 
-        if summary_rows:
-            spath = RUN_DIR / "baseline_results.csv"
-            with open(spath, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(summary_rows[0].keys()))
-                w.writeheader()
-                w.writerows(summary_rows)
+    # Wrong but well-formed: category mapping
+    if cat == "AR":
+        return "E1"
+    if cat == "ALG":
+        return "E3"
+    if cat == "LOG":
+        return "E2"
+    if cat == "WP":
+        return "E5"
 
-    try:
-        for row in prompts:
-            pid = row["id"].strip()
-            cat = row["category"].strip()
-            expected = str(row["expected_answer"]).strip()
+    return "E5"
 
-            prompt_send = normalize_prompt(row["prompt"])
 
-            for variant, wants_grammar in variants:
-                # ONLY apply Yes/No grammar to LOG when variant is "grammar"
-                if wants_grammar and cat.upper() == "LOG":
-                    grammar_text = yesno_grammar
-                else:
-                    # IMPORTANT: empty string clears grammar on servers that keep slot state
-                    grammar_text = ""
+def pick_n_predict(category: str, n_pred_num: int, n_pred_log: int) -> int:
+    return n_pred_log if category.upper() == "LOG" else n_pred_num
 
-                n_pred = N_PRED_LOG if cat.upper() == "LOG" else N_PRED_NUM
+def pick_grammar(category: str, num_grammar: str, yesno_grammar: str) -> str:
+    return yesno_grammar if category.upper() == "LOG" else num_grammar
 
-                # warmup (not counted)
-                for _ in range(WARMUP_PER_PROMPT):
-                    call_completion(prompt_send, n_pred, grammar_text)
+def post_completion(
+    server_url: str,
+    prompt: str,
+    n_predict: int,
+    temperature: float,
+    grammar: str,
+    timeout_s: float,
+) -> Tuple[str, Optional[float]]:
+    payload: Dict[str, Any] = {
+        "prompt": prompt,
+        "n_predict": int(n_predict),
+        "temperature": float(temperature),
+        # Always set grammar explicitly; for no-grammar pass ""
+        "grammar": grammar,
+    }
 
-                walls = []
-                computes = []
-                outs = []
-                corrects = []
+    # Force separate connect/read timeouts so it cannot hang forever on headers.
+    r = requests.post(server_url, json=payload, timeout=(3.0, float(timeout_s)))
+    r.raise_for_status()
+    data = r.json()
 
-                for t in range(1, REPEATS + 1):
-                    status, wall_s, compute_s, content, raw = call_completion(prompt_send, n_pred, grammar_text)
-                    got = extract_answer(cat, content)
-                    ok = int(status == "ok" and got == expected)
+    text = data.get("content", "")
+    compute_s = None
+    timings = data.get("timings")
+    if isinstance(timings, dict):
+        pm = timings.get("predicted_ms")
+        if isinstance(pm, (int, float)):
+            compute_s = float(pm) / 1000.0
+    return text, compute_s
 
-                    log_path = LOG_DIR / f"{pid}__{variant}__t{t}.json"
-                    raw_out = dict(raw)
-                    raw_out["prompt"] = prompt_send
-                    raw_out["expected_answer"] = expected
-                    raw_out["final_output"] = got
-                    raw_out["status"] = status
-                    with open(log_path, "w", encoding="utf-8") as f:
-                        json.dump(raw_out, f, ensure_ascii=False, indent=2)
+@dataclass
+class TrialRow:
+    id: str
+    category: str
+    variant: str
+    expected_answer: str
+    trial_index: int
+    final_output: str
+    correct: int
+    err: str
+    latency_wall_s: float
+    latency_compute_s: Optional[float]
 
-                    trial_rows.append({
-                        "id": pid,
-                        "category": cat,
-                        "variant": variant,
-                        "trial": t,
-                        "status": status,
-                        "latency_wall_s": f"{wall_s:.4f}",
-                        "latency_compute_s": (f"{compute_s:.4f}" if compute_s != "" else ""),
-                        "expected_answer": expected,
-                        "final_output": got,
-                        "correct": ok,
-                        "log_file": str(log_path),
-                    })
+@dataclass
+class SummaryRow:
+    id: str
+    category: str
+    variant: str
+    expected_answer: str
+    final_output: str
+    correct: int
+    err: str
+    latency_wall_median_s: float
+    latency_compute_median_s: Optional[float]
 
-                    walls.append(wall_s)
-                    if compute_s != "":
-                        computes.append(float(compute_s))
-                    outs.append(got)
-                    corrects.append(ok)
+def is_correct(expected: str, got: str) -> int:
+    return 1 if (expected or "").strip() == (got or "").strip() else 0
 
-                    eco = "E0" if ok else "E1"
-                    print(f"{pid} [{variant}] t{t}/{REPEATS} {status} wall={wall_s:.2f}s -> {got} ({eco})", flush=True)
+def log(msg: str, verbose: bool) -> None:
+    if verbose:
+        print(msg, flush=True)
 
-                # majority vote final output
-                final = max(set(outs), key=outs.count) if outs else ""
-                correct_majority = int(sum(corrects) >= (REPEATS // 2 + 1))
+def run_variant(
+    rows: List[Dict[str, str]],
+    variant: str,
+    mode: str,
+    server_url: str,
+    timeout_s: float,
+    repeats: int,
+    warmup_per_prompt: int,
+    n_pred_num: int,
+    n_pred_log: int,
+    num_grammar_text: str,
+    yesno_grammar_text: str,
+    verbose: bool,
+    print_every: int,
+    show_prompt: bool,
+) -> Tuple[List[SummaryRow], List[TrialRow]]:
+    summaries: List[SummaryRow] = []
+    trials: List[TrialRow] = []
 
-                summary_rows.append({
-                    "id": pid,
-                    "category": cat,
-                    "variant": variant,
-                    "expected_answer": expected,
-                    "final_output": final,
-                    "correct": correct_majority,
-                    "latency_wall_median_s": f"{median(walls):.4f}" if walls else "",
-                    "latency_compute_median_s": f"{median(computes):.4f}" if computes else "",
-                })
+    for idx, row in enumerate(rows, 1):
+        pid = row["id"].strip()
+        cat = row["category"].strip()
+        # Add "\nAnswer: " suffix to prompt Phi-2 to start answering immediately
+        # (consistent with grammar-based runner prompt format)
+        prompt = row["prompt"].rstrip() + "\nAnswer: "
+        expected = row["expected_answer"].strip()
 
-                flush_csvs()
+        # Warmups (not recorded)
+        for _ in range(max(0, warmup_per_prompt)):
+            try:
+                n_predict = pick_n_predict(cat, n_pred_num, n_pred_log)
+                g = pick_grammar(cat, num_grammar_text, yesno_grammar_text) if mode == "grammar" else ""
+                post_completion(server_url, prompt, n_predict, 0.0, g, timeout_s)
+            except Exception:
+                pass
 
-    except KeyboardInterrupt:
-        print("\n⚠️ interrupted: writing partial CSVs...", flush=True)
-        flush_csvs()
-        raise
+        if verbose and (print_every > 0) and (idx % print_every == 0 or idx == 1):
+            print(f"[{variant}] starting prompt {idx}/{len(rows)} id={pid} cat={cat}", flush=True)
+            if show_prompt:
+                p = prompt.replace("\n", "\\n")
+                print(f"  prompt={p[:240]}", flush=True)
 
-    flush_csvs()
-    print(f"\n✅ wrote {RUN_DIR/'baseline_results.csv'}")
-    print(f"✅ wrote {RUN_DIR/'baseline_results_trials.csv'}")
-    print(f"📁 raw logs in {LOG_DIR}")
+        wall_times: List[float] = []
+        compute_times: List[float] = []
+        outputs: List[str] = []
+        trial_errs: List[str] = []
+
+        for t in range(repeats):
+            n_predict = pick_n_predict(cat, n_pred_num, n_pred_log)
+            grammar = pick_grammar(cat, num_grammar_text, yesno_grammar_text) if mode == "grammar" else ""
+
+            start = time.time()
+            out_text = ""
+            compute_s = None
+            exc: Optional[BaseException] = None
+
+            try:
+                text, compute_s = post_completion(server_url, prompt, n_predict, 0.0, grammar, timeout_s)
+                out_text = extract_final_answer(cat, text)
+            except BaseException as e:
+                exc = e
+                out_text = ""
+                compute_s = None
+
+            wall = time.time() - start
+            err = error_taxonomy(exc, cat, out_text, expected, mode)
+            ok = is_correct(expected, out_text) if err in ("OK", "FORMAT_ERROR", "EMPTY_OUTPUT") else 0
+
+            wall_times.append(wall)
+            if compute_s is not None:
+                compute_times.append(compute_s)
+            outputs.append(out_text)
+            trial_errs.append(err)
+
+            log(
+                f"  trial {t+1}/{repeats} id={pid} cat={cat} n_pred={n_predict} "
+                f"wall={wall:.3f}s out='{out_text}' ok={ok} err={err}",
+                verbose
+            )
+
+            trials.append(TrialRow(
+                id=pid,
+                category=cat,
+                variant=variant,
+                expected_answer=expected,
+                trial_index=t + 1,
+                final_output=out_text,
+                correct=ok,
+                err=err,
+                latency_wall_s=wall,
+                latency_compute_s=compute_s,
+            ))
+
+        # Median latencies
+        wall_med = float(statistics.median(wall_times))
+        compute_med = float(statistics.median(compute_times)) if compute_times else None
+
+        # Choose the output corresponding to the median wall latency
+        med_idx = sorted(range(len(wall_times)), key=lambda i: wall_times[i])[len(wall_times)//2]
+        final_out = outputs[med_idx]
+        final_err = trial_errs[med_idx]
+        final_ok = is_correct(expected, final_out) if final_err in ("OK","FORMAT_ERROR","EMPTY_OUTPUT") else 0
+
+        summaries.append(SummaryRow(
+            id=pid,
+            category=cat,
+            variant=variant,
+            expected_answer=expected,
+            final_output=final_out,
+            correct=final_ok,
+            err=final_err,
+            latency_wall_median_s=wall_med,
+            latency_compute_median_s=compute_med,
+        ))
+
+    return summaries, trials
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--csv", required=True, help="Input prompts CSV")
+    ap.add_argument("--out", required=True, help="Summary output CSV path")
+    ap.add_argument("--trials_out", default=None, help="Trials output CSV path (optional)")
+    ap.add_argument("--mode", choices=["grammar", "nogrammar", "both"], default="grammar",
+                    help="Which baseline(s) to run")
+    ap.add_argument("--server_url", default=DEFAULT_SERVER_URL)
+    ap.add_argument("--timeout_s", type=float, default=DEFAULT_TIMEOUT_S)
+    ap.add_argument("--repeats", type=int, default=3)
+    ap.add_argument("--warmup_per_prompt", type=int, default=0)
+    ap.add_argument("--n_pred_num", type=int, default=DEFAULT_N_PRED_NUM)
+    ap.add_argument("--n_pred_log", type=int, default=DEFAULT_N_PRED_LOG)
+    ap.add_argument("--num_grammar_file", default=DEFAULT_NUM_GRAMMAR)
+    ap.add_argument("--yesno_grammar_file", default=DEFAULT_YESNO_GRAMMAR)
+
+    # New: verbosity / progress prints
+    ap.add_argument("--verbose", action="store_true", help="Print per-prompt/per-trial progress")
+    ap.add_argument("--print_every", type=int, default=1, help="Print header every N prompts (verbose only)")
+    ap.add_argument("--show_prompt", action="store_true", help="Also print prompt text snippets (verbose only)")
+
+    args = ap.parse_args()
+
+    with open(args.csv, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+
+    num_grammar = read_text(args.num_grammar_file)
+    yesno_grammar = read_text(args.yesno_grammar_file)
+
+    all_summaries: List[SummaryRow] = []
+    all_trials: List[TrialRow] = []
+
+    def add(mode: str, variant: str) -> None:
+        s, t = run_variant(
+            rows=rows,
+            variant=variant,
+            mode=mode,
+            server_url=args.server_url,
+            timeout_s=args.timeout_s,
+            repeats=args.repeats,
+            warmup_per_prompt=args.warmup_per_prompt,
+            n_pred_num=args.n_pred_num,
+            n_pred_log=args.n_pred_log,
+            num_grammar_text=num_grammar,
+            yesno_grammar_text=yesno_grammar,
+            verbose=args.verbose,
+            print_every=max(1, args.print_every),
+            show_prompt=args.show_prompt,
+        )
+        all_summaries.extend(s)
+        all_trials.extend(t)
+
+    if args.mode in ("grammar", "both"):
+        add("grammar", "phi2_server_grammar")
+    if args.mode in ("nogrammar", "both"):
+        add("nogrammar", "phi2_server_nogrammar")
+
+    with open(args.out, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["id","category","variant","expected_answer","final_output","correct","err",
+                    "latency_wall_median_s","latency_compute_median_s"])
+        for r in all_summaries:
+            w.writerow([r.id, r.category, r.variant, r.expected_answer, r.final_output, r.correct, r.err,
+                        f"{r.latency_wall_median_s:.6f}",
+                        (f"{r.latency_compute_median_s:.6f}" if r.latency_compute_median_s is not None else "")])
+
+    if args.trials_out:
+        with open(args.trials_out, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["id","category","variant","expected_answer","trial_index","final_output","correct","err",
+                        "latency_wall_s","latency_compute_s"])
+            for r in all_trials:
+                w.writerow([r.id, r.category, r.variant, r.expected_answer, r.trial_index, r.final_output, r.correct, r.err,
+                            f"{r.latency_wall_s:.6f}",
+                            (f"{r.latency_compute_s:.6f}" if r.latency_compute_s is not None else "")])
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nCTRL-C: stopping entire run.")
+        raise SystemExit(130) 
+
+
+# === OVERRIDE_EXTRACT_ANSWER_V2 ===
+import re as _re
+_INT_RE_V2 = _re.compile(r"[-+]?\d+")
+
+def extract_answer(content: str) -> str:
+    """
+    Returns:
+      - "Yes"/"No" if those appear unambiguously
+      - otherwise the LAST integer found anywhere in content
+      - "" if nothing found
+    """
+    t = (content or "").strip()
+    if not t:
+        return ""
+
+    low = t.lower()
+
+    # yes/no (LOG)
+    has_yes = ("yes" in low)
+    has_no  = ("no" in low)
+    if has_yes and not has_no:
+        return "Yes"
+    if has_no and not has_yes:
+        return "No"
+
+    # numeric (AR/ALG/WP)
+    nums = _INT_RE_V2.findall(t.replace(",", ""))
+    return nums[-1] if nums else ""
