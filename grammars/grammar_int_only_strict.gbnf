@@ -1,0 +1,6 @@
+root   ::= lead int
+lead   ::= ( " " | "\t" | "\n" )*
+int    ::= sign? digits
+sign   ::= "-" | "+"
+digits ::= digit digit*
+digit  ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
