@@ -51,6 +51,32 @@ def extract_last_int(text: str) -> str:
     nums = INT_RE.findall(cleaned)
     return nums[-1] if nums else ""
 
+def extract_int_safe(text: str) -> str:
+    """
+    Extract integer from text with fallback for prompt-echo scenarios.
+    Returns empty string if extraction fails.
+    """
+    if not text:
+        return ""
+
+    # Primary: extract last integer after "Answer:"
+    if "Answer:" in text:
+        after_answer = text.split("Answer:", 1)[-1]
+        cleaned = after_answer.strip().replace(",", "")
+        nums = INT_RE.findall(cleaned)
+        if nums:
+            return nums[-1]
+
+    # Fallback: if content is short (<80 chars) and contains digits, try first integer
+    # This handles cases where model outputs just a number without "Answer:" prefix
+    if len(text) < 80:
+        cleaned = text.strip().replace(",", "")
+        nums = INT_RE.findall(cleaned)
+        if nums:
+            return nums[0]
+
+    return ""
+
 def extract_yesno(text: str) -> str:
     """Find last occurrence of Yes or No (case-insensitive), return canonical Yes/No."""
     if not text:
@@ -104,8 +130,8 @@ def main():
     ap.add_argument("--warmup_per_prompt", type=int, default=0)
     ap.add_argument("--n_pred_num", type=int, default=12)
     ap.add_argument("--n_pred_log", type=int, default=6)
-    ap.add_argument("--num_grammar_file", default="grammars/grammar_phi2_answer_int_strict_final.gbnf")
-    ap.add_argument("--yesno_grammar_file", default="grammars/grammar_phi2_answer_yesno_strict_final.gbnf")
+    ap.add_argument("--num_grammar_file", default="grammars/grammar_phi2_answer_int_optimal.gbnf")
+    ap.add_argument("--yesno_grammar_file", default="grammars/grammar_phi2_answer_yesno_optimal.gbnf")
     ap.add_argument("--debug", action="store_true", help="Enable debug output")
     args = ap.parse_args()
 
@@ -122,6 +148,11 @@ def main():
     num_grammar = load_text(args.num_grammar_file)
     yesno_grammar = load_text(args.yesno_grammar_file)
 
+    # Debug: print grammar confirmation once
+    if args.debug:
+        print(f"DEBUG: num_grammar loaded: {repr(num_grammar[:80])}", file=sys.stderr, flush=True)
+        print(f"DEBUG: yesno_grammar loaded: {repr(yesno_grammar[:80])}", file=sys.stderr, flush=True)
+
     rows = []
     with open(args.csv, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -132,9 +163,20 @@ def main():
     for i, row in enumerate(rows, start=1):
         pid = row["id"].strip()
         cat = row["category"].strip()
-        # Strip problematic tokens that might be in CSV, then add "\nAnswer: "
-        prompt = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").rstrip() + "\nAnswer: "
         expected = row["expected_answer"].strip()
+
+        # Build safe prompt: strip tokens, ensure clean construction
+        base_prompt = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").strip()
+
+        # Add Answer: suffix if not already present
+        if not base_prompt.endswith("Answer:"):
+            prompt = base_prompt + "\nAnswer: "
+        else:
+            prompt = base_prompt + " "
+
+        # Debug: print first prompt construction once
+        if args.debug and i == 1:
+            print(f"DEBUG: First prompt (last 200 chars): {repr(prompt[-200:])}", file=sys.stderr, flush=True)
 
         # HTTP timeout should be longer than experiment timeout to avoid false cutoffs
         http_timeout = (10.0, float(args.timeout_s) + 15.0)
@@ -156,6 +198,10 @@ def main():
         for t in range(1, args.repeats + 1):
             n_pred = args.n_pred_log if cat.upper() == "LOG" else args.n_pred_num
             grammar = yesno_grammar if cat.upper() == "LOG" else num_grammar
+
+            # Debug: print grammar being sent (first trial only)
+            if args.debug and i == 1 and t == 1:
+                print(f"DEBUG: grammar for {cat}: {repr(grammar[:80]) if grammar else 'EMPTY'}", file=sys.stderr, flush=True)
 
             raw = ""
             tokens_predicted = None
@@ -188,13 +234,7 @@ def main():
             if cat.upper() == "LOG":
                 pred = extract_yesno(raw)
             else:
-                pred = extract_last_int(raw)
-                # Debug: detect "Answer:" + whitespace only (no digits)
-                if args.debug and not pred and raw.strip().startswith("Answer:"):
-                    # Check if raw has "Answer:" but no digits
-                    after_answer = raw.split("Answer:", 1)[-1] if "Answer:" in raw else ""
-                    if after_answer and not any(c.isdigit() for c in after_answer):
-                        print(f"DEBUG: Answer+whitespace only for {pid} {cat}, content={repr(raw)}, len={len(raw)}", file=sys.stderr, flush=True)
+                pred = extract_int_safe(raw)
 
             # Degeneracy guard: detect runaway loops
             degenerate = False
@@ -234,7 +274,15 @@ def main():
 
             # Debug output for E8 extraction failures
             if args.debug and e == "E8":
-                print(f"E8: {pid} {cat} content={repr(raw[:120])} error={repr(error_field)}", file=sys.stderr, flush=True)
+                # Check if content has no digits at all (prompt echo scenario)
+                has_digits = any(c.isdigit() for c in raw)
+                debug_msg = f"E8: {pid} {cat}"
+                if not has_digits:
+                    debug_msg += " [NO_DIGITS]"
+                debug_msg += f" content={repr(raw[:160])}"
+                if error_field:
+                    debug_msg += f" error={repr(error_field)}"
+                print(debug_msg, file=sys.stderr, flush=True)
 
             # Required single-line print (no extra jargon)
             print(f"{pid} {cat} #{t}/{args.repeats} time_s={dt:.3f} ans={pred} exp={expected} err={e}", flush=True)
