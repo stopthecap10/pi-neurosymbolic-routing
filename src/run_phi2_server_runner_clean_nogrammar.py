@@ -7,32 +7,41 @@ INT_RE = re.compile(r"[-+]?\d+")
 NUM_RE = re.compile(r"[-+]?\d+\.?\d*")  # Matches integers and decimals
 
 def extract_last_int(text: str) -> str:
+    """Extract last integer from text using regex [-+]?\d+"""
     if not text:
         return ""
-    # Use NUM_RE to handle decimals like "17.0", then convert to int
-    # Take FIRST number to avoid picking up numbers from model's rambling (e.g., "192\n\nExercise 3:")
-    nums = NUM_RE.findall(text.replace(",", ""))
+    # Strip whitespace and remove commas
+    cleaned = text.strip().replace(",", "")
+    # Use INT_RE to find all integers in the text
+    nums = INT_RE.findall(cleaned)
     if not nums:
         return ""
-    try:
-        return str(int(float(nums[0])))
-    except (ValueError, OverflowError):
-        return ""
+    # Return the LAST integer found
+    return nums[-1]
 
 def extract_yesno(text: str) -> str:
+    """Find last occurrence of Yes or No (case-insensitive), return canonical Yes/No."""
     if not text:
         return ""
-    # Check for yes/no or true/false (case insensitive)
-    m = re.search(r"(yes|no|true|false)", text, flags=re.I)
-    if not m:
+
+    # Clean up text
+    cleaned = text.strip()
+    if not cleaned:
         return ""
-    w = m.group(1).lower()
-    # Map true→Yes, false→No for consistency with expected answers
-    if w in ("yes", "true"):
+
+    # Find LAST occurrence of yes/no using rfind
+    t = cleaned.lower()
+    yes_pos = t.rfind("yes")
+    no_pos = t.rfind("no")
+
+    if yes_pos == -1 and no_pos == -1:
+        return ""
+
+    # Return the one that appears last
+    if yes_pos > no_pos:
         return "Yes"
-    elif w in ("no", "false"):
+    else:
         return "No"
-    return ""
 
 def err_code(category: str, pred: str, expected: str, timed_out: bool) -> str:
     if timed_out:
@@ -60,8 +69,8 @@ def main():
     ap.add_argument("--server_url", default="http://127.0.0.1:8080/completion")
     ap.add_argument("--timeout_s", type=float, default=60.0)
     ap.add_argument("--repeats", type=int, default=3)
-    ap.add_argument("--n_pred_num", type=int, default=8)
-    ap.add_argument("--n_pred_log", type=int, default=6)
+    ap.add_argument("--n_pred_num", type=int, default=16)
+    ap.add_argument("--n_pred_log", type=int, default=8)
     ap.add_argument("--warmup_per_prompt", type=int, default=0)
     ap.add_argument("--debug", action="store_true", help="Enable debug output")
     args = ap.parse_args()
@@ -72,13 +81,41 @@ def main():
     trials = []
     summary_rows = []
 
-    for row in rows:
+    for i, row in enumerate(rows, start=1):
         pid = row["id"].strip()
         cat = row["category"].strip()
         expected = row["expected_answer"].strip()
-        base_prompt = row["prompt"].rstrip()
-        # Always use consistent suffix for all categories
-        prompt = base_prompt + "\nAnswer: "
+
+        # Build safe prompt: strip tokens, ensure clean construction
+        # NEVER include <|question_end|> or <|endoftext|> - they cause empty outputs
+        base_question = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").strip()
+
+        # Remove any trailing "Answer:" or "Exercise:" patterns to avoid duplication
+        for pattern in ["\nAnswer:", "Answer:", "\nExercise:", "Exercise:"]:
+            if base_question.endswith(pattern):
+                base_question = base_question[:-len(pattern)].rstrip()
+
+        # Check if dataset prompt already contains instruction text
+        if cat.upper() == "LOG":
+            has_instruction = "yes or no" in base_question.lower() or "answer with only yes" in base_question.lower()
+        else:  # AR, ALG, WP - all numeric
+            has_instruction = "final number" in base_question.lower() or "answer with only the" in base_question.lower()
+
+        # Build prompt: add instruction only if not already present
+        if has_instruction:
+            # Instruction already in prompt, just add Answer: suffix
+            prompt = f"{base_question}\nAnswer: "
+        else:
+            # Add instruction before Answer: suffix
+            if cat.upper() == "LOG":
+                instruction = "Answer with only Yes or No."
+            else:
+                instruction = "Answer with only the final number."
+            prompt = f"{base_question}\n{instruction}\nAnswer: "
+
+        # Debug: print first prompt construction once
+        if args.debug and i == 1:
+            print(f"DEBUG: First prompt (last 200 chars): {repr(prompt[-200:])}", file=sys.stderr, flush=True)
 
         is_log = (cat.upper() == "LOG")
         n_pred = args.n_pred_log if is_log else args.n_pred_num
@@ -102,13 +139,25 @@ def main():
             t0 = time.time()
             timed_out = False
             content = ""
+            stop_type = None
+            tokens_predicted = None
             try:
+                # No stop sequences and NO grammar - let model generate freely
+                # CRITICAL: Do NOT include any "stop" field in payload
+                payload = {
+                    "prompt": prompt,
+                    "n_predict": int(n_pred),
+                    "temperature": 0.0
+                }
                 r = requests.post(
                     args.server_url,
-                    json={"prompt": prompt, "n_predict": int(n_pred), "temperature": 0.0},
+                    json=payload,
                     timeout=(10.0, float(args.timeout_s)),
                 )
-                content = r.json().get("content", "")
+                j = r.json()
+                content = j.get("content", "") or ""
+                stop_type = j.get("stop_type")
+                tokens_predicted = j.get("tokens_predicted")
             except requests.exceptions.Timeout:
                 timed_out = True
             except Exception:
@@ -116,14 +165,22 @@ def main():
 
             dt = time.time() - t0
             pred = extract_yesno(content) if is_log else extract_last_int(content)
+
+            # Debug output for E8 extraction failures
             if args.debug and pred == "" and not timed_out:
-                print(f"DEBUG {pid} {cat} content_prefix={repr(content[:120])}", file=sys.stderr)
+                debug_parts = [pid, cat, repr(content[:160])]
+                if stop_type:
+                    debug_parts.append(f"stop_type={stop_type}")
+                if tokens_predicted is not None:
+                    debug_parts.append(f"tokens_predicted={tokens_predicted}")
+                print(f"E8_DEBUG: {','.join(map(str, debug_parts))}", file=sys.stderr, flush=True)
+
             err = err_code(cat, pred, expected, timed_out)
             ok = 1 if err == "E0" else 0
 
             print(f"{pid} {cat} #{t}/{args.repeats} time_s={dt:.3f} ans={pred} exp={expected} err={err}", flush=True)
 
-            trials.append({"id": pid,"category": cat,"trial": t,"time_s": f"{dt:.6f}","pred": pred,"expected": expected,"err": err,"ok": ok})
+            trials.append({"id": pid,"category": cat,"trial": t,"time_s": f"{dt:.6f}","pred": pred,"expected": expected,"err": err,"ok": ok,"raw": content.replace("\n", "\\n")})
             times.append(dt); oks.append(ok)
 
             # Small delay to let server settle between requests
@@ -134,7 +191,7 @@ def main():
 
     with open(args.trials_out, "w", newline="", encoding="utf-8") as f:
         import csv as _csv
-        w=_csv.DictWriter(f, fieldnames=["id","category","trial","time_s","pred","expected","err","ok"])
+        w=_csv.DictWriter(f, fieldnames=["id","category","trial","time_s","pred","expected","err","ok","raw"])
         w.writeheader(); w.writerows(trials)
 
     with open(args.out, "w", newline="", encoding="utf-8") as f:
