@@ -7,22 +7,35 @@ INT_RE = re.compile(r"[-+]?\d+")
 NUM_RE = re.compile(r"[-+]?\d+\.?\d*")  # Matches integers and decimals
 
 def extract_last_int(text: str) -> str:
-    """Extract last integer from text using regex [-+]?\d+"""
+    """Extract last integer from text using regex [-+]?\d+, ignoring continuation markers"""
     if not text:
         return ""
+
+    # Split at common continuation markers to avoid extracting from generated exercises
+    for marker in ["\n\nExercise", "\n\n\nExercise", "\nExercise", "\n\n#", "\n\nProblem", "\n\nQuestion"]:
+        if marker in text:
+            text = text.split(marker)[0]
+            break
+
     # Strip whitespace and remove commas
     cleaned = text.strip().replace(",", "")
     # Use INT_RE to find all integers in the text
     nums = INT_RE.findall(cleaned)
     if not nums:
         return ""
-    # Return the LAST integer found
+    # Return the LAST integer found (before continuation markers)
     return nums[-1]
 
 def extract_yesno(text: str) -> str:
-    """Find last occurrence of Yes or No (case-insensitive), return canonical Yes/No."""
+    """Find last occurrence of Yes or No (case-insensitive), ignoring continuation markers"""
     if not text:
         return ""
+
+    # Split at common continuation markers to avoid extracting from generated exercises
+    for marker in ["\n\nExercise", "\n\n\nExercise", "\nExercise", "\n\n#", "\n\nProblem", "\n\nQuestion"]:
+        if marker in text:
+            text = text.split(marker)[0]
+            break
 
     # Clean up text
     cleaned = text.strip()
@@ -70,7 +83,7 @@ def main():
     ap.add_argument("--timeout_s", type=float, default=60.0)
     ap.add_argument("--repeats", type=int, default=3)
     ap.add_argument("--n_pred_num", type=int, default=16)
-    ap.add_argument("--n_pred_log", type=int, default=8)
+    ap.add_argument("--n_pred_log", type=int, default=12)
     ap.add_argument("--warmup_per_prompt", type=int, default=0)
     ap.add_argument("--debug", action="store_true", help="Enable debug output")
     args = ap.parse_args()
