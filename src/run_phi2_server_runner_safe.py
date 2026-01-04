@@ -174,13 +174,24 @@ def main():
             if base_question.endswith(pattern):
                 base_question = base_question[:-len(pattern)].rstrip()
 
-        # Build prompt with category-appropriate instruction
+        # Check if dataset prompt already contains instruction text
+        # If it does, don't duplicate it - just add Answer: suffix
         if cat.upper() == "LOG":
-            instruction = "Answer with only Yes or No."
+            has_instruction = "yes or no" in base_question.lower() or "answer with only yes" in base_question.lower()
         else:  # AR, ALG, WP - all numeric
-            instruction = "Answer with only the final number."
+            has_instruction = "final number" in base_question.lower() or "answer with only the" in base_question.lower()
 
-        prompt = f"{base_question}\n{instruction}\nAnswer: "
+        # Build prompt: add instruction only if not already present
+        if has_instruction:
+            # Instruction already in prompt, just add Answer: suffix
+            prompt = f"{base_question}\nAnswer: "
+        else:
+            # Add instruction before Answer: suffix
+            if cat.upper() == "LOG":
+                instruction = "Answer with only Yes or No."
+            else:
+                instruction = "Answer with only the final number."
+            prompt = f"{base_question}\n{instruction}\nAnswer: "
 
         # Debug: print first prompt construction once
         if args.debug and i == 1:
