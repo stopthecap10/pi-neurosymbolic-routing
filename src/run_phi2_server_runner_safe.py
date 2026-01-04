@@ -166,13 +166,21 @@ def main():
         expected = row["expected_answer"].strip()
 
         # Build safe prompt: strip tokens, ensure clean construction
-        base_prompt = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").strip()
+        base_question = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").strip()
 
-        # Add Answer: suffix if not already present
-        if not base_prompt.endswith("Answer:"):
-            prompt = base_prompt + "\nAnswer: "
-        else:
-            prompt = base_prompt + " "
+        # Remove any trailing "Answer:" or "Exercise:" patterns to avoid duplication
+        # This prevents the model from echoing prompt templates instead of answering
+        for pattern in ["\nAnswer:", "Answer:", "\nExercise:", "Exercise:"]:
+            if base_question.endswith(pattern):
+                base_question = base_question[:-len(pattern)].rstrip()
+
+        # Build prompt with category-appropriate instruction
+        if cat.upper() == "LOG":
+            instruction = "Answer with only Yes or No."
+        else:  # AR, ALG, WP - all numeric
+            instruction = "Answer with only the final number."
+
+        prompt = f"{base_question}\n{instruction}\nAnswer: "
 
         # Debug: print first prompt construction once
         if args.debug and i == 1:
