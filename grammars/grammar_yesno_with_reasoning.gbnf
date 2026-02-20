@@ -1,0 +1,13 @@
+# Relaxed yes/no grammar - allows reasoning before final answer
+# Lets model think, but ensures Yes or No appears in output
+
+root ::= content
+content ::= (text | ws | punct)+
+
+# Must contain Yes or No somewhere
+text ::= word
+word ::= "Yes" | "No" | [a-zA-Z]+
+
+# Whitespace and punctuation
+ws ::= [ \t\n\r]+
+punct ::= [.,;:!?=()\[\]{}<>/\\|@#$%^&*_`~'"+-]

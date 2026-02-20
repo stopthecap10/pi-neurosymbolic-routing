@@ -1,0 +1,121 @@
+id,category,trial,time_s,pred,expected,err,ok,raw
+ALG001,ALG,1,8.876779,980,980,E0,1,\nx = 980\n\nExercise 2:
+ALG001,ALG,2,8.896751,980,980,E0,1,\nx = 980\n\nExercise 2:
+ALG001,ALG,3,8.907795,980,980,E0,1,\nx = 980\n\nExercise 2:
+ALG002,ALG,1,8.871431,99,99,E0,1, x = 99\n\nExercise 3:\nSolve
+ALG002,ALG,2,8.904059,99,99,E0,1, x = 99\n\nExercise 3:\nSolve
+ALG002,ALG,3,8.896816,99,99,E0,1, x = 99\n\nExercise 3:\nSolve
+ALG003,ALG,1,8.877498,69,69,E0,1, x = 69\n\nExercise 3:\nSolve
+ALG003,ALG,2,8.905429,69,69,E0,1, x = 69\n\nExercise 3:\nSolve
+ALG003,ALG,3,8.899961,69,69,E0,1, x = 69\n\nExercise 3:\nSolve
+ALG004,ALG,1,8.873873,37,37,E0,1, x = 37\n\nExercise 3:\nSolve
+ALG004,ALG,2,8.893076,37,37,E0,1, x = 37\n\nExercise 3:\nSolve
+ALG004,ALG,3,8.901451,37,37,E0,1, x = 37\n\nExercise 3:\nSolve
+ALG005,ALG,1,8.883971,4025,4025,E0,1,\nx = 4025\n\nExercise 2
+ALG005,ALG,2,8.891373,4025,4025,E0,1,\nx = 4025\n\nExercise 2
+ALG005,ALG,3,8.894364,4025,4025,E0,1,\nx = 4025\n\nExercise 2
+ALG006,ALG,1,8.880662,371,311,E3,0, x = 371\n\nExercise 3:\nSolve
+ALG006,ALG,2,8.899609,371,311,E3,0, x = 371\n\nExercise 3:\nSolve
+ALG006,ALG,3,8.889700,371,311,E3,0, x = 371\n\nExercise 3:\nSolve
+ALG007,ALG,1,5.180850,,110782,E8,0,\nx = \n
+ALG007,ALG,2,5.198483,,110782,E8,0,\nx = \n
+ALG007,ALG,3,5.199524,,110782,E8,0,\nx = \n
+ALG008,ALG,1,8.867025,640,640,E0,1, x = 640\n\nExercise 3:\nSolve
+ALG008,ALG,2,8.900524,640,640,E0,1, x = 640\n\nExercise 3:\nSolve
+ALG008,ALG,3,8.896704,640,640,E0,1, x = 640\n\nExercise 3:\nSolve
+ALG009,ALG,1,8.876946,,36,E8,0,\nx =  \n\nExercise 3:
+ALG009,ALG,2,8.898474,,36,E8,0,\nx =  \n\nExercise 3:
+ALG009,ALG,3,8.901457,,36,E8,0,\nx =  \n\nExercise 3:
+ALG010,ALG,1,8.872264,-123,-123,E0,1, x = -123\n\nExercise 3:\nS
+ALG010,ALG,2,8.889552,-123,-123,E0,1, x = -123\n\nExercise 3:\nS
+ALG010,ALG,3,8.884117,-123,-123,E0,1, x = -123\n\nExercise 3:\nS
+AR001,AR,1,8.883382,14,14,E0,1,\n14\n\nExercise 2:\nSolve the
+AR001,AR,2,8.923963,14,14,E0,1,\n14\n\nExercise 2:\nSolve the
+AR001,AR,3,8.893810,14,14,E0,1,\n14\n\nExercise 2:\nSolve the
+AR002,AR,1,8.877658,80,80,E0,1,\n\n80\n\nExercise 3:\n\nWhat
+AR002,AR,2,8.909717,80,80,E0,1,\n\n80\n\nExercise 3:\n\nWhat
+AR002,AR,3,8.891227,80,80,E0,1,\n\n80\n\nExercise 3:\n\nWhat
+AR003,AR,1,8.880263,,979,E8,0,\n\nExercise 2:\nSolve the following equation
+AR003,AR,2,8.890706,,979,E8,0,\n\nExercise 2:\nSolve the following equation
+AR003,AR,3,8.893073,,979,E8,0,\n\nExercise 2:\nSolve the following equation
+AR004,AR,1,8.876530,5,593,E1,0,\n\n5. \n\nSubtract the following
+AR004,AR,2,8.898923,5,593,E1,0,\n\n5. \n\nSubtract the following
+AR004,AR,3,8.891324,5,593,E1,0,\n\n5. \n\nSubtract the following
+AR005,AR,1,8.948017,43,43,E0,1, 43\n\nExercise 2:\nSolve the following
+AR005,AR,2,9.247428,43,43,E0,1, 43\n\nExercise 2:\nSolve the following
+AR005,AR,3,9.237207,43,43,E0,1, 43\n\nExercise 2:\nSolve the following
+AR006,AR,1,9.237975,,528,E8,0,\n\nExercise 2:\nSolve the following equation
+AR006,AR,2,9.250036,,528,E8,0,\n\nExercise 2:\nSolve the following equation
+AR006,AR,3,9.249021,,528,E8,0,\n\nExercise 2:\nSolve the following equation
+AR007,AR,1,9.233841,,434350,E8,0,\n\nExercise: \nWhat is the value of
+AR007,AR,2,9.297349,,434350,E8,0,\n\nExercise: \nWhat is the value of
+AR007,AR,3,9.252439,,434350,E8,0,\n\nExercise: \nWhat is the value of
+AR008,AR,1,9.234292,,59,E8,0,\n\nExercise 2:\nSolve the following equation
+AR008,AR,2,9.237245,,59,E8,0,\n\nExercise 2:\nSolve the following equation
+AR008,AR,3,9.249278,,59,E8,0,\n\nExercise 2:\nSolve the following equation
+AR009,AR,1,9.303988,1047,1047,E0,1, 1047\n\nExercise 2:\nCompute the
+AR009,AR,2,9.249569,1047,1047,E0,1, 1047\n\nExercise 2:\nCompute the
+AR009,AR,3,9.244340,1047,1047,E0,1, 1047\n\nExercise 2:\nCompute the
+AR010,AR,1,9.229990,1,1213,E1,0,\n\n1. \n\n2. \n\n
+AR010,AR,2,9.248927,1,1213,E1,0,\n\n1. \n\n2. \n\n
+AR010,AR,3,9.249468,1,1213,E1,0,\n\n1. \n\n2. \n\n
+LOG001,LOG,1,4.628061,,Yes,E8,0,\n\nExercise 2:
+LOG001,LOG,2,4.651940,,Yes,E8,0,\n\nExercise 2:
+LOG001,LOG,3,4.649281,,Yes,E8,0,\n\nExercise 2:
+LOG002,LOG,1,4.633405,,No,E8,0,\n\nExercise 2:
+LOG002,LOG,2,4.653371,,No,E8,0,\n\nExercise 2:
+LOG002,LOG,3,4.636451,,No,E8,0,\n\nExercise 2:
+LOG003,LOG,1,4.628720,,Yes,E8,0,\n\nExercise 2:
+LOG003,LOG,2,4.649631,,Yes,E8,0,\n\nExercise 2:
+LOG003,LOG,3,4.658799,,Yes,E8,0,\n\nExercise 2:
+LOG004,LOG,1,4.636261,,No,E8,0,\n\nExercise 3:
+LOG004,LOG,2,4.645903,,No,E8,0,\n\nExercise 3:
+LOG004,LOG,3,4.649058,,No,E8,0,\n\nExercise 3:
+LOG005,LOG,1,4.623471,,Yes,E8,0,\n\nExercise 2:
+LOG005,LOG,2,4.647591,,Yes,E8,0,\n\nExercise 2:
+LOG005,LOG,3,4.650819,,Yes,E8,0,\n\nExercise 2:
+LOG006,LOG,1,4.622626,,No,E8,0,\n\nExercise 2:
+LOG006,LOG,2,4.644207,,No,E8,0,\n\nExercise 2:
+LOG006,LOG,3,4.646673,,No,E8,0,\n\nExercise 2:
+LOG007,LOG,1,4.634183,,Yes,E8,0,\n\nExercise 2:
+LOG007,LOG,2,4.644672,,Yes,E8,0,\n\nExercise 2:
+LOG007,LOG,3,4.650383,,Yes,E8,0,\n\nExercise 2:
+LOG008,LOG,1,4.642496,,No,E8,0,\n\nExercise 2:
+LOG008,LOG,2,4.655719,,No,E8,0,\n\nExercise 2:
+LOG008,LOG,3,4.650784,,No,E8,0,\n\nExercise 2:
+LOG009,LOG,1,4.634671,,Yes,E8,0,\n\nExercise 2:
+LOG009,LOG,2,4.640620,,Yes,E8,0,\n\nExercise 2:
+LOG009,LOG,3,4.647069,,Yes,E8,0,\n\nExercise 2:
+LOG010,LOG,1,4.638811,,No,E8,0,\n\nExercise 2:
+LOG010,LOG,2,4.646115,,No,E8,0,\n\nExercise 2:
+LOG010,LOG,3,4.644134,,No,E8,0,\n\nExercise 2:
+WP001,WP,1,9.307578,,300,E8,0,\n\nExercise 2:\nSolve the following word
+WP001,WP,2,9.315707,,300,E8,0,\n\nExercise 2:\nSolve the following word
+WP001,WP,3,9.335229,,300,E8,0,\n\nExercise 2:\nSolve the following word
+WP002,WP,1,9.300602,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP002,WP,2,9.323306,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP002,WP,3,9.392996,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP003,WP,1,9.287494,1400,1400,E0,1, $1400\n\nExercise 2:\nSolve
+WP003,WP,2,9.302824,1400,1400,E0,1, $1400\n\nExercise 2:\nSolve
+WP003,WP,3,9.290367,1400,1400,E0,1, $1400\n\nExercise 2:\nSolve
+WP004,WP,1,9.257668,,15,E8,0,\n\nExercise: Solve the following word problem.
+WP004,WP,2,9.279090,,15,E8,0,\n\nExercise: Solve the following word problem.
+WP004,WP,3,9.278742,,15,E8,0,\n\nExercise: Solve the following word problem.
+WP005,WP,1,9.269002,1,240,E5,0,\n\nStep 1: Calculate the new value of the
+WP005,WP,2,9.269580,1,240,E5,0,\n\nStep 1: Calculate the new value of the
+WP005,WP,3,9.279656,1,240,E5,0,\n\nStep 1: Calculate the new value of the
+WP006,WP,1,9.337425,,20,E8,0,\n\nExercise: \nSolve the following word
+WP006,WP,2,9.370851,,20,E8,0,\n\nExercise: \nSolve the following word
+WP006,WP,3,9.359340,,20,E8,0,\n\nExercise: \nSolve the following word
+WP007,WP,1,9.293973,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP007,WP,2,9.328846,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP007,WP,3,9.311658,,10,E8,0,\n\nExercise 2:\nSolve the following word
+WP008,WP,1,9.289094,,2,E8,0,\n\nExercise 2:\nSolve the following word
+WP008,WP,2,9.310499,,2,E8,0,\n\nExercise 2:\nSolve the following word
+WP008,WP,3,9.319559,,2,E8,0,\n\nExercise 2:\nSolve the following word
+WP009,WP,1,9.414531,,25,E8,0,\n\nExercise 2:\nSolve the following word
+WP009,WP,2,9.418246,,25,E8,0,\n\nExercise 2:\nSolve the following word
+WP009,WP,3,9.412185,,25,E8,0,\n\nExercise 2:\nSolve the following word
+WP010,WP,1,9.280575,,25,E8,0,\n\nExercise 2:\nSolve the following word
+WP010,WP,2,9.304983,,25,E8,0,\n\nExercise 2:\nSolve the following word
+WP010,WP,3,9.316567,,25,E8,0,\n\nExercise 2:\nSolve the following word

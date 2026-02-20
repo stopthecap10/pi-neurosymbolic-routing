@@ -164,6 +164,9 @@ def main():
         pid = row["id"].strip()
         cat = row["category"].strip()
         expected = row["expected_answer"].strip()
+        is_log = cat.upper() == "LOG"
+        n_pred = args.n_pred_log if is_log else args.n_pred_num
+        grammar = yesno_grammar if is_log else num_grammar
 
         # Build safe prompt: strip tokens, ensure clean construction
         base_question = row["prompt"].replace("<|question_end|>", "").replace("<|endoftext|>", "").strip()
@@ -202,9 +205,12 @@ def main():
 
         for w in range(args.warmup_per_prompt):
             try:
+                warmup_payload = {"prompt": prompt, "n_predict": 8, "temperature": 0.0}
+                # Use the same grammar as the main run so decode setup matches
+                warmup_payload["grammar"] = grammar
                 requests.post(
                     args.server_url,
-                    json={"prompt": prompt, "n_predict": 8, "temperature": 0.0, "grammar": ""},
+                    json=warmup_payload,
                     timeout=http_timeout,
                 )
             except Exception:
@@ -215,8 +221,6 @@ def main():
         trial_errs = []
 
         for t in range(1, args.repeats + 1):
-            n_pred = args.n_pred_log if cat.upper() == "LOG" else args.n_pred_num
-            grammar = yesno_grammar if cat.upper() == "LOG" else num_grammar
 
             # Debug: print grammar being sent (first trial only)
             if args.debug and i == 1 and t == 1:
@@ -270,6 +274,10 @@ def main():
 
             e = err_code(cat, pred, expected, timed_out, degenerate)
 
+            if e == "E8":
+                content_prefix = raw.replace("\n", "\\n")[:160]
+                print(f"E8 {pid} {cat} content={repr(content_prefix)}", file=sys.stderr, flush=True)
+
             # Debug output for E7s
             if args.debug and e == "E7":
                 debug_parts = [
@@ -290,18 +298,6 @@ def main():
                 if raw:
                     debug_parts.append(f"content={repr(raw[:160])}")
                 print(" ".join(debug_parts), file=sys.stderr, flush=True)
-
-            # Debug output for E8 extraction failures
-            if args.debug and e == "E8":
-                # Check if content has no digits at all (prompt echo scenario)
-                has_digits = any(c.isdigit() for c in raw)
-                debug_msg = f"E8: {pid} {cat}"
-                if not has_digits:
-                    debug_msg += " [NO_DIGITS]"
-                debug_msg += f" content={repr(raw[:160])}"
-                if error_field:
-                    debug_msg += f" error={repr(error_field)}"
-                print(debug_msg, file=sys.stderr, flush=True)
 
             # Required single-line print (no extra jargon)
             print(f"{pid} {cat} #{t}/{args.repeats} time_s={dt:.3f} ans={pred} exp={expected} err={e}", flush=True)

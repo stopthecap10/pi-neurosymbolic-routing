@@ -1,0 +1,5 @@
+# Optimal yes/no grammar: Just Yes or No (no "Answer:" prefix since it's in the prompt)
+# Allows optional space, then Yes or No, then immediate EOS
+root ::= sp? yn
+sp   ::= " "
+yn   ::= "Yes" | "No"

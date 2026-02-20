@@ -1,0 +1,2 @@
+root ::= yn "\n"?
+yn   ::= "Yes" | "No"

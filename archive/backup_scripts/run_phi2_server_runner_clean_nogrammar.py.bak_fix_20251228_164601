@@ -1,0 +1,122 @@
+import argparse, csv, time, re
+from pathlib import Path
+import requests
+from statistics import median
+
+INT_RE = re.compile(r"[-+]?\d+")
+
+def extract_int_after_answer(text: str) -> str:
+    if not text:
+        return ""
+    t = text.replace(",", "")
+    ms = re.findall(r"Answer:\s*([-+]?\d+)", t)
+    if ms:
+        return ms[-1]
+    m2 = INT_RE.search(t)
+    return m2.group(0) if m2 else ""
+
+
+def extract_last_int(text: str) -> str:
+    if not text:
+        return ""
+    nums = INT_RE.findall(text.replace(",", ""))
+    return nums[-1] if nums else ""
+
+def extract_yesno(text: str) -> str:
+    if not text:
+        return ""
+    t = text.strip().lower()
+    if "yes" in t:
+        return "Yes"
+    if "no" in t:
+        return "No"
+    return ""
+
+def err_code(category: str, pred: str, expected: str, timed_out: bool) -> str:
+    if timed_out:
+        return "E7"
+    if pred == "":
+        return "E8"
+    if pred == expected:
+        return "E0"
+    c = category.upper()
+    if c == "AR":
+        return "E1"
+    if c == "ALG":
+        return "E3"
+    if c == "LOG":
+        return "E2"
+    if c == "WP":
+        return "E5"
+    return "E8"
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--csv", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--trials_out", required=True)
+    ap.add_argument("--server_url", default="http://127.0.0.1:8080/completion")
+    ap.add_argument("--timeout_s", type=float, default=60.0)
+    ap.add_argument("--repeats", type=int, default=3)
+    ap.add_argument("--n_pred_num", type=int, default=64)
+    ap.add_argument("--n_pred_log", type=int, default=16)
+    args = ap.parse_args()
+
+    with open(args.csv, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    trials = []
+    summary_rows = []
+
+    for row in rows:
+        pid = row["id"].strip()
+        cat = row["category"].strip()
+        expected = row["expected_answer"].strip()
+        prompt = row["prompt"].rstrip() + "\n<|question_end|>Answer: "
+
+        is_log = (cat.upper() == "LOG")
+        n_pred = args.n_pred_log if is_log else args.n_pred_num
+
+        times = []
+        oks = []
+
+        for t in range(1, args.repeats + 1):
+            t0 = time.time()
+            timed_out = False
+            content = ""
+            try:
+                r = requests.post(
+                    args.server_url,
+                    json={"prompt": prompt, "n_predict": int(n_pred), "temperature": 0.0, "grammar": "", },
+                    timeout=(10.0, float(args.timeout_s)),
+                )
+                content = r.json().get("content", "")
+            except requests.exceptions.Timeout:
+                timed_out = True
+            except Exception:
+                content = ""
+
+            dt = time.time() - t0
+            pred = extract_yesno(content) if is_log else extract_int_after_answer(content)
+            err = err_code(cat, pred, expected, timed_out)
+            ok = 1 if err == "E0" else 0
+
+            print(f"{pid} {cat} #{t}/{args.repeats} time_s={dt:.3f} ans={pred} exp={expected} err={err}", flush=True)
+
+            trials.append({"id": pid,"category": cat,"trial": t,"time_s": f"{dt:.6f}","pred": pred,"expected": expected,"err": err,"ok": ok})
+            times.append(dt); oks.append(ok)
+
+        summary_rows.append({"id": pid,"category": cat,"expected": expected,"acc": f"{sum(oks)/len(oks):.3f}","median_time_s": f"{median(times):.6f}"})
+
+    with open(args.trials_out, "w", newline="", encoding="utf-8") as f:
+        import csv as _csv
+        w=_csv.DictWriter(f, fieldnames=["id","category","trial","time_s","pred","expected","err","ok"])
+        w.writeheader(); w.writerows(trials)
+
+    with open(args.out, "w", newline="", encoding="utf-8") as f:
+        import csv as _csv
+        w=_csv.DictWriter(f, fieldnames=["id","category","expected","acc","median_time_s"])
+        w.writeheader(); w.writerows(summary_rows)
+
+if __name__ == "__main__":
+    main()

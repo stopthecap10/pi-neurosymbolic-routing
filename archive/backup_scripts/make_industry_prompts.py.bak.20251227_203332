@@ -1,0 +1,334 @@
+import csv
+import random
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
+
+from datasets import load_dataset
+
+SEED_DEFAULT = 42
+
+INT_RE = re.compile(r"[-+]?\d+")
+
+def parse_int_from_text(s: str) -> Optional[int]:
+    if s is None:
+        return None
+    s = str(s).strip().replace(",", "")
+    # GSM8K-style: rationale then "#### <answer>"
+    if "####" in s:
+        tail = s.split("####")[-1].strip()
+        m = INT_RE.search(tail)
+        return int(m.group(0)) if m else None
+    m = INT_RE.search(s)
+    return int(m.group(0)) if m else None
+
+def norm_yesno(s: str) -> Optional[str]:
+    if s is None:
+        return None
+    t = str(s).strip().lower()
+    if t in ["yes", "y", "entailed", "entails", "true"]:
+        return "Yes"
+    if t in ["no", "n", "not entailed", "contradiction", "false"]:
+        return "No"
+    return None
+
+def safe_join_lines(lines: List[str]) -> str:
+    return "\n".join([str(x).rstrip() for x in lines if str(x).strip() != ""]).strip()
+
+@dataclass
+class Example:
+    prompt: str
+    expected: str
+    source: str
+
+def try_load(name: str, config: str | None = None, **kwargs):
+    try:
+        if config is None:
+            return load_dataset(name, **kwargs)
+        return load_dataset(name, config, **kwargs)
+    except Exception:
+        return None
+
+def sample_gsm8k(n: int, rng: random.Random) -> List[Example]:
+    ds = try_load("openai/gsm8k", "main")
+    if ds is None:
+        ds = try_load("gsm8k", "main")
+    if ds is None:
+        raise RuntimeError("Could not load GSM8K (openai/gsm8k or gsm8k).")
+
+    split = "test" if "test" in ds else list(ds.keys())[0]
+    rows = list(ds[split])
+    rng.shuffle(rows)
+
+    out: List[Example] = []
+    for r in rows:
+        q = r.get("question") or r.get("query") or ""
+        a = r.get("answer") or r.get("target") or ""
+        ans = parse_int_from_text(a)
+        if ans is None:
+            continue
+        prompt = str(q).strip()
+        if not prompt:
+            continue
+        out.append(Example(prompt=prompt, expected=str(ans), source=f"GSM8K:{split}"))
+        if len(out) >= n:
+            break
+    return out
+
+def sample_proofwriter_yesno(n: int, rng: random.Random) -> List[Example]:
+    ds = try_load("proofwriter")
+    if ds is None:
+        raise RuntimeError("Could not load proofwriter dataset.")
+
+    # proofwriter often has multiple splits
+    split = "test" if "test" in ds else list(ds.keys())[0]
+    rows = list(ds[split])
+    rng.shuffle(rows)
+
+    out: List[Example] = []
+    for r in rows:
+        # typical fields vary; handle common ones
+        theory = r.get("theory") or r.get("context") or ""
+        question = r.get("question") or r.get("query") or r.get("hypothesis") or ""
+        answer = r.get("answer") or r.get("label") or r.get("gold") or ""
+
+        yn = norm_yesno(answer)
+        if yn is None:
+            continue
+
+        # build a clear, natural-language prompt (context + question)
+        lines = []
+        if str(theory).strip():
+            lines.append("Facts and rules:")
+            lines.append(str(theory).strip())
+        lines.append("Question:")
+        lines.append(str(question).strip())
+
+        prompt = safe_join_lines(lines)
+        if len(prompt) < 10:
+            continue
+
+        out.append(Example(prompt=prompt, expected=yn, source=f"ProofWriter:{split}"))
+        if len(out) >= n:
+            break
+    return out
+
+def sample_ruletaker_yesno(n: int, rng: random.Random) -> List[Example]:
+    ds = try_load("ruletaker")
+    if ds is None:
+        raise RuntimeError("Could not load ruletaker dataset.")
+    split = "test" if "test" in ds else list(ds.keys())[0]
+    rows = list(ds[split])
+    rng.shuffle(rows)
+
+    out: List[Example] = []
+    for r in rows:
+        context = r.get("context") or r.get("theory") or ""
+        question = r.get("question") or r.get("query") or ""
+        label = r.get("label") or r.get("answer") or ""
+
+        yn = norm_yesno(label)
+        if yn is None:
+            continue
+
+        prompt = safe_join_lines([
+            "Facts and rules:",
+            str(context).strip(),
+            "Question:",
+            str(question).strip()
+        ])
+        if len(prompt) < 10:
+            continue
+
+        out.append(Example(prompt=prompt, expected=yn, source=f"RuleTaker:{split}"))
+        if len(out) >= n:
+            break
+    return out
+
+def sample_math_dataset(n: int, rng: random.Random, want: str) -> List[Example]:
+    # Some HF installs have this as "mathematics_dataset" or similar; try both.
+    ds = try_load("mathematics_dataset")
+    if ds is None:
+        ds = try_load("mathematics_dataset", "all")
+    if ds is None:
+        raise RuntimeError("Could not load mathematics_dataset on this machine.")
+
+    split = "test" if "test" in ds else list(ds.keys())[0]
+    rows = list(ds[split])
+    rng.shuffle(rows)
+
+    out: List[Example] = []
+    for r in rows:
+        q = r.get("question") or r.get("problem") or ""
+        a = r.get("answer") or r.get("target") or ""
+        typ = (r.get("type") or r.get("category") or r.get("module") or "").lower()
+
+        if want == "AR":
+            # heuristic: include arithmetic-like types
+            if "arith" not in typ and "add" not in typ and "sub" not in typ and "mul" not in typ and "div" not in typ:
+                continue
+        if want == "ALG":
+            if "algebra" not in typ and "linear" not in typ and "polynomial" not in typ and "solve" not in typ:
+                continue
+
+        ans = parse_int_from_text(a)
+        if ans is None:
+            continue
+
+        prompt = str(q).strip()
+        if not prompt:
+            continue
+
+        out.append(Example(prompt=prompt, expected=str(ans), source=f"MathDataset:{split}:{typ or 'unknown'}"))
+        if len(out) >= n:
+            break
+    return out
+
+def sample_svamp_like(n: int, rng: random.Random, dsname: str, label: str) -> List[Example]:
+    ds = try_load(dsname)
+    if ds is None:
+        raise RuntimeError(f"Could not load {dsname}")
+
+    split = "test" if "test" in ds else ("train" if "train" in ds else list(ds.keys())[0])
+    rows = list(ds[split])
+    rng.shuffle(rows)
+
+    out: List[Example] = []
+    for r in rows:
+        # SVAMP / ASDiv style common fields
+        body = r.get("Body") or r.get("body") or r.get("question") or ""
+        q = r.get("Question") or r.get("query") or ""
+        ans_raw = r.get("Answer") or r.get("answer") or r.get("target") or ""
+
+        ans = parse_int_from_text(ans_raw)
+        if ans is None:
+            continue
+
+        prompt = safe_join_lines([str(body).strip(), str(q).strip()]).strip()
+        if len(prompt) < 10:
+            continue
+
+        out.append(Example(prompt=prompt, expected=str(ans), source=f"{label}:{split}"))
+        if len(out) >= n:
+            break
+    return out
+
+def build_category(cat: str, n: int, rng: random.Random) -> Tuple[List[Example], List[str]]:
+    notes: List[str] = []
+    if cat == "WP":
+        ex = sample_gsm8k(n, rng)
+        notes.append("WP: GSM8K")
+        return ex, notes
+
+    if cat == "LOG":
+        try:
+            ex = sample_proofwriter_yesno(n, rng)
+            notes.append("LOG: ProofWriter")
+            return ex, notes
+        except Exception:
+            ex = sample_ruletaker_yesno(n, rng)
+            notes.append("LOG: RuleTaker (fallback)")
+            return ex, notes
+
+    if cat in ["AR", "ALG"]:
+        # try math dataset first for cleaner AR/ALG separation
+        try:
+            ex = sample_math_dataset(n, rng, want=cat)
+            notes.append(f"{cat}: mathematics_dataset")
+            return ex, notes
+        except Exception:
+            # fallback: SVAMP/ASDiv-like (these are wordy, but still public benchmarks)
+            # AR fallback: ASDiv
+            # ALG fallback: SVAMP
+            if cat == "AR":
+                for name in ["asdiv", "ChilleD/ASDiv"]:
+                    try:
+                        ex = sample_svamp_like(n, rng, name, "ASDiv")
+                        notes.append(f"AR: {name} (fallback)")
+                        return ex, notes
+                    except Exception:
+                        continue
+            if cat == "ALG":
+                for name in ["svamp", "ChilleD/SVAMP"]:
+                    try:
+                        ex = sample_svamp_like(n, rng, name, "SVAMP")
+                        notes.append(f"ALG: {name} (fallback)")
+                        return ex, notes
+                    except Exception:
+                        continue
+            raise RuntimeError(f"Could not build {cat} from available datasets.")
+    raise ValueError(f"Unknown category: {cat}")
+
+def write_csv(path: Path, rows: List[Dict[str, str]]):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["id", "category", "prompt", "expected_answer"])
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+
+def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--outdir", type=str, default="data")
+    ap.add_argument("--seed", type=int, default=SEED_DEFAULT)
+    ap.add_argument("--tier1", type=int, default=40)
+    ap.add_argument("--tier2", type=int, default=400)
+    ap.add_argument("--tier3", type=int, default=1000)
+    args = ap.parse_args()
+
+    outdir = Path(args.outdir)
+    rng = random.Random(args.seed)
+
+    tiers = [
+        ("tier1", args.tier1, "baseline_prompts_tier1_40.csv"),
+        ("tier2", args.tier2, "baseline_prompts_tier2_400.csv"),
+        ("tier3", args.tier3, "baseline_prompts_tier3_1000.csv"),
+    ]
+
+    for tname, total, fname in tiers:
+        if total % 4 != 0:
+            raise RuntimeError(f"{tname} total must be divisible by 4 (got {total})")
+
+        per = total // 4
+        rows: List[Dict[str, str]] = []
+        meta_lines: List[str] = [f"{tname}: total={total}, per_category={per}, seed={args.seed}"]
+
+        for cat in ["AR", "ALG", "LOG", "WP"]:
+            exs, notes = build_category(cat, per, rng)
+            meta_lines.extend([f"{tname}:{cat}: " + "; ".join(notes)])
+
+            for ex in exs:
+                rows.append({
+                    "id": "",  # fill below
+                    "category": cat,
+                    "prompt": ex.prompt,
+                    "expected_answer": ex.expected,
+                })
+
+        # stable shuffle across categories
+        rng.shuffle(rows)
+
+        # assign IDs
+        prefix = {"tier1": "T1", "tier2": "T2", "tier3": "T3"}[tname]
+        for i, r in enumerate(rows, start=1):
+            r["id"] = f"{prefix}_{i:04d}"
+
+        out_csv = outdir / fname
+        write_csv(out_csv, rows)
+
+        meta_path = outdir / f"{fname}.sources.txt"
+        meta_path.write_text("\n".join(meta_lines) + "\n", encoding="utf-8")
+
+        print(f"Wrote {out_csv} ({len(rows)} rows)")
+        print(f"Wrote {meta_path}")
+
+    # Convenience default: baseline_prompts.csv = tier3
+    tier3_path = outdir / "baseline_prompts_tier3_1000.csv"
+    default_path = outdir / "baseline_prompts.csv"
+    default_path.write_text(tier3_path.read_text(encoding="utf-8"), encoding="utf-8")
+    print(f"Wrote {default_path} (copy of tier3)")
+
+if __name__ == "__main__":
+    main()

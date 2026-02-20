@@ -1,0 +1,13 @@
+Industry prompt set generation notes
+generated_utc=2025-12-28T04:33:56.178075Z
+seed=42
+tier1=40 tier2=400 tier3=1000
+category_mix=AR:25% ALG:25% LOG:25% WP:25%
+
+AR: MU-NLPC/Calc-mawps split=train streaming=True (used: expression->result; integers only)
+ALG: MU-NLPC/Calc-mawps split=train streaming=True (used: equation(x)->result; integers only)
+LOG: google/boolq split=train (passage truncated to 900 chars; Yes/No labels)
+WP: openai/gsm8k (main/test) + ChilleD/SVAMP (test); integers only; ratio approx 125:125
+
+filters: integers-only for AR/ALG/WP; LOG uses Yes/No
+prompt_fairness: identical prompts across systems; grammars affect decoding only

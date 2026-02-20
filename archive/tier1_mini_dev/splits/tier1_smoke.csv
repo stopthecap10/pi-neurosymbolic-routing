@@ -1,0 +1,5 @@
+prompt_id,dataset,category,prompt_text,ground_truth
+AR001,deepmind_math_arithmetic,AR,Calculate: 594 divided by 3,198
+ALG001,deepmind_math_algebra,ALG,Solve for x: 2x + 5 = 17,6
+WP001,gsm8k,WP,"Janet has 3 ducks. Each duck lays 16 eggs per day. She eats 3 eggs for breakfast every morning and uses the rest to bake muffins. If she sells each muffin for $2 and uses 4 eggs per muffin, how many dollars does she make in a day?",18
+LOG001,ruletaker,LOG,Fact: All dogs are mammals. Fact: Rex is a dog. Question: Is Rex a mammal?,Yes

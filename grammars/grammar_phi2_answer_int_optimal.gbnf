@@ -1,0 +1,8 @@
+# Optimal integer grammar: Just the number (no "Answer:" prefix since it's in the prompt)
+# Allows optional space, optional sign, 1-12 digits, then immediate EOS
+root    ::= sp? int
+sp      ::= " "
+int     ::= sign? digits
+sign    ::= "-"
+digits  ::= digit | digit digit | digit digit digit | digit digit digit digit | digit digit digit digit digit | digit digit digit digit digit digit | digit digit digit digit digit digit digit | digit digit digit digit digit digit digit digit | digit digit digit digit digit digit digit digit digit | digit digit digit digit digit digit digit digit digit digit | digit digit digit digit digit digit digit digit digit digit digit | digit digit digit digit digit digit digit digit digit digit digit digit
+digit   ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

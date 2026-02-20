@@ -1,0 +1,43 @@
+# Frozen Tier-1 Runtime Configuration
+# Created: 2026-02-11
+# DO NOT MODIFY after freeze
+
+# Model
+model_name: "Phi-4-Mini"
+model_path: "/home/stopthecap10/edge-ai/models/microsoft_Phi-4-mini-instruct-Q6_K.gguf"
+quantization: "Q6_K"
+model_size_gb: 3.0
+
+# Inference Parameters (FROZEN)
+temperature: 0.0
+top_p: 1.0
+seed: 42
+timeout_sec: 20
+
+# Grammar Mode
+grammar_num: "grammars/grammar_phi2_answer_int_strict_final.gbnf"
+grammar_yesno: "grammars/grammar_phi2_answer_yesno_strict_final.gbnf"
+
+# No-Grammar Mode
+n_pred_num: 12
+n_pred_log: 6
+
+# Experimental Setup
+repeats: 3
+warmup_per_prompt: 1
+
+# Server (Pi IP since running test from Mac)
+server_url: "http://192.168.1.179:8080/completion"
+
+# Hardware
+hardware_id: "RaspberryPi-4B-8GB"
+os_version: "Debian-6.12.47"
+cpu_governor: "ondemand"  # document actual setting
+
+# Energy Measurement
+energy_method: "usb_power_meter_delta_mwh"  # or proxy if meter unavailable
+energy_units: "mWh"
+
+# Version
+config_version: "v1.0"
+frozen_date: "2026-02-11"

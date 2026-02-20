@@ -1,160 +1,252 @@
-# Benchmark Datasets
+# Benchmark Datasets (Official - Section 3 Protocol)
 
-This document describes the industry-standard public datasets used to construct our benchmark CSVs.
+This document describes the **real public datasets** used to construct official evaluation splits for the Pi Neurosymbolic Routing project.
 
-## Datasets Used
+**All splits follow Section 3 protocol**: no synthetic prompts, no paraphrasing, full provenance, `source_type=dataset_raw`.
 
-### 1. GSM8K (Grade School Math 8K)
-- **Category**: WP (Word Problems)
-- **Source**: [OpenAI GSM8K Repository](https://github.com/openai/grade-school-math) via HuggingFace Datasets
-- **Paper**: [Training Verifiers to Solve Math Word Problems](https://arxiv.org/abs/2110.14168)
-- **License**: MIT License
-- **Split Used**: `train` split (7,473 samples)
-- **Format**:
-  - **Prompt**: Question text from the dataset
-  - **Expected Answer**: Final numeric answer extracted from the solution (after "####")
-- **Description**: Grade-school level math word problems requiring multi-step reasoning to reach a numeric answer.
+---
 
-### 2. Synthetic Arithmetic Problems
-- **Category**: AR (Arithmetic)
-- **Source**: Deterministically generated synthetic problems
-- **Format**:
-  - **Prompt**: Simple arithmetic expressions (addition, subtraction, multiplication)
-  - **Expected Answer**: Integer result
-- **Complexity Tiers**:
-  - Easy (1st third): Operands 1-100
-  - Medium (2nd third): Operands 10-500
-  - Hard (3rd third): Operands 100-1000
-- **Description**: Basic arithmetic expressions with guaranteed integer answers. Problems are generated deterministically using the specified seed to ensure reproducibility.
+## Overview
 
-### 3. Synthetic Algebra Problems
-- **Category**: ALG (Algebra)
-- **Source**: Deterministically generated synthetic problems
-- **Format**:
-  - **Prompt**: Linear equations (e.g., "x = a + b", "x + a = b", "x - a = b")
-  - **Expected Answer**: Integer solution for x
-- **Complexity Tiers**:
-  - Easy (1st third): Values 1-100
-  - Medium (2nd third): Values 10-300
-  - Hard (3rd third): Values 50-1000
-- **Description**: Simple linear algebra problems with guaranteed integer solutions. Generated deterministically for reproducibility.
+| Category | Dataset | Source | Loader |
+|----------|---------|--------|--------|
+| **AR** (Arithmetic) | DeepMind Mathematics v1.0 | Google Storage (raw tarball) | tarball parser |
+| **ALG** (Algebra) | DeepMind Mathematics v1.0 | Google Storage (raw tarball) | tarball parser |
+| **WP** (Word Problems) | GSM8K | `openai/gsm8k` (HuggingFace) | datasets lib |
+| **LOG** (Logical Entailment) | RuleTaker | `tasksource/ruletaker` (HuggingFace) | datasets lib |
 
-### 4. Synthetic Logic Problems
-- **Category**: LOG (Logical Reasoning)
-- **Source**: Deterministically generated synthetic problems
-- **Format**:
-  - **Prompt**: Logical rules and facts with a query
-  - **Expected Answer**: "Yes" or "No"
-- **Problem Types**:
-  - Transitive reasoning (All A are B, All B are C → Is X a C?)
-  - Negation (No A are B, X is A → Is X a B?)
-  - Conditional reasoning (If P then Q, P is true → Is Q true?)
-- **Description**: Basic deductive reasoning problems with clear Yes/No answers. Generated deterministically for reproducibility.
+---
 
-## Why Synthetic Data?
+## 1. DeepMind Mathematics v1.0 - AR & ALG Categories
 
-The benchmark currently uses synthetic data for AR, ALG, and LOG categories due to:
-- Dataset loading script deprecation in HuggingFace Datasets library
-- Unavailability of certain datasets (DeepMind Math, ProofWriter) via standard APIs
-- Need for simple, deterministic, and reproducible benchmarks
+**Source**: https://storage.googleapis.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz
 
-**Advantages of our synthetic approach:**
-- Fully deterministic and reproducible
-- Guaranteed correct answers (no labeling errors)
-- Controlled difficulty progression
-- No licensing restrictions
-- Efficient generation without large downloads
+**Paper**: [Analysing Mathematical Reasoning Abilities of Neural Models](https://arxiv.org/abs/1904.01557) (Saxton et al., 2019)
 
-**Note**: The WP category uses real GSM8K problems to maintain alignment with industry-standard benchmarks for word problem reasoning.
+**License**: Apache 2.0
 
-## Sampling Strategy
+**Version**: v1.0 (frozen)
 
-All benchmarks are generated using deterministic sampling with a fixed random seed:
-- **Default Seed**: 1234
-- **Sampling Method**: Stratified random sampling from the train split of each dataset
-- **Category Distribution**: Equal distribution across all four categories (AR, ALG, LOG, WP)
+**Loader**: Raw tarball download + text file parsing (alternating question/answer lines)
 
-### Tier Configurations
+**Why raw tarball?** The HuggingFace `deepmind/math_dataset` wrapper uses deprecated dataset scripts (`trust_remote_code` removed in datasets>=4.0). The raw tarball from Google Storage is the primary authoritative source.
 
-| Tier | Total Samples | Per Category | File |
-|------|---------------|--------------|------|
-| Tier 1 | 40 | 10 | `industry_tier1_40.csv` |
-| Tier 2 | 400 | 100 | `industry_tier2_400.csv` |
-| Tier 3 | 1000 | 250 | `industry_tier3_1000.csv` |
+### AR (Arithmetic) Modules
+
+| Module | Records (train-easy) |
+|--------|---------------------|
+| `arithmetic__add_or_sub` | ~170K |
+| `arithmetic__add_sub_multiple` | ~667K |
+| `arithmetic__mul` | ~212K |
+| `arithmetic__div` | ~398K |
+| `arithmetic__mixed` | ~333K |
+| **Total** | **~1.78M** |
+
+### ALG (Algebra) Modules
+
+| Module | Records (train-easy) |
+|--------|---------------------|
+| `algebra__linear_1d` | ~667K |
+| `algebra__linear_2d` | ~667K |
+| `algebra__polynomial_roots` | ~191K |
+| **Total** | **~1.52M** |
+
+### Field Mapping
+
+- `prompt_text` ← original `question` line (whitespace-normalized only)
+- `ground_truth` ← original `answer` line (numeric-only filter applied)
+- `source_module` ← module name (e.g., `arithmetic__add_or_sub`)
+- Difficulty: `train-easy` (suitable for edge models)
+
+### Filtering
+
+- Non-numeric answers excluded (fractions, expressions, etc.)
+- Empty questions/answers excluded
+- Duplicates removed by (source, record_id) and text hash
+
+---
+
+## 2. GSM8K - WP Category
+
+**Source**: `openai/gsm8k` on HuggingFace (config: `main`, split: `test`)
+
+**Paper**: [Training Verifiers to Solve Math Word Problems](https://arxiv.org/abs/2110.14168) (Cobbe et al., 2021)
+
+**License**: MIT License
+
+**Split Used**: `test` (1,319 samples)
+
+### Field Mapping
+
+- `prompt_text` ← `question` field (whitespace-normalized only)
+- `ground_truth` ← final number extracted after `####` separator
+- `source_answer_raw` ← full answer with rationale (for audit)
+
+### Filtering
+
+- Must contain `####` separator
+- Final answer must be integer (non-numeric excluded)
+- Empty questions/answers excluded
+
+### Example
+
+```
+Question: "Janet's ducks lay 16 eggs per day..."
+Answer: "Janet sells 16 - 3 - 4 = 9 duck eggs... #### 18"
+ground_truth: "18"
+```
+
+---
+
+## 3. RuleTaker - LOG Category
+
+**Source**: `tasksource/ruletaker` on HuggingFace (split: `train`)
+
+**Paper**: [Transformers as Soft Reasoners over Language](https://arxiv.org/abs/2002.05867) (Clark et al., 2020)
+
+**Split Used**: `train` (480,152 samples before dedup)
+
+### Field Mapping
+
+- `prompt_text` ← fixed template: `{context}\n\nQuestion: {question}`
+- `ground_truth` ← deterministic label mapping:
+  - `"entailment"` → `"Yes"`
+  - `"not entailment"` → `"No"`
+- `source_answer_raw` ← original label string
+- `source_module` ← depth config (e.g., `depth-1`, `depth-2`)
+
+### Filtering
+
+- Empty context/question excluded
+- Invalid labels excluded
+- Duplicates removed by text hash
+
+### Example
+
+```
+Context: "Anne is quiet. Bob is kind..."
+Question: "Bob is kind."
+Label: "entailment"
+ground_truth: "Yes"
+```
+
+---
+
+## Tier Structure (Section 3.3)
+
+| Tier | Per Category | Total | Role |
+|------|-------------|-------|------|
+| T1 | 10 | 40 | Smoke + design decisions (official but small) |
+| T2 | 50 | 200 | Development + calibrator training |
+| T3 | 75 | 300 | Final held-out claims only |
+
+### Sampling Order (Section 3.9)
+
+1. T3 sampled first (largest held-out pool)
+2. T2 from remaining
+3. T1 from remaining
+
+This guarantees zero cross-tier overlap by construction.
+
+### Seeds
+
+- Global seed: 42
+- AR: 42, ALG: 43, WP: 42, LOG: 42
+- Tier offsets: stable MD5 hash of tier name
+
+---
+
+## Output Files
+
+- `data/splits/industry_tier1_40.csv` - 40 rows
+- `data/splits/industry_tier2_200.csv` - 200 rows
+- `data/splits/industry_tier3_300.csv` - 300 rows
+- `data/splits/split_manifest.json` - full build metadata
+- `data/splits/split_build_report.md` - human-readable report
+
+---
 
 ## Reproducibility
 
-To regenerate the benchmark CSVs:
-
 ```bash
-python3 src/build_benchmark.py --seed 1234 --output-dir data
+# Regenerate identical splits
+python3 src/build_official_splits.py --out_dir data/splits --seed 42 --cache_dir data/cache
+
+# Validate datasets are accessible
+python3 src/validate_dataset_builder.py
 ```
 
-This will:
-1. Download/load the required datasets
-2. Parse and format prompts according to our specification
-3. Sample deterministically using the specified seed
-4. Generate all three tier CSV files
+Running with same seed produces byte-for-byte identical CSVs (given same dataset versions).
 
-## Data Preprocessing
+---
 
-### Prompt Formatting
+## Schema (Section 3.4)
 
-All prompts follow these conventions to match our grammar constraints:
+Every row in all tier CSVs contains:
 
-- **AR/ALG/WP** (numeric answer): Prompts end with `"Answer with only the final number."`
-- **LOG** (Yes/No answer): Prompts end with `"Answer with only Yes or No."`
+| Field | Description |
+|-------|-------------|
+| `prompt_id` | Unique ID (e.g., `AR_000001`) |
+| `category` | One of: AR, ALG, WP, LOG |
+| `dataset_name` | Short name (deepmind_math, gsm8k, ruletaker) |
+| `dataset_source` | Full URL or HF path |
+| `dataset_version` | Version string |
+| `source_split` | Original split (train-easy, test, train) |
+| `source_record_id` | Stable source identifier |
+| `source_type` | Always `dataset_raw` |
+| `field_map_version` | `fm_v1.0` |
+| `prompt_text` | Original question (whitespace-normalized) |
+| `ground_truth` | Target answer (numeric or Yes/No) |
+| `source_answer_raw` | Original answer from source |
+| `source_module` | Module/config info |
+| `source_meta_json` | Additional metadata as JSON |
 
-### Answer Extraction
-
-- **GSM8K**: Extract the final numeric value from the answer field (typically after "####")
-- **DeepMind Math**: Use the provided answer field directly
-- **ProofWriter**: Map boolean entailment to "Yes"/"No"
-
-### ID Format
-
-IDs are deterministic and follow the pattern: `{CATEGORY}{NUMBER:03d}`
-- AR001, AR002, ..., AR250
-- ALG001, ALG002, ..., ALG250
-- LOG001, LOG002, ..., LOG250
-- WP001, WP002, ..., WP250
-
-## Validation
-
-Run validation checks on generated CSVs:
-
-```bash
-# Validate tier 1 (40 total, 10 per category)
-python3 src/validate_prompt_csv.py --csv data/industry_tier1_40.csv --total 40 --per_cat 10
-
-# Validate tier 2 (400 total, 100 per category)
-python3 src/validate_prompt_csv.py --csv data/industry_tier2_400.csv --total 400 --per_cat 100
-
-# Validate tier 3 (1000 total, 250 per category)
-python3 src/validate_prompt_csv.py --csv data/industry_tier3_1000.csv --total 1000 --per_cat 250
-```
-
-## Quality Checks
-
-Inspect random samples:
-
-```bash
-python3 src/smoke_test_samples.py --csv data/industry_tier2_400.csv
-```
-
-This will print 2 random samples from each category for manual review.
+---
 
 ## Citation
 
-If you use these benchmarks, please cite the GSM8K dataset for the WP category:
+**DeepMind Mathematics**:
+```bibtex
+@article{saxton2019analysing,
+  title={Analysing Mathematical Reasoning Abilities of Neural Models},
+  author={Saxton, David and Grefenstette, Edward and Hill, Felix and Kohli, Pushmeet},
+  journal={arXiv preprint arXiv:1904.01557},
+  year={2019}
+}
+```
 
+**GSM8K**:
 ```bibtex
 @article{cobbe2021training,
   title={Training Verifiers to Solve Math Word Problems},
-  author={Cobbe, Karl and Kosaraju, Vineet and Bavarian, Mohammad and Chen, Mark and Jun, Heewoo and Kaiser, Lukasz and Plappert, Matthias and Tworek, Jerry and Hilton, Jacob and Nakano, Reiichiro and Hesse, Christopher and Schulman, John},
+  author={Cobbe, Karl and Kosaraju, Vineet and Bavarian, Mohammad and others},
   journal={arXiv preprint arXiv:2110.14168},
   year={2021}
 }
 ```
 
-For the synthetic AR, ALG, and LOG categories, please cite this repository and note that the problems are deterministically generated.
+**RuleTaker**:
+```bibtex
+@article{clark2020transformers,
+  title={Transformers as Soft Reasoners over Language},
+  author={Clark, Peter and Tafjord, Oyvind and Richardson, Kyle},
+  journal={arXiv preprint arXiv:2002.05867},
+  year={2020}
+}
+```
+
+---
+
+## License Notes
+
+- **DeepMind Mathematics**: Apache 2.0
+- **GSM8K**: MIT License
+- **RuleTaker**: CC BY 4.0
+
+All generated CSV files are derived works and should be attributed to original dataset authors.
+
+---
+
+## Dev Dataset (Archived)
+
+The original `data/splits/tier1_mini.csv` (20 manually written prompts) was used for development/debugging only. It has been archived to `archive/tier1_mini_dev/` and is NOT used for official claims. See `archive/tier1_mini_dev/README.md` for details.

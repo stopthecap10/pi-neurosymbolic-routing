@@ -1,0 +1,16 @@
+# Relaxed integer grammar - allows reasoning before final answer
+# Lets model think through problem, then extract last number
+
+root ::= content
+content ::= (text | num | ws | punct)+
+
+# Allow any text characters
+text ::= [a-zA-Z]+
+
+# Numbers (integers)
+num ::= sign? [0-9]+
+sign ::= "-" | "+"
+
+# Whitespace and punctuation
+ws ::= [ \t\n\r]+
+punct ::= [.,;:!?=()\[\]{}<>/\\|@#$%^&*_`~'"+-]

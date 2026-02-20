@@ -1,0 +1,21 @@
+prompt_id,dataset,category,prompt_text,ground_truth
+AR001,deepmind_math_arithmetic,AR,Calculate: 594 divided by 3,198
+AR002,deepmind_math_arithmetic,AR,What is 847 + 253?,1100
+AR003,deepmind_math_arithmetic,AR,Compute: 156 * 7,1092
+AR004,deepmind_math_arithmetic,AR,What is 2048 - 1536?,512
+AR005,deepmind_math_arithmetic,AR,Calculate: 144 / 12,12
+ALG001,deepmind_math_algebra,ALG,Solve for x: 2x + 5 = 17,6
+ALG002,deepmind_math_algebra,ALG,"If 3x - 4 = 11, what is x?",5
+ALG003,deepmind_math_algebra,ALG,Solve: 5x + 10 = 2x + 25,5
+ALG004,deepmind_math_algebra,ALG,"If 4(x + 2) = 20, find x",3
+ALG005,deepmind_math_algebra,ALG,Solve for x: x/3 + 7 = 12,15
+WP001,gsm8k,WP,"Janet has 3 ducks. Each duck lays 16 eggs per day. She eats 3 eggs for breakfast every morning and uses the rest to bake muffins. If she sells each muffin for $2 and uses 4 eggs per muffin, how many dollars does she make in a day?",18
+WP002,gsm8k,WP,"A store sells pencils for $0.25 each. If you buy 12 pencils, you get a 20% discount. How much do 12 pencils cost after the discount?",2
+WP003,gsm8k,WP,Tom has 5 boxes with 8 marbles in each box. He gives away 12 marbles. How many marbles does he have left?,28
+WP004,gsm8k,WP,A recipe calls for 2 cups of flour to make 12 cookies. How many cups of flour are needed to make 30 cookies?,5
+WP005,gsm8k,WP,Sarah reads 15 pages per day. Her book has 180 pages. How many days will it take her to finish the book?,12
+LOG001,ruletaker,LOG,Fact: All dogs are mammals. Fact: Rex is a dog. Question: Is Rex a mammal?,Yes
+LOG002,ruletaker,LOG,"Fact: If it rains, the ground gets wet. Fact: It is raining. Question: Is the ground wet?",Yes
+LOG003,ruletaker,LOG,Fact: No birds have four legs. Fact: A robin is a bird. Question: Does a robin have four legs?,No
+LOG004,ruletaker,LOG,Fact: All squares have four sides. Fact: This shape is a square. Question: Does this shape have four sides?,Yes
+LOG005,ruletaker,LOG,Fact: Cats are not reptiles. Fact: Fluffy is a cat. Question: Is Fluffy a reptile?,No

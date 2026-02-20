@@ -1,0 +1,8 @@
+# Strict numeric grammar: Answer: + optional space + required integer + optional newline, then STOP.
+# No loops, no trailing whitespace allowed after the number.
+root    ::= "Answer:" sp int nl
+sp      ::= " "?
+int     ::= sign digits
+sign    ::= "-" | ""
+digits  ::= [0-9] [0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?
+nl      ::= "\n" | ""

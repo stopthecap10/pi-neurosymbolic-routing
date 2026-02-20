@@ -1,0 +1,22 @@
+root   ::= opt_nl "Answer:" sp? int
+opt_nl ::= "\n"?
+sp     ::= (" " | "\t")*
+int    ::= sign? digits
+
+sign   ::= "-" | "+"
+
+digits ::= d1|d2|d3|d4|d5|d6|d7|d8|d9|d10|d11|d12
+d1     ::= digit
+d2     ::= digit digit
+d3     ::= digit digit digit
+d4     ::= digit digit digit digit
+d5     ::= digit digit digit digit digit
+d6     ::= digit digit digit digit digit digit
+d7     ::= digit digit digit digit digit digit digit
+d8     ::= digit digit digit digit digit digit digit digit
+d9     ::= digit digit digit digit digit digit digit digit digit
+d10    ::= digit digit digit digit digit digit digit digit digit digit
+d11    ::= digit digit digit digit digit digit digit digit digit digit digit
+d12    ::= digit digit digit digit digit digit digit digit digit digit digit digit
+
+digit  ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

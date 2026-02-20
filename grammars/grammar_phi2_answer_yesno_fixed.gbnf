@@ -1,0 +1,4 @@
+root   ::= opt_nl "Answer:" sp? yn
+opt_nl ::= "\n"?
+sp     ::= (" " | "\t")*
+yn     ::= "Yes" | "No"

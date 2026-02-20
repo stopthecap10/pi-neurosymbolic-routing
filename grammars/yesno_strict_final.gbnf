@@ -1,0 +1,6 @@
+# Strict yes/no grammar: Answer: + optional space + Yes/No + optional newline, then STOP.
+# No loops, no trailing whitespace allowed.
+root ::= "Answer:" sp yn nl
+sp   ::= " "?
+yn   ::= "Yes" | "No"
+nl   ::= "\n" | ""

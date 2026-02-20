@@ -1,0 +1,8 @@
+# Ultra-strict integer grammar - max 6 digits to prevent all degeneracy
+# Most benchmark answers are small (single to triple digits)
+# Uses explicit alternatives instead of {0,N} for tighter control
+
+root ::= int "\n"
+int  ::= sign? digits
+sign ::= "-" | "+"
+digits ::= "0" | [1-9] | [1-9] [0-9] | [1-9] [0-9] [0-9] | [1-9] [0-9] [0-9] [0-9] | [1-9] [0-9] [0-9] [0-9] [0-9] | [1-9] [0-9] [0-9] [0-9] [0-9] [0-9]

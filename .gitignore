@@ -16,6 +16,12 @@ runs_hybrid_v2/
 artifacts/
 *.tar.gz
 
+# dataset cache (HuggingFace cache + DeepMind tarball)
+data/cache/
+
+# old benchmark iterations (superseded by data/splits/)
+data/benchmarks/
+
 # OS
 .DS_Store
 

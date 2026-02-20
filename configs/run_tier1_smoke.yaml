@@ -1,0 +1,42 @@
+# Smoke Test Configuration
+# Based on run_tier1.yaml but with repeats=1
+
+# Model
+model_name: "Phi-4-Mini"
+model_path: "/home/stopthecap10/edge-ai/models/microsoft_Phi-4-mini-instruct-Q6_K.gguf"
+quantization: "Q6_K"
+model_size_gb: 3.0
+
+# Inference Parameters (FROZEN)
+temperature: 0.0
+top_p: 1.0
+seed: 42
+timeout_sec: 20
+
+# Grammar Mode (relaxed - allows reasoning)
+grammar_num: "grammars/grammar_int_with_reasoning.gbnf"
+grammar_yesno: "grammars/grammar_yesno_with_reasoning.gbnf"
+
+# No-Grammar Mode
+n_pred_num: 12
+n_pred_log: 6
+
+# Experimental Setup - SMOKE TEST
+repeats: 1  # Only 1 repeat for smoke test
+warmup_per_prompt: 0
+
+# Server (localhost since runner and server both on Pi)
+server_url: "http://127.0.0.1:8080/completion"
+
+# Hardware
+hardware_id: "RaspberryPi-4B-8GB"
+os_version: "Debian-6.12.47"
+cpu_governor: "ondemand"
+
+# Energy Measurement
+energy_method: "usb_power_meter_delta_mwh"
+energy_units: "mWh"
+
+# Version
+config_version: "v1.0-smoke"
+frozen_date: "2026-02-12"

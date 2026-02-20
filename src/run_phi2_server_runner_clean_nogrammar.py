@@ -19,6 +19,12 @@ def extract_last_int(text: str) -> str:
 
     # Strip whitespace and remove commas
     cleaned = text.strip().replace(",", "")
+
+    # Remove common answer prefixes that might confuse extraction
+    cleaned = cleaned.replace("x = ", "").replace("x=", "")
+    cleaned = cleaned.replace("Answer: ", "").replace("Answer:", "")
+    cleaned = cleaned.strip()
+
     # Use INT_RE to find all integers in the text
     nums = INT_RE.findall(cleaned)
     if not nums:
@@ -82,8 +88,8 @@ def main():
     ap.add_argument("--server_url", default="http://127.0.0.1:8080/completion")
     ap.add_argument("--timeout_s", type=float, default=60.0)
     ap.add_argument("--repeats", type=int, default=3)
-    ap.add_argument("--n_pred_num", type=int, default=16)
-    ap.add_argument("--n_pred_log", type=int, default=12)
+    ap.add_argument("--n_pred_num", type=int, default=12)
+    ap.add_argument("--n_pred_log", type=int, default=6)
     ap.add_argument("--warmup_per_prompt", type=int, default=0)
     ap.add_argument("--debug", action="store_true", help="Enable debug output")
     args = ap.parse_args()
@@ -150,26 +156,21 @@ def main():
 
         for t in range(1, args.repeats + 1):
             t0 = time.time()
-            timed_out = False
             content = ""
-            stop_type = None
             tokens_predicted = None
+            timed_out = False
             try:
-                # No stop sequences and NO grammar - let model generate freely
-                # CRITICAL: Do NOT include any "stop" field in payload
-                payload = {
-                    "prompt": prompt,
-                    "n_predict": int(n_pred),
-                    "temperature": 0.0
-                }
                 r = requests.post(
                     args.server_url,
-                    json=payload,
+                    json={
+                        "prompt": prompt,
+                        "n_predict": int(n_pred),
+                        "temperature": 0.0,
+                    },
                     timeout=(10.0, float(args.timeout_s)),
                 )
                 j = r.json()
                 content = j.get("content", "") or ""
-                stop_type = j.get("stop_type")
                 tokens_predicted = j.get("tokens_predicted")
             except requests.exceptions.Timeout:
                 timed_out = True
@@ -177,16 +178,13 @@ def main():
                 content = ""
 
             dt = time.time() - t0
+            if dt >= args.timeout_s:
+                timed_out = True
             pred = extract_yesno(content) if is_log else extract_last_int(content)
 
-            # Debug output for E8 extraction failures
-            if args.debug and pred == "" and not timed_out:
-                debug_parts = [pid, cat, repr(content[:160])]
-                if stop_type:
-                    debug_parts.append(f"stop_type={stop_type}")
-                if tokens_predicted is not None:
-                    debug_parts.append(f"tokens_predicted={tokens_predicted}")
-                print(f"E8_DEBUG: {','.join(map(str, debug_parts))}", file=sys.stderr, flush=True)
+            if pred == "" and not timed_out:
+                content_prefix = content.replace("\n", "\\n")[:160]
+                print(f"E8 {pid} {cat} content={repr(content_prefix)}", file=sys.stderr, flush=True)
 
             err = err_code(cat, pred, expected, timed_out)
             ok = 1 if err == "E0" else 0

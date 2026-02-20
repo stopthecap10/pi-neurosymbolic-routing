@@ -1,0 +1,7 @@
+# Optimal yes/no grammar for Phi-2 with prompt ending in "Answer: "
+# Allows: optional leading space, then exactly "Yes" or "No"
+# Forces immediate stop after answer (no trailing text)
+
+root ::= ws? yn
+ws   ::= [ \t]
+yn   ::= "Yes" | "No"

@@ -1,457 +1,337 @@
-import csv, json, re, time
-from pathlib import Path
+#!/usr/bin/env python3
+"""
+Hybrid V2 Runner - Enhanced Router with A4 Symbolic Solver
+"""
+
+import argparse
+import csv
+import sys
+import time
 from datetime import datetime
-from statistics import median
+from pathlib import Path
+import yaml
 
-import requests
-import sympy as sp
-from sympy.parsing.sympy_parser import (
-    parse_expr,
-    standard_transformations,
-    implicit_multiplication_application,
-    convert_xor,
-)
+from router_v2 import RouterV2
 
-# ========= CONFIG =========
-SERVER_URL = "http://127.0.0.1:8080/completion"
-PROMPTS_CSV = "data/baseline_prompts.csv"
+def load_config(config_path):
+    """Load YAML config"""
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
 
-TIMEOUT_S = 120
-REPEATS = 1           # later: 3
-WARMUP_PER_PROMPT = 0 # keep 0 unless you need warming
+def load_routing_decisions(decisions_path=None):
+    """
+    Load routing decisions for V2
 
-N_PRED_NUM = 32
-N_PRED_LOG = 8
-TEMP = 0
-
-PROMPT_SUFFIX = "\n<|question_end|>Answer:"
-
-GRAMMAR_YESNO_FILE = "grammars/grammar_yesno.gbnf"
-USE_YESNO_GRAMMAR = True
-
-RUN_TAG = datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = Path("runs_hybrid_v2") / RUN_TAG
-LOG_DIR = RUN_DIR / "logs"
-RUN_DIR.mkdir(parents=True, exist_ok=True)
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-# ========= Regex / parsing helpers =========
-YESNO_ANY = re.compile(r"\b(Yes|No)\b", re.IGNORECASE)
-INT_ANY   = re.compile(r"[-+]?\d+")
-
-TRANSFORMS = standard_transformations + (
-    implicit_multiplication_application,
-    convert_xor,
-)
-
-def load_yesno_grammar() -> str:
-    try:
-        return Path(GRAMMAR_YESNO_FILE).read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return ""
-
-YESNO_GRAMMAR = load_yesno_grammar() if USE_YESNO_GRAMMAR else ""
-
-def normalize_prompt(p: str) -> str:
-    p = p.replace("\r\n", "\n").rstrip()
-    # strip any existing answer markers at end
-    for s in ["\n<|question_end|>Answer:", "<|question_end|>Answer:", "\nAnswer:", "Answer:"]:
-        if p.endswith(s):
-            p = p[:-len(s)].rstrip()
-    return p + PROMPT_SUFFIX
-
-def call_llm(prompt: str, n_predict: int, grammar: str = ""):
-    payload = {
-        "prompt": prompt,
-        "n_predict": n_predict,
-        "temperature": TEMP,
-        "grammar": grammar or "",
-    }
-    t0 = time.time()
-    try:
-        r = requests.post(SERVER_URL, json=payload, timeout=TIMEOUT_S)
-        wall_s = time.time() - t0
-        if not r.ok:
-            return f"http_{r.status_code}", wall_s, "", {"text": r.text}
-        j = r.json()
-        return "ok", wall_s, j.get("content", ""), j
-    except Exception as e:
-        wall_s = time.time() - t0
-        return "err", wall_s, "", {"error": str(e)}
-
-def extract_num(content: str) -> str:
-    m = INT_ANY.search(content)
-    return (m.group(0) if m else "").strip()
-
-def extract_yesno(content: str) -> str:
-    m = YESNO_ANY.search(content)
-    return (m.group(1).title() if m else "").strip()
-
-def correctness(expected: str, got: str, category: str) -> int:
-    if not expected or not got:
-        return 0
-    c = category.strip().upper()
-    if c == "LOG":
-        return int(expected.strip().lower() == got.strip().lower())
-    try:
-        return int(int(expected.strip()) == int(got.strip()))
-    except Exception:
-        return 0
-
-# ========= SymPy helpers =========
-def sympy_arithmetic_from_prompt(prompt: str) -> tuple[str, str]:
-    m = re.search(r"What is (.+?)\??$", prompt.strip())
-    if not m:
-        raise ValueError("AR: could not find 'What is ...' expression")
-    expr_raw = m.group(1).strip()
-    expr = parse_expr(expr_raw, transformations=TRANSFORMS)
-    val = sp.simplify(expr)
-    return expr_raw, str(int(val))
-
-def sympy_algebra_from_prompt(prompt: str) -> tuple[str, str]:
-    m = re.search(r"Solve for x:\s*(.+)$", prompt.strip())
-    if not m:
-        raise ValueError("ALG: could not find 'Solve for x:' equation")
-    eq_raw = m.group(1).strip().rstrip(".")
-    if "=" not in eq_raw:
-        raise ValueError("ALG: no '=' found")
-    left_raw, right_raw = [s.strip() for s in eq_raw.split("=", 1)]
-    x = sp.Symbol("x")
-    left = parse_expr(left_raw, transformations=TRANSFORMS, local_dict={"x": x})
-    right = parse_expr(right_raw, transformations=TRANSFORMS, local_dict={"x": x})
-    sol = sp.solve(sp.Eq(left, right), x)
-    if not sol:
-        raise ValueError("ALG: no solution")
-    return eq_raw, str(int(sol[0]))
-
-# ========= WP verifier (FIXED + safer policy) =========
-PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
-LITERS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*liters?\b", re.IGNORECASE)
-
-def wp_percent_used_remaining(prompt: str):
-    # "A tank holds 50 liters. 30% is used. How many liters remain?"
-    mL = LITERS_RE.search(prompt)
-    mP = PCT_RE.search(prompt)
-    if not mL or not mP:
-        return None, None, "missing_total_or_pct"
-    total = float(mL.group(1))
-    used_pct = float(mP.group(1))
-    remain = total * (1.0 - used_pct / 100.0)
-    if abs(remain - round(remain)) < 1e-9:
-        remain = int(round(remain))
-    sym_expr = f"{total}*(1-({used_pct}/100))"
-    return str(remain), sym_expr, None
-
-def sympy_word_problem(prompt: str) -> tuple[str, str]:
-    p = prompt.strip()
-
-    # percent-used tank (WP08-style) — handled by robust regex
-    ans, expr, err = wp_percent_used_remaining(p)
-    if err is None and ans is not None:
-        return expr, ans
-
-    # simple templates
-    m = re.search(r"box has (\d+).+buy (\d+) box", p, re.IGNORECASE)
-    if m:
-        a, b = map(int, m.groups()); return f"{a}*{b}", str(a*b)
-
-    m = re.search(r"length (\d+).+width (\d+).+area", p, re.IGNORECASE)
-    if m:
-        L, W = map(int, m.groups()); return f"{L}*{W}", str(L*W)
-
-    m = re.search(r"have (\d+).+give away (\d+).+remain", p, re.IGNORECASE)
-    if m:
-        a, b = map(int, m.groups()); return f"{a}-{b}", str(a-b)
-
-    m = re.search(r"travels (\d+).+in (\d+) hour.+average speed", p, re.IGNORECASE)
-    if m:
-        d, t = map(int, m.groups()); return f"{d}/{t}", str(int(d/t))
-
-    m = re.search(r"sells (\d+) .+ for \$?(\d+).+1 .* cost", p, re.IGNORECASE)
-    if m:
-        n, total = map(int, m.groups()); return f"{total}/{n}", str(int(total/n))
-
-    m = re.search(r"needs (\d+) cup.+per batch.+for (\d+) batch", p, re.IGNORECASE)
-    if m:
-        per, batches = map(int, m.groups()); return f"{per}*{batches}", str(per*batches)
-
-    m = re.search(r"There are (\d+).+groups of (\d+).+How many groups", p, re.IGNORECASE)
-    if m:
-        total, size = map(int, m.groups()); return f"{total}/{size}", str(int(total/size))
-
-    m = re.search(r"moves (\d+).+in (\d+) hour.+speed", p, re.IGNORECASE)
-    if m:
-        d, t = map(int, m.groups()); return f"{d}/{t}", str(int(d/t))
-
-    m = re.search(r"read (\d+) pages per day for (\d+) day", p, re.IGNORECASE)
-    if m:
-        per, days = map(int, m.groups()); return f"{per}*{days}", str(per*days)
-
-    raise ValueError("WP: could not parse into math expression")
-
-# ========= LOG verifier (self-consistency) =========
-def log_verifier(question_prompt: str) -> tuple[str, dict]:
-    q = question_prompt.strip()
-    base = q if q.lower().startswith("answer with only") else ("Answer with only Yes or No. " + q)
-
-    p1 = normalize_prompt(base)
-    p2 = normalize_prompt(base + " Answer only Yes or No.")
-    p3 = normalize_prompt("Answer with only Yes or No. Think carefully. " + q)
-
-    g = YESNO_GRAMMAR if YESNO_GRAMMAR else ""
-
-    s1, t1, c1, j1 = call_llm(p1, N_PRED_LOG, grammar=g)
-    a1 = extract_yesno(c1)
-
-    s2, t2, c2, j2 = call_llm(p2, N_PRED_LOG, grammar=g)
-    a2 = extract_yesno(c2)
-
-    meta = {
-        "attempts": [
-            {"status": s1, "wall_s": t1, "answer": a1, "content": c1, "prompt": p1},
-            {"status": s2, "wall_s": t2, "answer": a2, "content": c2, "prompt": p2},
-        ],
-        "used_grammar": bool(g),
+    V2 routing map:
+    - AR: A5 → A1 → A2 (symbolic direct with 2-level fallback)
+    - ALG: A4 → A1 → A2 (LLM extract + SymPy with 2-level fallback)
+    - WP: A1 → A2 (neural with fallback)
+    - LOG: A1 strict yes/no
+    """
+    return {
+        'category_routes': {
+            'AR': {
+                'action': 'A5',  # Direct symbolic computation
+                'grammar_enabled': False
+            },
+            'ALG': {
+                'action': 'A4',  # LLM extract + SymPy solve
+                'grammar_enabled': False
+            },
+            'WP': {
+                'action': 'A1',  # Start with A1, fallback to A2
+                'grammar_enabled': False
+            },
+            'LOG': {
+                'action': 'A1',  # Fast yes/no
+                'grammar_enabled': False
+            }
+        },
+        'max_escalations': 2,  # Allow up to 2 fallback attempts
+        'fallback_rules': {
+            'timeout': 'escalate',
+            'parse_fail': 'escalate',
+            'symbolic_fail': 'escalate_to_neural'
+        }
     }
 
-    if s1 == "ok" and s2 == "ok" and a1 in ("Yes","No") and a1 == a2:
-        meta["final_rule"] = "agree_2"
-        return a1, meta
+OFFICIAL_PROVENANCE_COLS = ['dataset_name', 'dataset_source', 'source_type', 'source_record_id', 'field_map_version']
 
-    s3, t3, c3, j3 = call_llm(p3, N_PRED_LOG, grammar=g)
-    a3 = extract_yesno(c3)
-    meta["attempts"].append({"status": s3, "wall_s": t3, "answer": a3, "content": c3, "prompt": p3})
-
-    votes = [a for a in (a1,a2,a3) if a in ("Yes","No")]
-    if votes:
-        yes = votes.count("Yes"); no = votes.count("No")
-        if yes > no:
-            meta["final_rule"] = "majority_3"; return "Yes", meta
-        if no > yes:
-            meta["final_rule"] = "majority_3"; return "No", meta
-        meta["final_rule"] = "tie_pick_last_valid"
-        return votes[-1], meta
-
-    meta["final_rule"] = "no_valid_answer"
-    return "", meta
-
-# ========= Error codes =========
-# Your codes:
-# E0 correct
-# E1 arithmetic computation error (AR/WP numeric wrong)
-# E2 logical inference error (LOG wrong)
-# E3 algebraic manipulation error (ALG wrong)
-# E4 hallucinated step (not used here)
-# E5 partial reasoning (not used here)
-# E6 instruction following failure (blank/malformed)
-# Added:
-# E7 verification/solver failure
-# E8 timeout/server error
-
-def pick_error(category: str, expected: str, got: str, status: str, sym_ok: bool) -> str:
-    if status != "ok":
-        return "E8"
-    if got == "":
-        return "E6"
-    if correctness(expected, got, category):
-        return "E0"
-    c = category.upper()
-    if not sym_ok and c in ("AR","ALG","WP"):
-        return "E7"
-    if c == "LOG":
-        return "E2"
-    if c == "ALG":
-        return "E3"
-    return "E1"
+def verify_official_split(csv_path: str, prompts: list):
+    """Guardrail: verify CSV is a valid official split (Section 2)."""
+    errors = []
+    import os
+    fname = os.path.basename(csv_path)
+    if not fname.startswith('industry_tier'):
+        errors.append(f"Filename '{fname}' is not an official split (expected industry_tier*.csv)")
+    if prompts:
+        cols = set(prompts[0].keys())
+        missing = [c for c in OFFICIAL_PROVENANCE_COLS if c not in cols]
+        if missing:
+            errors.append(f"Missing provenance columns: {missing}")
+        bad = [r['prompt_id'] for r in prompts if r.get('source_type') != 'dataset_raw']
+        if bad:
+            errors.append(f"{len(bad)} rows have source_type != dataset_raw: {bad[:5]}")
+    if errors:
+        print("ERROR: Official split validation FAILED:")
+        for e in errors:
+            print(f"  - {e}")
+        sys.exit(1)
+    print(f"[guardrail] Official split verified: {csv_path}")
 
 def main():
-    prompts = list(csv.DictReader(open(PROMPTS_CSV, newline="", encoding="utf-8")))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", required=True, help="Config YAML")
+    ap.add_argument("--csv", required=True, help="Prompts CSV")
+    ap.add_argument("--decisions", help="Routing decisions file (optional)")
+    ap.add_argument("--out_trials", required=True, help="Output CSV")
+    ap.add_argument("--split_role", choices=["official", "dev"], default="dev",
+                    help="Set to 'official' to enforce provenance guardrails")
+    args = ap.parse_args()
 
-    trial_rows = []
-    summary_rows = []
+    # Load config and routing decisions
+    config = load_config(args.config)
+    routing_decisions = load_routing_decisions(args.decisions)
 
-    def flush():
-        if trial_rows:
-            p = RUN_DIR / "hybrid_v2_results_trials.csv"
-            with open(p, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(trial_rows[0].keys()))
-                w.writeheader()
-                w.writerows(trial_rows)
-        if summary_rows:
-            p = RUN_DIR / "hybrid_v2_results.csv"
-            with open(p, "w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(summary_rows[0].keys()))
-                w.writeheader()
-                w.writerows(summary_rows)
+    # Load prompts
+    with open(args.csv, 'r', encoding='utf-8') as f:
+        prompts = list(csv.DictReader(f))
 
-    for row in prompts:
-        pid = row["id"].strip()
-        cat = row["category"].strip().upper()
-        prompt_base = row["prompt"]
-        expected = str(row.get("expected_answer","")).strip()
+    # Official-mode guardrail
+    if args.split_role == "official":
+        verify_official_split(args.csv, prompts)
 
-        walls = []
-        finals = []
+    # Initialize router
+    router = RouterV2(config, routing_decisions)
 
-        for t in range(1, REPEATS + 1):
-            status = "ok"
-            wall_s = 0.0
+    system_name = "hybrid_v2"
 
-            llm_content = ""
-            llm_answer = ""
-            final_answer = ""
+    print(f"Running {system_name}")
+    print(f"Router: Enhanced with A4 (LLM extract + SymPy solve)")
+    print(f"Prompts: {len(prompts)}")
+    print(f"Repeats: {config['repeats']}")
+    print()
+    print("Category routing:")
+    for cat, route_info in routing_decisions['category_routes'].items():
+        action = route_info['action']
+        print(f"  {cat:4} → {action} (grammar: {route_info['grammar_enabled']})")
+    print()
+    print("Max escalations: 2")
+    print()
 
-            verify_used = False
-            verify_pass = ""
-            fallback_used = False
-            sym_expr = ""
-            sym_out = ""
-            sym_ok = True
-            route = "LLM"
+    # Energy measurement
+    print("=" * 60)
+    print("ENERGY MEASUREMENT")
+    print("=" * 60)
+    print("📊 Check your USB power meter now.")
+    print()
+    start_mwh_str = input("Enter STARTING mWh reading (just the number): ").strip()
 
-            raw_llm = {}
-            raw_meta = {}
+    try:
+        start_mwh = float(start_mwh_str)
+        print(f"✓ Recorded starting: {start_mwh} mWh")
+    except ValueError:
+        print("⚠️  Invalid input, energy will be marked as NA")
+        start_mwh = None
 
-            try:
-                if cat == "LOG":
-                    t0 = time.time()
-                    final_answer, meta = log_verifier(prompt_base)
-                    wall_s = time.time() - t0
-                    raw_meta = meta
-                    route = "LLM_LOG_SELFCONSIST"
+    print("=" * 60)
+    print()
 
-                else:
-                    prompt_send = normalize_prompt(prompt_base)
+    # Generate run_id
+    run_id = f"{system_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-                    for _ in range(WARMUP_PER_PROMPT):
-                        call_llm(prompt_send, N_PRED_NUM, grammar="")
+    # Run trials
+    trials = []
 
-                    status, wall_s, llm_content, raw_llm = call_llm(prompt_send, N_PRED_NUM, grammar="")
-                    llm_answer = extract_num(llm_content)
-                    final_answer = llm_answer
+    for prompt_row in prompts:
+        prompt_id = prompt_row['prompt_id']
+        dataset = prompt_row.get('dataset_name', prompt_row.get('dataset', ''))
+        category = prompt_row['category']
+        base_prompt = prompt_row['prompt_text']
+        ground_truth = prompt_row['ground_truth']
 
-                    # numeric verification for AR/ALG/WP
-                    verify_used = True
-                    try:
-                        if cat == "AR":
-                            sym_expr, sym_out = sympy_arithmetic_from_prompt(prompt_base)
-                            if llm_answer != "" and int(llm_answer) == int(sym_out):
-                                verify_pass = "1"
-                                route = "LLM+VERIFY_PASS"
-                            else:
-                                verify_pass = "0"
-                                final_answer = sym_out
-                                fallback_used = True
-                                route = "LLM+VERIFY_FAIL_FALLBACK_SYM"
+        is_log = (category == "LOG")
 
-                        elif cat == "ALG":
-                            sym_expr, sym_out = sympy_algebra_from_prompt(prompt_base)
-                            if llm_answer != "" and int(llm_answer) == int(sym_out):
-                                verify_pass = "1"
-                                route = "LLM+VERIFY_PASS"
-                            else:
-                                verify_pass = "0"
-                                final_answer = sym_out
-                                fallback_used = True
-                                route = "LLM+VERIFY_FAIL_FALLBACK_SYM"
+        # FROZEN prompt template
+        # Official CSVs (fm_v1.1+) bake the full instruction into LOG prompt_text.
+        # Fall back to appending for legacy CSVs that don't.
+        if is_log and base_prompt.rstrip().endswith("Answer:"):
+            prompt_text = base_prompt
+        elif is_log:
+            prompt_text = f"{base_prompt}\nAnswer with only Yes or No.\nAnswer:"
+        else:
+            prompt_text = f"{base_prompt}\nAnswer with only the final number.\nAnswer:"
 
-                        elif cat == "WP":
-                            # IMPORTANT POLICY:
-                            # WP verifier is best-effort. It should NOT override LLM when it disagrees.
-                            sym_expr, sym_out = sympy_word_problem(prompt_base)
-                            if llm_answer != "" and sym_out != "" and int(llm_answer) == int(sym_out):
-                                verify_pass = "1"
-                                route = "LLM+VERIFY_PASS"
-                                final_answer = llm_answer
-                            else:
-                                verify_pass = "0"
-                                route = "LLM+VERIFY_MISMATCH_KEEP_LLM"
-                                final_answer = llm_answer  # keep LLM
+        for repeat_idx in range(1, config['repeats'] + 1):
+            # Route through Hybrid V2
+            result = router.route(
+                prompt_id=prompt_id,
+                category=category,
+                prompt_text=prompt_text,
+                ground_truth=ground_truth
+            )
 
-                        else:
-                            verify_used = False
-                            route = "LLM"
+            # Build trial record with V2-specific fields
+            trial = {
+                # Identity
+                "run_id": run_id,
+                "timestamp": datetime.now().isoformat(),
+                "prompt_id": prompt_id,
+                "dataset": dataset,
+                "category": category,
+                "split": "tier1_mini",
+                "system": system_name,
+                "repeat_idx": repeat_idx,
 
-                    except Exception as e:
-                        sym_ok = False
-                        verify_used = True
-                        verify_pass = ""
-                        raw_meta = {"verifier_error": str(e)}
-                        route = "LLM+VERIFY_ERROR_KEEP_LLM"
-                        final_answer = llm_answer
+                # Routing info (V2 enhanced)
+                "route_chosen": result['final_source'],
+                "route_attempt_sequence": result['route_attempt_sequence'],
+                "escalations_count": result['escalations_count'],
+                "decision_reason": result['decision_reason'],
+                "final_answer_source": result['final_source'],
+                "reasoning_mode": result['reasoning_mode'],
 
-            except Exception as e:
-                status = "err"
-                raw_meta = {"exception": str(e)}
+                # Symbolic execution info (V2 new)
+                "symbolic_parse_success": int(result['symbolic_parse_success']),
+                "sympy_solve_success": int(result['sympy_solve_success']),
 
-            eco = pick_error(cat, expected, final_answer, status, sym_ok)
-            ok = correctness(expected, final_answer, cat)
+                # Output
+                "answer_raw": result['answer_raw'].replace("\n", "\\n")[:200],
+                "answer_parsed": result['answer_final'],
+                "parse_success": int(result['parse_success']),
+                "ground_truth": ground_truth,
+                "correct": int(result['correct']),
 
-            log_path = LOG_DIR / f"{pid}__{cat}__t{t}.json"
-            log_obj = {
-                "id": pid,
-                "category": cat,
-                "trial": t,
-                "route": route,
-                "prompt": prompt_base,
-                "expected_answer": expected,
-                "llm_content": llm_content,
-                "llm_answer": llm_answer,
-                "final_output": final_answer,
-                "correct": int(ok),
-                "error_code": eco,
-                "latency_wall_s": wall_s,
-                "verify_used": int(bool(verify_used)),
-                "verify_pass": verify_pass,
-                "fallback_used": int(bool(fallback_used)),
-                "sym_expr": sym_expr,
-                "sym_output": sym_out,
-                "sym_ok": sym_ok,
-                "llm_raw": raw_llm,
-                "meta": raw_meta,
+                # Runtime
+                "total_latency_ms": f"{result['total_latency_ms']:.3f}",
+                "timeout_flag": int(result['timeout_flag']),
+
+                # Energy (placeholder)
+                "energy_start_mwh": "NA",
+                "energy_end_mwh": "NA",
+                "energy_delta_mwh": "NA",
+                "energy_per_prompt_mwh": "NA",
+
+                # Error
+                "error_code": result['error_code'],
+
+                # Reproducibility (all frozen)
+                "model_name": config['model_name'],
+                "quantization": config['quantization'],
+                "temperature": 0.0,
+                "top_p": 1.0,
+                "seed": 42,
+                "timeout_sec": config['timeout_sec'],
+                "config_version": config['config_version'],
+                "router_version": "v2.0",
             }
-            log_path.write_text(json.dumps(log_obj, indent=2), encoding="utf-8", errors="replace")
 
-            trial_rows.append({
-                "id": pid,
-                "category": cat,
-                "trial": t,
-                "route": route,
-                "expected_answer": expected,
-                "final_output": final_answer,
-                "correct": int(ok),
-                "error_code": eco,
-                "latency_wall_s": f"{wall_s:.4f}",
-                "verify_used": int(bool(verify_used)),
-                "verify_pass": verify_pass,
-                "fallback_used": int(bool(fallback_used)),
-                "sym_expr": sym_expr,
-                "sym_output": sym_out,
-                "log_file": str(log_path),
-            })
+            trials.append(trial)
 
-            walls.append(wall_s)
-            finals.append(final_answer)
+            # Print progress with V2 info
+            status = "✓" if result['correct'] else ("T" if result['timeout_flag'] else "✗")
+            route_display = " → ".join(result['route_sequence'])
 
-            print(f"{pid} [{cat}] t{t}/{REPEATS} {status} wall={wall_s:.2f}s -> {final_answer} ({eco}) route={route}", flush=True)
-            flush()
+            # Add symbolic indicators
+            mode_indicator = ""
+            if result['symbolic_parse_success']:
+                mode_indicator += "S"  # Symbolic parse success
+            if result['sympy_solve_success']:
+                mode_indicator += "P"  # SymPy success
+            mode_str = f" [{mode_indicator}]" if mode_indicator else ""
 
-        # summary row
-        final = finals[0] if finals else ""
-        summary_rows.append({
-            "id": pid,
-            "category": cat,
-            "route": "mixed",
-            "expected_answer": expected,
-            "final_output": final,
-            "correct": correctness(expected, final, cat),
-            "latency_wall_median_s": f"{median(walls):.4f}" if walls else "",
-        })
-        flush()
+            print(f"{status} {prompt_id} {category} #{repeat_idx}/{config['repeats']} "
+                  f"route={route_display}{mode_str} "
+                  f"mode={result['reasoning_mode']} "
+                  f"lat={result['total_latency_ms']:.0f}ms "
+                  f"ans={result['answer_final']} exp={ground_truth} err={result['error_code']}")
 
-    print(f"\n✅ wrote {RUN_DIR/'hybrid_v2_results.csv'}")
-    print(f"✅ wrote {RUN_DIR/'hybrid_v2_results_trials.csv'}")
-    print(f"📁 raw logs in {LOG_DIR}")
+            # Small delay
+            if repeat_idx < config['repeats']:
+                time.sleep(0.1)
+
+    # Energy end reading
+    print()
+    print("=" * 60)
+    print("ENERGY MEASUREMENT")
+    print("=" * 60)
+    print("📊 Check your USB power meter now.")
+    print()
+    end_mwh_str = input("Enter ENDING mWh reading (just the number): ").strip()
+
+    try:
+        end_mwh = float(end_mwh_str)
+        print(f"✓ Recorded ending: {end_mwh} mWh")
+
+        if start_mwh is not None:
+            delta_mwh = end_mwh - start_mwh
+            num_prompts = len(set(t['prompt_id'] for t in trials))
+            energy_per_prompt = delta_mwh / num_prompts if num_prompts > 0 else 0
+
+            print(f"✓ Total energy: {delta_mwh:.2f} mWh")
+            print(f"✓ Energy per prompt: {energy_per_prompt:.2f} mWh")
+
+            # Update all trials
+            for trial in trials:
+                trial['energy_start_mwh'] = f"{start_mwh:.2f}"
+                trial['energy_end_mwh'] = f"{end_mwh:.2f}"
+                trial['energy_delta_mwh'] = f"{delta_mwh:.2f}"
+                trial['energy_per_prompt_mwh'] = f"{energy_per_prompt:.2f}"
+    except ValueError:
+        print("⚠️  Invalid input, energy marked as NA")
+
+    print("=" * 60)
+    print()
+
+    # Write trials CSV with V2 fields
+    fieldnames = [
+        "run_id", "timestamp", "prompt_id", "dataset", "category", "split", "system", "repeat_idx",
+        "route_chosen", "route_attempt_sequence", "escalations_count", "decision_reason", "final_answer_source",
+        "reasoning_mode", "symbolic_parse_success", "sympy_solve_success",
+        "answer_raw", "answer_parsed", "parse_success", "ground_truth", "correct",
+        "total_latency_ms", "timeout_flag",
+        "energy_start_mwh", "energy_end_mwh", "energy_delta_mwh", "energy_per_prompt_mwh",
+        "error_code",
+        "model_name", "quantization", "temperature", "top_p", "seed", "timeout_sec", "config_version", "router_version"
+    ]
+
+    with open(args.out_trials, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(trials)
+
+    # Summary
+    total = len(trials)
+    correct_count = sum(t['correct'] for t in trials)
+    timeout_count = sum(t['timeout_flag'] for t in trials)
+    parse_fail_count = sum(1 - t['parse_success'] for t in trials)
+
+    # Escalation stats
+    escalation_counts = [int(t['escalations_count']) for t in trials]
+    total_escalations = sum(escalation_counts)
+    prompts_with_escalation = sum(1 for e in escalation_counts if e > 0)
+
+    # Symbolic stats
+    symbolic_parse_count = sum(t['symbolic_parse_success'] for t in trials)
+    sympy_solve_count = sum(t['sympy_solve_success'] for t in trials)
+
+    latencies = [float(t['total_latency_ms']) for t in trials if not t['timeout_flag']]
+    if latencies:
+        latencies.sort()
+        median_lat = latencies[len(latencies)//2]
+    else:
+        median_lat = 0
+
+    print(f"📊 SUMMARY:")
+    print(f"  Accuracy: {correct_count}/{total} ({100*correct_count/total:.1f}%)")
+    print(f"  Timeouts: {timeout_count}/{total}")
+    print(f"  Parse failures: {parse_fail_count}/{total}")
+    print(f"  Median latency: {median_lat:.0f}ms")
+    print(f"  Total escalations: {total_escalations}")
+    print(f"  Prompts needing fallback: {prompts_with_escalation}/{len(prompts)}")
+    print(f"  Symbolic parse success: {symbolic_parse_count}/{total}")
+    print(f"  SymPy solve success: {sympy_solve_count}/{total}")
+    print(f"\n✅ Saved to: {args.out_trials}")
 
 if __name__ == "__main__":
     main()

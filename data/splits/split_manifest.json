@@ -1,0 +1,138 @@
+{
+  "schema_version": "schema_v1.0",
+  "build_timestamp": "2026-02-12T22:57:21.094235",
+  "builder_script": "src/build_official_splits.py",
+  "builder_version": "v1.1",
+  "global_seed": 42,
+  "category_seeds": {
+    "AR": 42,
+    "ALG": 43,
+    "WP": 42,
+    "LOG": 42
+  },
+  "field_map_version": "fm_v1.0",
+  "dataset_sources": {
+    "AR": {
+      "name": "DeepMind Mathematics v1.0",
+      "primary_url": "https://storage.googleapis.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz",
+      "version": "v1.0",
+      "modules": [
+        "arithmetic__add_or_sub",
+        "arithmetic__add_sub_multiple",
+        "arithmetic__mul",
+        "arithmetic__div",
+        "arithmetic__mixed"
+      ],
+      "difficulty": "train-easy",
+      "loader": "raw_tarball",
+      "citation": "Saxton et al., 2019 (arXiv:1904.01557)"
+    },
+    "ALG": {
+      "name": "DeepMind Mathematics v1.0",
+      "primary_url": "https://storage.googleapis.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz",
+      "version": "v1.0",
+      "modules": [
+        "algebra__linear_1d",
+        "algebra__linear_2d",
+        "algebra__polynomial_roots"
+      ],
+      "difficulty": "train-easy",
+      "loader": "raw_tarball",
+      "citation": "Saxton et al., 2019 (arXiv:1904.01557)"
+    },
+    "WP": {
+      "name": "GSM8K",
+      "hf_path": "openai/gsm8k",
+      "hf_config": "main",
+      "split": "test",
+      "loader": "huggingface_datasets",
+      "citation": "Cobbe et al., 2021 (arXiv:2110.14168)"
+    },
+    "LOG": {
+      "name": "RuleTaker",
+      "hf_path": "tasksource/ruletaker",
+      "split": "train",
+      "label_mapping": {
+        "entailment": "Yes",
+        "not entailment": "No"
+      },
+      "prompt_template": "{context}\\n\\nQuestion: {question}",
+      "loader": "huggingface_datasets",
+      "citation": "Clark et al., 2020 (arXiv:2002.05867)"
+    }
+  },
+  "tier_counts": {
+    "T1": {
+      "total": 40,
+      "per_category": {
+        "AR": 10,
+        "ALG": 10,
+        "WP": 10,
+        "LOG": 10
+      }
+    },
+    "T2": {
+      "total": 200,
+      "per_category": {
+        "AR": 50,
+        "ALG": 50,
+        "WP": 50,
+        "LOG": 50
+      }
+    },
+    "T3": {
+      "total": 300,
+      "per_category": {
+        "AR": 75,
+        "ALG": 75,
+        "WP": 75,
+        "LOG": 75
+      }
+    }
+  },
+  "filter_exclusion_counts": {
+    "AR": {
+      "non_numeric": 1554165,
+      "duplicate_text": 192448
+    },
+    "ALG": {
+      "non_numeric": 475599,
+      "duplicate_text": 13791
+    },
+    "LOG": {
+      "duplicate_text": 139420
+    }
+  },
+  "loaded_counts": {
+    "AR": 1779165,
+    "ALG": 1524399,
+    "WP": 1319,
+    "LOG": 480152
+  },
+  "loaded_modules": {
+    "AR": [
+      "arithmetic__add_or_sub",
+      "arithmetic__add_sub_multiple",
+      "arithmetic__mul",
+      "arithmetic__div",
+      "arithmetic__mixed"
+    ],
+    "ALG": [
+      "algebra__linear_1d",
+      "algebra__linear_2d",
+      "algebra__polynomial_roots"
+    ],
+    "WP": [
+      "openai/gsm8k/main/test"
+    ],
+    "LOG": [
+      "tasksource/ruletaker/train"
+    ]
+  },
+  "overlap_check": "PASSED",
+  "output_files": [
+    "industry_tier1_40.csv",
+    "industry_tier2_200.csv",
+    "industry_tier3_300.csv"
+  ]
+}
