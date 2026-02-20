@@ -26,12 +26,17 @@ SAFE_OPS = {
 def safe_eval_expr(node):
     """Safely evaluate arithmetic expression AST node"""
     if isinstance(node, ast.Constant):
+        if not isinstance(node.value, (int, float)):
+            raise ValueError(f"Non-numeric constant: {type(node.value)}")
         return node.value
     elif isinstance(node, ast.Num):  # Python <3.8
         return node.n
     elif isinstance(node, ast.BinOp):
         left = safe_eval_expr(node.left)
         right = safe_eval_expr(node.right)
+        # Cap exponents to prevent DoS (e.g. 9**9**9**9)
+        if isinstance(node.op, ast.Pow) and isinstance(right, (int, float)) and abs(right) > 10000:
+            raise ValueError(f"Exponent too large: {right}")
         return SAFE_OPS[type(node.op)](left, right)
     elif isinstance(node, ast.UnaryOp):
         operand = safe_eval_expr(node.operand)
@@ -50,7 +55,7 @@ def safe_eval_arithmetic(expr: str) -> Optional[float]:
         # Evaluate using safe operations only
         result = safe_eval_expr(tree.body)
         return float(result)
-    except:
+    except Exception:
         return None
 
 # Regex patterns
@@ -236,8 +241,8 @@ class RouterV1:
             try:
                 with open(grammar_file, 'r') as f:
                     request["grammar"] = f.read()
-            except:
-                pass  # Grammar file not found, continue without
+            except Exception as e:
+                print(f"WARNING: Grammar file {grammar_file} failed to load: {e}")
 
         # Execute
         t0 = time.time()
@@ -430,7 +435,7 @@ class RouterV1:
         return None
 
     def _extract_last_int(self, text: str) -> str:
-        """Extract last integer from text"""
+        """Extract last integer from text, normalized (no leading zeros)"""
         if not text:
             return ""
         cleaned = text.strip().replace(",", "")
@@ -438,17 +443,23 @@ class RouterV1:
         if not nums:
             return ""
         result = nums[-1].lstrip('+')
-        return result
+        # Normalize through int() to strip leading zeros: "007" -> "7"
+        try:
+            return str(int(result))
+        except ValueError:
+            return result
 
     def _extract_yesno(self, text: str) -> str:
-        """Extract Yes/No from text"""
+        """Extract Yes/No from text using word-boundary matching"""
         if not text:
             return ""
         t = text.lower().strip()
-        yes_pos = t.rfind("yes")
-        no_pos = t.rfind("no")
-        if yes_pos == -1 and no_pos == -1:
+        yes_matches = list(re.finditer(r'\byes\b', t))
+        no_matches = list(re.finditer(r'\bno\b', t))
+        if not yes_matches and not no_matches:
             return ""
+        yes_pos = yes_matches[-1].start() if yes_matches else -1
+        no_pos = no_matches[-1].start() if no_matches else -1
         return "Yes" if yes_pos > no_pos else "No"
 
     def _determine_error_code(self, category: str, pred: str, expected: str,

@@ -32,17 +32,23 @@ def extract_last_int(text: str) -> str:
         return ""
     # Remove leading + sign if present
     result = nums[-1].lstrip('+')
-    return result
+    # Normalize through int() to strip leading zeros: "007" -> "7"
+    try:
+        return str(int(result))
+    except ValueError:
+        return result
 
 def extract_yesno(text: str) -> str:
-    """Extract Yes/No from text"""
+    """Extract Yes/No from text using word-boundary matching"""
     if not text:
         return ""
     t = text.lower().strip()
-    yes_pos = t.rfind("yes")
-    no_pos = t.rfind("no")
-    if yes_pos == -1 and no_pos == -1:
+    yes_matches = list(re.finditer(r'\byes\b', t))
+    no_matches = list(re.finditer(r'\bno\b', t))
+    if not yes_matches and not no_matches:
         return ""
+    yes_pos = yes_matches[-1].start() if yes_matches else -1
+    no_pos = no_matches[-1].start() if no_matches else -1
     return "Yes" if yes_pos > no_pos else "No"
 
 def determine_error_code(category: str, pred: str, expected: str, timed_out: bool, parse_success: bool) -> str:
@@ -268,7 +274,7 @@ def main():
                 "correct": int(correct),
 
                 # Runtime
-                "latency_ms_total": f"{latency_ms:.3f}",
+                "total_latency_ms": f"{latency_ms:.3f}",
                 "timeout_flag": int(timed_out),
 
                 # Energy (placeholders - filled after run completes)
@@ -391,7 +397,7 @@ def main():
     fieldnames = [
         "run_id", "timestamp", "prompt_id", "dataset", "category", "system", "repeat_idx",
         "answer_raw", "answer_parsed", "parse_success", "ground_truth", "correct",
-        "latency_ms_total", "timeout_flag",
+        "total_latency_ms", "timeout_flag",
         "energy_start_mwh", "energy_end_mwh", "energy_delta_mwh", "energy_delta_j", "energy_per_prompt_mwh", "energy_method",
         "error_code",
         "model_name", "quantization", "temperature", "top_p", "max_tokens", "timeout_sec", "seed", "config_version"
@@ -413,7 +419,7 @@ def main():
     num_inferences = len(trials)
     accuracy = correct_count / total if total > 0 else 0
 
-    latencies = [float(t['latency_ms_total']) for t in trials if not t['timeout_flag']]
+    latencies = [float(t['total_latency_ms']) for t in trials if not t['timeout_flag']]
     median_lat = 0
     if latencies:
         latencies.sort()

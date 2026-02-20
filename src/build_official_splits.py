@@ -218,7 +218,12 @@ class SplitBuilder:
                 answer = pair['answer']
 
                 # Deterministic filter: numeric answers only (Section 3.7)
-                answer_clean = answer.replace(',', '').replace(' ', '')
+                # Reject multi-value answers (e.g. polynomial roots "-1, 1")
+                # BEFORE stripping commas, to avoid corrupting them into "-11"
+                if ',' in answer:
+                    self.stats['filtered'][category]['non_numeric'] += 1
+                    continue
+                answer_clean = answer.replace(' ', '')
                 if not answer_clean.lstrip('-').isdigit():
                     self.stats['filtered'][category]['non_numeric'] += 1
                     continue

@@ -33,16 +33,23 @@ def extract_last_int(text: str) -> str:
     if not nums:
         return ""
     result = nums[-1].lstrip('+')
-    return result
+    # Normalize through int() to strip leading zeros: "007" -> "7"
+    try:
+        return str(int(result))
+    except ValueError:
+        return result
 
 def extract_yesno(text: str) -> str:
+    """Extract Yes/No from text using word-boundary matching"""
     if not text:
         return ""
     t = text.lower().strip()
-    yes_pos = t.rfind("yes")
-    no_pos = t.rfind("no")
-    if yes_pos == -1 and no_pos == -1:
+    yes_matches = list(re.finditer(r'\byes\b', t))
+    no_matches = list(re.finditer(r'\bno\b', t))
+    if not yes_matches and not no_matches:
         return ""
+    yes_pos = yes_matches[-1].start() if yes_matches else -1
+    no_pos = no_matches[-1].start() if no_matches else -1
     return "Yes" if yes_pos > no_pos else "No"
 
 def determine_error_code(category: str, pred: str, expected: str, timed_out: bool, parse_success: bool) -> str:
@@ -254,7 +261,7 @@ def main():
                 "prompt_id": prompt_id,
                 "dataset": dataset,
                 "category": category,
-                "split": "tier1_mini",
+                "split": os.path.splitext(os.path.basename(args.csv))[0],
                 "system": system_name,
                 "repeat_idx": repeat_idx,
 

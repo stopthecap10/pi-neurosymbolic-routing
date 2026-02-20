@@ -179,7 +179,7 @@ def main():
                 "prompt_id": prompt_id,
                 "dataset": dataset,
                 "category": category,
-                "split": "tier1_mini",
+                "split": os.path.splitext(os.path.basename(args.csv))[0],
                 "system": system_name,
                 "repeat_idx": repeat_idx,
 
