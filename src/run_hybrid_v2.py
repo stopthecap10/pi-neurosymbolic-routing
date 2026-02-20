@@ -5,6 +5,7 @@ Hybrid V2 Runner - Enhanced Router with A4 Symbolic Solver
 
 import argparse
 import csv
+import os
 import sys
 import time
 from datetime import datetime
