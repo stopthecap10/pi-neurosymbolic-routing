@@ -58,8 +58,12 @@ def compute_metrics(trials):
 
 def main():
     # Input files
-    base_dir = Path(__file__).parent.parent
-    output_dir = base_dir / "outputs"
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out_dir", default="outputs/official", help="Directory with baseline CSVs")
+    args = ap.parse_args()
+
+    output_dir = Path(args.out_dir)
 
     configs = {
         'v1_a1_grammar': output_dir / 'v1_a1_grammar.csv',
@@ -133,7 +137,7 @@ def main():
 
     summary_md = output_dir / 't1_baseline_summary.md'
     with open(summary_md, 'w') as f:
-        f.write("# V1 Baseline Matrix Summary - Tier 1 Mini\n\n")
+        f.write("# V1 Baseline Matrix Summary - Official Tier 1\n\n")
         f.write("**Generated**: Automatically from baseline CSV files\n\n")
         f.write("## Overall Results by System\n\n")
         f.write("| System | Accuracy | Median Latency | Median Energy | Timeout Rate | Parse Fail Rate |\n")
@@ -233,14 +237,107 @@ def main():
                     })
 
     print(f"✅ Category breakdown written to: {category_csv}")
+
+    # ========================================================================
+    # GENERATE v1_decisions_for_hybrid.md
+    # ========================================================================
+
+    decisions_md = output_dir / 'v1_decisions_for_hybrid.md'
+    with open(decisions_md, 'w') as f:
+        f.write("# V1 Routing Decisions for Hybrid System\n\n")
+        f.write("**Auto-generated from T1 baseline matrix results.**\n\n")
+
+        # Pick best baseline for main comparison
+        best_name, best_m = max(system_metrics.items(), key=lambda x: x[1]['accuracy'])
+        f.write(f"## Main Comparison Baseline\n\n")
+        f.write(f"- **Selected**: `{best_name}` ({best_m['accuracy']*100:.1f}% accuracy, "
+                f"{best_m['median_latency_ms']:.0f} ms median latency)\n\n")
+
+        # Per-category decisions
+        f.write("## Per-Category Routing Decisions\n\n")
+        f.write("| Category | Primary Action | Grammar | Fallback | Rationale |\n")
+        f.write("|----------|---------------|---------|----------|----------|\n")
+
+        # For each category, find best baseline config and derive decisions
+        cat_decisions = {}
+        for cat in ['AR', 'ALG', 'WP', 'LOG']:
+            best_for_cat = max(
+                [(name, category_results[name][cat]) for name in configs.keys()],
+                key=lambda x: x[1]['accuracy'] if x[1] else 0
+            )
+            cat_best_name = best_for_cat[0]
+            cat_best_m = best_for_cat[1]
+
+            # Derive action, grammar from best baseline name
+            uses_a1 = 'a1' in cat_best_name
+            uses_grammar = 'grammar' in cat_best_name and 'nogrammar' not in cat_best_name
+
+            if cat == 'AR':
+                action = 'A5'
+                grammar = False
+                fallback = 'A1 → A2'
+                rationale = (f"Symbolic direct (A5) for speed; baseline best={cat_best_name} "
+                            f"({cat_best_m['accuracy']*100:.0f}%)")
+            elif cat == 'ALG':
+                action = 'A1' if uses_a1 else 'A2'
+                grammar = uses_grammar
+                fallback = 'A2' if action == 'A1' else 'None'
+                rationale = f"Neural; baseline best={cat_best_name} ({cat_best_m['accuracy']*100:.0f}%)"
+            elif cat == 'WP':
+                action = 'A1' if uses_a1 else 'A2'
+                grammar = uses_grammar
+                fallback = 'A2' if action == 'A1' else 'None'
+                rationale = f"Neural; baseline best={cat_best_name} ({cat_best_m['accuracy']*100:.0f}%)"
+            else:  # LOG
+                action = 'A1'
+                grammar = uses_grammar
+                fallback = 'A2'
+                rationale = f"Fast yes/no; baseline best={cat_best_name} ({cat_best_m['accuracy']*100:.0f}%)"
+
+            cat_decisions[cat] = {
+                'action': action,
+                'grammar_enabled': grammar,
+                'fallback': fallback,
+            }
+
+            f.write(f"| {cat} | {action} | {'Yes' if grammar else 'No'} | {fallback} | {rationale} |\n")
+
+        f.write("\n## Routing Map (YAML format for hybrid runner)\n\n")
+        f.write("```yaml\n")
+        f.write("category_routes:\n")
+        for cat in ['AR', 'ALG', 'WP', 'LOG']:
+            d = cat_decisions[cat]
+            f.write(f"  {cat}:\n")
+            f.write(f"    action: {d['action']}\n")
+            f.write(f"    grammar_enabled: {str(d['grammar_enabled']).lower()}\n")
+        f.write("max_escalations: 1\n")
+        f.write("```\n\n")
+
+        f.write("## Grammar Policy\n\n")
+        for cat in ['AR', 'ALG', 'WP', 'LOG']:
+            d = cat_decisions[cat]
+            g_str = "grammar-constrained" if d['grammar_enabled'] else "no grammar"
+            f.write(f"- **{cat}**: {g_str}\n")
+
+        f.write("\n## Fallback Order\n\n")
+        f.write("- **AR**: A5 (symbolic) → A1 (neural 12-tok) → A2 (neural 30-tok)\n")
+        f.write("- **ALG**: A1 (neural) → A2 (extended neural)\n")
+        f.write("- **WP**: A1 (neural) → A2 (extended neural)\n")
+        f.write("- **LOG**: A1 (strict yes/no) → A2 (extended)\n")
+
+    print(f"✅ Decisions written to: {decisions_md}")
+
     print("\n" + "="*60)
     print("SUMMARY GENERATION COMPLETE")
     print("="*60)
-    print(f"\nReview outputs:")
+    print(f"\nOutputs:")
     print(f"  1. {summary_md}")
     print(f"  2. {category_csv}")
-    print("\nNext: Create routing decisions file:")
-    print("  outputs/v1_decisions_for_hybrid.md")
+    print(f"  3. {decisions_md}")
+    print(f"\nNext: Run Hybrid V1:")
+    print(f"  python3 src/run_hybrid_v1.py --config configs/run_tier1.yaml \\")
+    print(f"    --csv data/splits/industry_tier1_40.csv --split_role official \\")
+    print(f"    --out_trials {output_dir}/hybrid_v1.csv")
 
 if __name__ == "__main__":
     main()
