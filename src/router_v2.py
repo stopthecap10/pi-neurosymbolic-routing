@@ -531,30 +531,63 @@ class RouterV2:
             return ("", False, False)
 
     def _extract_arithmetic_expression(self, prompt_text: str) -> Optional[str]:
-        """Extract arithmetic expression from prompt text"""
-        text = prompt_text.lower()
+        """Extract arithmetic expression from prompt text.
 
-        # Extract all numbers first
+        Strategy:
+        1. For each non-instruction line, try stripping known word prefixes and
+           evaluating the remaining expression directly.  Handles complex multi-step
+           expressions like ((-32)/6 - -2)/(104/156).
+        2. Fall back to simple 2-number pattern matching for word-form prompts.
+        """
+        # Common instruction prefixes to strip before the expression
+        PREFIXES = [
+            r'^what\s+is\s+the\s+value\s+of\s+',
+            r'^what\s+is\s+',
+            r'^calculate\s+',
+            r'^compute\s+',
+            r'^evaluate\s+',
+            r'^find\s+',
+            r'^simplify\s+',
+        ]
+        # Lines that are part of the instruction wrapper, not the expression
+        SKIP_PATTERNS = re.compile(
+            r'^(answer|answer with|answer with only|answer:)\b', re.IGNORECASE
+        )
+
+        # Step 1: Try each line of the prompt
+        for raw_line in prompt_text.splitlines():
+            line = raw_line.strip().rstrip('?.').strip()
+            if not line or SKIP_PATTERNS.match(line):
+                continue
+
+            # Try evaluating the line as-is (bare expression)
+            if safe_eval_arithmetic(line) is not None:
+                return line
+
+            # Try stripping known word prefixes
+            for prefix_pat in PREFIXES:
+                stripped = re.sub(prefix_pat, '', line, flags=re.IGNORECASE).strip().rstrip('?.').strip()
+                if stripped and stripped != line:
+                    if safe_eval_arithmetic(stripped) is not None:
+                        return stripped
+
+        # Step 2: Fallback — word-form / 2-number patterns
+        text = prompt_text.lower()
         nums = FLOAT_RE.findall(prompt_text)
 
-        # Pattern: "X / Y" or "X divided by Y"
-        if ('/' in text) or ('divided by' in text) or ('divide' in text):
+        if ('divided by' in text) or ('divide' in text):
             if len(nums) >= 2:
                 return f"{nums[0]} / {nums[1]}"
 
-        # Pattern: "X + Y" or "X plus Y"
-        if ('+' in text) or ('plus' in text):
+        if 'plus' in text:
             if len(nums) >= 2:
                 return f"{nums[0]} + {nums[1]}"
 
-        # Pattern: "X * Y" or "X times Y" or "X multiplied by Y"
-        if ('*' in text) or ('times' in text) or ('multiplied by' in text):
+        if ('times' in text) or ('multiplied by' in text):
             if len(nums) >= 2:
                 return f"{nums[0]} * {nums[1]}"
 
-        # Pattern: "X - Y" or "X minus Y"
-        # Look for subtraction operator (not a negative sign at start of number)
-        if (' - ' in prompt_text) or ('minus' in text):
+        if 'minus' in text:
             if len(nums) >= 2:
                 return f"{nums[0]} - {nums[1]}"
 
