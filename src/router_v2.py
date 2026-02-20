@@ -72,6 +72,39 @@ def safe_eval_arithmetic(expr: str) -> Optional[float]:
 INT_RE = re.compile(r"[-+]?\d+")
 FLOAT_RE = re.compile(r"[-+]?\d+\.?\d*")
 
+# P2_numeric_robust parser (matches run_v1_baseline_matrix.py)
+NUM_TOKEN_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?")
+
+def parse_numeric_robust(text: str) -> str:
+    """Extract the LAST valid numeric token from text.
+    Supports integers, decimals, simple fractions. Normalizes integral values."""
+    if not text:
+        return ""
+    cleaned = text.strip().replace(",", "")
+    tokens = NUM_TOKEN_RE.findall(cleaned)
+    if not tokens:
+        return ""
+    raw_token = tokens[-1].lstrip('+')
+    try:
+        if '/' in raw_token:
+            parts = raw_token.split('/')
+            if len(parts) == 2:
+                num = float(parts[0])
+                den = float(parts[1])
+                if den == 0:
+                    return ""
+                value = num / den
+            else:
+                return ""
+        else:
+            value = float(raw_token)
+        if abs(value - round(value)) < 1e-9:
+            return str(int(round(value)))
+        else:
+            return str(value)
+    except (ValueError, ZeroDivisionError):
+        return ""
+
 class RouterV2:
     """Enhanced router for Hybrid V2 with A4 support"""
 
@@ -301,11 +334,11 @@ class RouterV2:
         if latency_ms >= self.config['timeout_sec'] * 1000:
             timed_out = True
 
-        # Parse answer
+        # Parse answer (P2_numeric_robust for numeric, word-boundary for yesno)
         if is_log:
             answer_parsed = self._extract_yesno(content)
         else:
-            answer_parsed = self._extract_last_int(content)
+            answer_parsed = parse_numeric_robust(content)
 
         parse_success = (answer_parsed != "")
 
@@ -389,7 +422,9 @@ class RouterV2:
         # Step 1: Extract BASE prompt (remove instruction suffix to avoid template collision)
         # prompt_text format: "{base_prompt}\n{instruction}\nAnswer:"
         # We need just the base prompt for clean extraction
-        base_prompt = prompt_text.split('\nAnswer with only')[0].strip()
+        # Strip instruction suffix - handle both old and new templates
+        base_prompt = prompt_text.split('\nReturn only')[0].strip()
+        base_prompt = base_prompt.split('\nAnswer with only')[0].strip()
 
         # Build CLEAN extraction prompt (no collision with answer template)
         # STRICT: Only ask for equation, short generation
@@ -556,7 +591,7 @@ class RouterV2:
         ]
         # Lines that are part of the instruction wrapper, not the expression
         SKIP_PATTERNS = re.compile(
-            r'^(answer|answer with|answer with only|answer:)\b', re.IGNORECASE
+            r'^(answer|answer with|answer with only|answer:|return only)\b', re.IGNORECASE
         )
 
         # Step 1: Try each line of the prompt

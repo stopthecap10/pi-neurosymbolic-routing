@@ -14,6 +14,9 @@ import yaml
 
 from router_v1 import RouterV1
 
+PARSER_VERSION = "P2_numeric_robust"
+PROMPT_TEMPLATE_VERSION = "PT2_frozen"
+
 def load_config(config_path):
     """Load YAML config"""
     with open(config_path, 'r') as f:
@@ -148,15 +151,15 @@ def main():
 
         is_log = (category == "LOG")
 
-        # FROZEN prompt template
+        # FROZEN prompt template (PT2_frozen)
         # Official CSVs (fm_v1.1+) bake the full instruction into LOG prompt_text.
-        # Fall back to appending for legacy CSVs that don't.
+        # Detect and don't double-wrap.
         if is_log and base_prompt.rstrip().endswith("Answer:"):
             prompt_text = base_prompt
         elif is_log:
-            prompt_text = f"{base_prompt}\nAnswer with only Yes or No.\nAnswer:"
+            prompt_text = f"{base_prompt}\nReturn only Yes or No.\nAnswer:"
         else:
-            prompt_text = f"{base_prompt}\nAnswer with only the final number.\nAnswer:"
+            prompt_text = f"{base_prompt}\nReturn only the final numeric answer.\nAnswer:"
 
         for repeat_idx in range(1, config['repeats'] + 1):
             # Route through Hybrid V1
@@ -179,6 +182,10 @@ def main():
                 "system": system_name,
                 "repeat_idx": repeat_idx,
 
+                # Version tracking
+                "prompt_template_version": PROMPT_TEMPLATE_VERSION,
+                "parser_version": PARSER_VERSION,
+
                 # Routing info
                 "route_chosen": result['final_source'],
                 "route_attempt_sequence": result['route_attempt_sequence'],
@@ -187,7 +194,7 @@ def main():
                 "final_answer_source": result['final_source'],
 
                 # Output
-                "answer_raw": result['answer_raw'].replace("\n", "\\n")[:200],
+                "answer_raw": result['answer_raw'].replace("\n", "\\n")[:500],
                 "answer_parsed": result['answer_final'],
                 "parse_success": int(result['parse_success']),
                 "ground_truth": ground_truth,
@@ -266,6 +273,7 @@ def main():
     # Write trials CSV
     fieldnames = [
         "run_id", "timestamp", "prompt_id", "dataset", "category", "split", "system", "repeat_idx",
+        "prompt_template_version", "parser_version",
         "route_chosen", "route_attempt_sequence", "escalations_count", "decision_reason", "final_answer_source",
         "answer_raw", "answer_parsed", "parse_success", "ground_truth", "correct",
         "total_latency_ms", "timeout_flag",
