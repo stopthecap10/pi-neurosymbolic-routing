@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pi-neuro-routing"
+version = "1.0.0"
+description = "Neurosymbolic routing for LLMs on edge devices"
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Avyay Sadhu"}
+]
+keywords = ["llm", "neuro-symbolic", "edge-computing", "raspberry-pi", "phi-2", "sympy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "sympy==1.14.0",
+    "pandas==2.3.3",
+    "numpy==2.4.0",
+    "requests==2.32.5",
+    "python-dateutil",
+    "pytz",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+]
+
+[project.scripts]
+pi-neuro-run = "pi_neuro_routing.cli.run_experiment:main"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | archive
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
