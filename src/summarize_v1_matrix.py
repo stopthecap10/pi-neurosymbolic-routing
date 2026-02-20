@@ -325,6 +325,43 @@ def main():
         f.write("- **WP**: A1 (neural) → A2 (extended neural)\n")
         f.write("- **LOG**: A1 (strict yes/no) → A2 (extended)\n")
 
+        # ================================================================
+        # Token Budget Decision (Data-Driven)
+        # ================================================================
+        f.write("\n## Token Budget Decision (Data-Driven)\n\n")
+        f.write("Compare A1 (12 tok) vs A2 (30 tok) per category on official T1.\n")
+        f.write("Rule: If A2 improves accuracy by >=3 pp over A1, allow A2 as default or fallback.\n\n")
+        f.write("| Category | A1 Grammar | A1 No-Grammar | A2 Grammar | A2 No-Grammar | Best A1 | Best A2 | Delta (A2-A1) | Decision |\n")
+        f.write("|----------|-----------|--------------|-----------|--------------|---------|---------|--------------|----------|\n")
+
+        for cat in ['AR', 'ALG', 'WP', 'LOG']:
+            a1g = category_results['v1_a1_grammar'].get(cat)
+            a1n = category_results['v1_a1_nogrammar'].get(cat)
+            a2g = category_results['v1_a2_grammar'].get(cat)
+            a2n = category_results['v1_a2_nogrammar'].get(cat)
+
+            a1g_acc = a1g['accuracy'] * 100 if a1g else 0
+            a1n_acc = a1n['accuracy'] * 100 if a1n else 0
+            a2g_acc = a2g['accuracy'] * 100 if a2g else 0
+            a2n_acc = a2n['accuracy'] * 100 if a2n else 0
+
+            best_a1 = max(a1g_acc, a1n_acc)
+            best_a2 = max(a2g_acc, a2n_acc)
+            delta = best_a2 - best_a1
+
+            if delta >= 3.0:
+                decision = "A2 justified (>=3 pp gain)"
+            else:
+                decision = "Keep A1 (cost efficient)"
+
+            f.write(f"| {cat} | {a1g_acc:.1f}% | {a1n_acc:.1f}% | {a2g_acc:.1f}% | {a2n_acc:.1f}% "
+                    f"| {best_a1:.1f}% | {best_a2:.1f}% | {delta:+.1f} pp | {decision} |\n")
+
+        f.write("\n### Interpretation\n\n")
+        f.write("- Categories where A2 gains >=3 pp: A2 should be the primary action or an active fallback.\n")
+        f.write("- Categories where A2 gains <3 pp: A1 is sufficient; A2 available only as timeout/parse-fail fallback.\n")
+        f.write("- AR is always A5 (symbolic) regardless of A1/A2 comparison.\n")
+
     print(f"✅ Decisions written to: {decisions_md}")
 
     print("\n" + "="*60)
