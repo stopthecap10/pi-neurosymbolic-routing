@@ -15,7 +15,11 @@ import yaml
 from router_v1 import RouterV1
 
 PARSER_VERSION = "P2_numeric_robust"
-PROMPT_TEMPLATE_VERSION = "PT2_frozen"
+PROMPT_TEMPLATE_VERSION = "PT3_phi_chat"
+
+# System messages for Phi chat format
+SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
+SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
 
 def load_config(config_path):
     """Load YAML config"""
@@ -151,15 +155,18 @@ def main():
 
         is_log = (category == "LOG")
 
-        # FROZEN prompt template (PT2_frozen)
-        # Official CSVs (fm_v1.1+) bake the full instruction into LOG prompt_text.
-        # Detect and don't double-wrap.
-        if is_log and base_prompt.rstrip().endswith("Answer:"):
-            prompt_text = base_prompt
-        elif is_log:
-            prompt_text = f"{base_prompt}\nReturn only Yes or No.\nAnswer:"
-        else:
-            prompt_text = f"{base_prompt}\nReturn only the final numeric answer.\nAnswer:"
+        # Build Phi chat template prompt (PT3_phi_chat)
+        # Strip any existing instruction suffix from CSV
+        question = base_prompt
+        lines_q = question.rstrip().split('\n')
+        while lines_q and lines_q[-1].strip() in ("Answer:", ""):
+            lines_q.pop()
+        while lines_q and lines_q[-1].strip().startswith("Return only"):
+            lines_q.pop()
+        question = '\n'.join(lines_q).strip()
+
+        system_msg = SYSTEM_MSG_YESNO if is_log else SYSTEM_MSG_NUMERIC
+        prompt_text = f"<|system|>{system_msg}<|end|><|user|>{question}<|end|><|assistant|>"
 
         for repeat_idx in range(1, config['repeats'] + 1):
             # Route through Hybrid V1

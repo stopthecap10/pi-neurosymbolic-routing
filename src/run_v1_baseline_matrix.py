@@ -97,27 +97,42 @@ def extract_yesno(text: str) -> str:
 # ============================================================
 # PROMPT TEMPLATES (FROZEN)
 # ============================================================
-PROMPT_TEMPLATE_VERSION = "PT2_frozen"
+PROMPT_TEMPLATE_VERSION = "PT3_phi_chat"
 
-# AR / ALG / WP wrapper
-NUMERIC_WRAPPER = "{source_question}\nReturn only the final numeric answer.\nAnswer:"
-
-# LOG wrapper (already baked into official CSVs, but fallback for legacy)
-LOG_WRAPPER = "{source_question}\nReturn only Yes or No.\nAnswer:"
+# System message for Phi chat format
+SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
+SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
 
 
 def build_prompt(base_prompt: str, category: str) -> str:
-    """Build the full prompt with frozen wrapper."""
+    """Build the full prompt using Phi-4 chat template format.
+
+    Format: <|system|>{system}<|end|><|user|>{question}<|end|><|assistant|>
+    """
     is_log = (category == "LOG")
 
-    # Official CSVs (fm_v1.1+) bake the full instruction into LOG prompt_text.
-    # Detect this and don't double-wrap.
-    if is_log and base_prompt.rstrip().endswith("Answer:"):
-        return base_prompt
-    elif is_log:
-        return LOG_WRAPPER.format(source_question=base_prompt)
+    # Strip any existing instruction suffix from official CSVs
+    # (e.g. "...\nReturn only Yes or No.\nAnswer:")
+    question = base_prompt
+    for suffix in ["\nReturn only Yes or No.\nAnswer:",
+                   "\nReturn only the final numeric answer.\nAnswer:"]:
+        if question.rstrip().endswith(suffix.strip()):
+            question = question[:question.rfind(suffix.split('\n')[1].strip().split()[0]) - 1]
+            break
+    # Simpler approach: strip trailing "Answer:" and instruction lines
+    lines = question.rstrip().split('\n')
+    while lines and lines[-1].strip() in ("Answer:", ""):
+        lines.pop()
+    while lines and lines[-1].strip().startswith("Return only"):
+        lines.pop()
+    question = '\n'.join(lines).strip()
+
+    if is_log:
+        system_msg = SYSTEM_MSG_YESNO
     else:
-        return NUMERIC_WRAPPER.format(source_question=base_prompt)
+        system_msg = SYSTEM_MSG_NUMERIC
+
+    return f"<|system|>{system_msg}<|end|><|user|>{question}<|end|><|assistant|>"
 
 
 # ============================================================
@@ -126,6 +141,13 @@ def build_prompt(base_prompt: str, category: str) -> str:
 ACTION_BUDGETS = {
     "A1": 12,  # Short decode
     "A2": 30,  # Extended decode
+}
+
+# Client-side timeouts per action (seconds)
+# Must be long enough for Pi 4 prefill + decode
+ACTION_TIMEOUTS = {
+    "A1": 45,
+    "A2": 60,
 }
 
 
@@ -154,6 +176,53 @@ def determine_error_code(category: str, pred: str, expected: str,
 # ============================================================
 # INFERENCE
 # ============================================================
+def check_server_health(server_url, timeout=10):
+    """Check if llama.cpp server is healthy before starting run."""
+    # Derive health URL from completion URL
+    base_url = server_url.rsplit('/', 1)[0]
+    health_url = f"{base_url}/health"
+
+    try:
+        r = requests.get(health_url, timeout=timeout)
+        if r.status_code == 200:
+            data = r.json()
+            status = data.get("status", "unknown")
+            if status == "ok":
+                print(f"[health] Server healthy: {health_url}")
+                return True
+            else:
+                print(f"[health] Server status: {status}")
+                return status != "error"
+        else:
+            print(f"[health] Server returned HTTP {r.status_code}")
+            return False
+    except Exception as e:
+        print(f"[health] Server unreachable: {e}")
+        return False
+
+
+def run_warmup(server_url, timeout_sec):
+    """Send a trivial warmup prompt to prime KV cache and model loading."""
+    print("[warmup] Sending warmup prompt: '2+2='")
+    warmup_req = {
+        "prompt": "2+2=",
+        "n_predict": 4,
+        "temperature": 0.0,
+        "seed": 42,
+    }
+    t0 = time.time()
+    try:
+        r = requests.post(server_url, json=warmup_req, timeout=(10.0, float(timeout_sec)))
+        j = r.json()
+        content = j.get("content", "")
+        latency_ms = (time.time() - t0) * 1000
+        print(f"[warmup] Response: {repr(content[:40])} in {latency_ms:.0f}ms")
+        return True
+    except Exception as e:
+        print(f"[warmup] FAILED: {e}")
+        return False
+
+
 def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, grammar_file):
     """Run single inference - FROZEN params."""
     request = {
@@ -162,6 +231,7 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
         "temperature": 0.0,
         "top_p": 1.0,
         "seed": 42,
+        "stop": ["\n", "<|end|>", "<|endoftext|>"],
     }
 
     if use_grammar and grammar_file:
@@ -175,6 +245,10 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
     t0 = time.time()
     content = ""
     timed_out = False
+    http_status = None
+    exception_type = None
+    tokens_predicted = None
+    stop_type = None
 
     try:
         r = requests.post(
@@ -182,11 +256,19 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
             json=request,
             timeout=(10.0, float(timeout_sec)),
         )
+        http_status = r.status_code
         j = r.json()
         content = j.get("content", "") or ""
+        tokens_predicted = j.get("tokens_predicted", None)
+        stop_type = j.get("stop_type", None)
     except requests.exceptions.Timeout:
         timed_out = True
+        exception_type = "Timeout"
+    except requests.exceptions.ConnectionError:
+        exception_type = "ConnectionError"
+        content = ""
     except Exception as e:
+        exception_type = type(e).__name__
         print(f"ERROR: {e}", file=sys.stderr)
         content = ""
 
@@ -195,7 +277,15 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
     if latency_ms >= timeout_sec * 1000:
         timed_out = True
 
-    return content, latency_ms, timed_out
+    diagnostics = {
+        "http_status": http_status,
+        "exception_type": exception_type,
+        "tokens_predicted": tokens_predicted,
+        "stop_type": stop_type,
+        "prompt_len_chars": len(prompt_text),
+    }
+
+    return content, latency_ms, timed_out, diagnostics
 
 
 # ============================================================
@@ -270,6 +360,8 @@ def run_debug_mode(args, config, prompts, debug_ids):
 
     print(f"DEBUG MODE: Running {len(debug_prompts)} prompts × 1 repeat\n")
 
+    timeout_sec = ACTION_TIMEOUTS[args.action]
+
     lines = []
     for prompt_row in debug_prompts:
         prompt_id = prompt_row['prompt_id']
@@ -285,10 +377,10 @@ def run_debug_mode(args, config, prompts, debug_ids):
         if args.grammar:
             grammar_file = config.get('grammar_yesno' if is_log else 'grammar_num')
 
-        content, latency_ms, timed_out = run_inference(
+        content, latency_ms, timed_out, diag = run_inference(
             prompt_text=prompt_text,
             server_url=config['server_url'],
-            timeout_sec=config['timeout_sec'],
+            timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
             grammar_file=grammar_file
@@ -313,7 +405,7 @@ def run_debug_mode(args, config, prompts, debug_ids):
             f"  source_record_id:      {prompt_row.get('source_record_id', 'N/A')}",
             f"  grammar_enabled:       {args.grammar}",
             f"  max_tokens_budget:     {n_pred}",
-            f"  timeout_sec:           {config['timeout_sec']}",
+            f"  timeout_sec:           {timeout_sec}",
             f"  prompt_template_ver:   {PROMPT_TEMPLATE_VERSION}",
             f"  parser_version:        {PARSER_VERSION}",
             "",
@@ -337,6 +429,13 @@ def run_debug_mode(args, config, prompts, debug_ids):
             f"  total_latency_ms:      {latency_ms:.1f}",
             f"  timed_out:             {timed_out}",
             f"  correct:               {answer_parsed == ground_truth}",
+            "",
+            f"  --- E7 Diagnostics ---",
+            f"  http_status:           {diag['http_status']}",
+            f"  exception_type:        {diag['exception_type']}",
+            f"  tokens_predicted:      {diag['tokens_predicted']}",
+            f"  stop_type:             {diag['stop_type']}",
+            f"  prompt_len_chars:      {diag['prompt_len_chars']}",
             "",
         ]
 
@@ -366,6 +465,7 @@ def run_smoke_test(args, config, prompts):
             seen_cats.add(cat)
             smoke_prompts.append(p)
 
+    timeout_sec = ACTION_TIMEOUTS[args.action]
     print(f"SMOKE TEST: {len(smoke_prompts)} prompts × 1 repeat\n")
 
     trials = []
@@ -383,10 +483,10 @@ def run_smoke_test(args, config, prompts):
         if args.grammar:
             grammar_file = config.get('grammar_yesno' if is_log else 'grammar_num')
 
-        content, latency_ms, timed_out = run_inference(
+        content, latency_ms, timed_out, diag = run_inference(
             prompt_text=prompt_text,
             server_url=config['server_url'],
-            timeout_sec=config['timeout_sec'],
+            timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
             grammar_file=grammar_file
@@ -439,6 +539,278 @@ def run_smoke_test(args, config, prompts):
 
 
 # ============================================================
+# DEBUG QUICK MODE
+# ============================================================
+def run_debug_quick(args, config, prompts):
+    """Debug run: 2 prompts per category, 1 repeat, with full diagnostics."""
+    # Pick first 2 prompts per category
+    cat_counts = {}
+    selected = []
+    for p in prompts:
+        cat = p['category']
+        cat_counts.setdefault(cat, 0)
+        if cat_counts[cat] < 2:
+            selected.append(p)
+            cat_counts[cat] += 1
+
+    timeout_sec = ACTION_TIMEOUTS[args.action]
+    n_prompts = len(selected)
+    cats = sorted(set(p['category'] for p in selected))
+    print(f"DEBUG QUICK: {n_prompts} prompts (2/category) x 1 repeat")
+    print(f"  Categories: {', '.join(cats)}")
+    print(f"  Timeout: {timeout_sec}s (action {args.action})")
+    print()
+
+    # Health check + warmup
+    if not check_server_health(config['server_url']):
+        print("FATAL: Server health check failed.")
+        sys.exit(1)
+    run_warmup(config['server_url'], timeout_sec)
+    print()
+
+    trials = []
+    for prompt_row in selected:
+        prompt_id = prompt_row['prompt_id']
+        category = prompt_row['category']
+        base_prompt = prompt_row['prompt_text']
+        ground_truth = prompt_row['ground_truth']
+        is_log = (category == "LOG")
+
+        prompt_text = build_prompt(base_prompt, category)
+        n_pred = 6 if is_log else ACTION_BUDGETS[args.action]
+
+        grammar_file = None
+        if args.grammar:
+            grammar_file = config.get('grammar_yesno' if is_log else 'grammar_num')
+
+        content, latency_ms, timed_out, diag = run_inference(
+            prompt_text=prompt_text,
+            server_url=config['server_url'],
+            timeout_sec=timeout_sec,
+            n_pred=n_pred,
+            use_grammar=args.grammar,
+            grammar_file=grammar_file
+        )
+
+        if is_log:
+            answer_parsed = extract_yesno(content)
+        else:
+            answer_parsed = parse_numeric_robust(content)
+
+        parse_success = (answer_parsed != "")
+        correct = (answer_parsed == ground_truth)
+        error_code = determine_error_code(
+            category, answer_parsed, ground_truth, timed_out, parse_success
+        )
+
+        # Full diagnostic output
+        print(f"{'=' * 60}")
+        print(f"  {prompt_id} | {category} | exp={ground_truth}")
+        print(f"  prompt_len={diag['prompt_len_chars']} chars | n_pred={n_pred}")
+        print(f"  http={diag['http_status']} | tokens={diag['tokens_predicted']} "
+              f"| stop={diag['stop_type']} | lat={latency_ms:.0f}ms")
+        print(f"  raw={repr(content[:120])}")
+        print(f"  parsed={repr(answer_parsed)} | correct={correct} | err={error_code}")
+        if timed_out:
+            print(f"  >>> TIMEOUT! exception={diag['exception_type']}")
+        print()
+
+        trials.append({
+            "prompt_id": prompt_id, "category": category,
+            "error_code": error_code, "correct": int(correct),
+            "timeout_flag": int(timed_out), "latency_ms": f"{latency_ms:.0f}",
+            "answer_parsed": answer_parsed, "ground_truth": ground_truth,
+            "http_status": diag['http_status'],
+            "tokens_predicted": diag['tokens_predicted'],
+            "stop_type": diag['stop_type'],
+            "prompt_len_chars": diag['prompt_len_chars'],
+            "answer_raw": content.replace("\n", "\\n")[:200],
+        })
+
+    # Per-category summary
+    print(f"{'=' * 60}")
+    print("DEBUG QUICK SUMMARY:")
+    for cat in cats:
+        cat_trials = [t for t in trials if t['category'] == cat]
+        n = len(cat_trials)
+        ok = sum(t['correct'] for t in cat_trials)
+        e7 = sum(t['timeout_flag'] for t in cat_trials)
+        print(f"  {cat}: {ok}/{n} correct, {e7}/{n} E7 timeouts")
+
+    total_ok = sum(t['correct'] for t in trials)
+    total_e7 = sum(t['timeout_flag'] for t in trials)
+    print(f"  TOTAL: {total_ok}/{n_prompts} correct, {total_e7}/{n_prompts} E7 timeouts")
+
+    if total_e7 > 0:
+        print(f"\n  WARNING: {total_e7} timeouts detected. Check server and prompt lengths.")
+    else:
+        print(f"\n  All prompts completed without timeout. Safe to run full baseline.")
+
+    # Save debug CSV
+    debug_csv = args.out_trials.replace('.csv', '_debug_quick.csv')
+    os.makedirs(os.path.dirname(debug_csv), exist_ok=True)
+    if trials:
+        with open(debug_csv, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=trials[0].keys())
+            writer.writeheader()
+            writer.writerows(trials)
+        print(f"\nDebug CSV saved to: {debug_csv}")
+
+
+# ============================================================
+# PROBE MODE
+# ============================================================
+PROBE_COUNTS = {"AR": 3, "ALG": 3, "WP": 2, "LOG": 2}  # 10 total
+
+
+def run_probe(args, config, prompts):
+    """Probe mode: 3 AR, 3 ALG, 2 WP, 2 LOG × 1 repeat.
+    Prints full prompt_text, answer_raw, timeout flag, parsed answer.
+    Goal: verify prompt format + timeout are fixed before full baselines."""
+
+    # Select prompts per category
+    cat_counts = {}
+    selected = []
+    for p in prompts:
+        cat = p['category']
+        cat_counts.setdefault(cat, 0)
+        if cat_counts[cat] < PROBE_COUNTS.get(cat, 0):
+            selected.append(p)
+            cat_counts[cat] += 1
+
+    timeout_sec = ACTION_TIMEOUTS[args.action]
+    n_prompts = len(selected)
+    cats = sorted(set(p['category'] for p in selected))
+
+    print("=" * 70)
+    print(f"PROBE MODE: {n_prompts} prompts × 1 repeat")
+    print(f"  Distribution: {', '.join(f'{c}={PROBE_COUNTS[c]}' for c in ['AR', 'ALG', 'WP', 'LOG'])}")
+    print(f"  Action: {args.action} (max_tokens={ACTION_BUDGETS[args.action]})")
+    print(f"  Timeout: {timeout_sec}s")
+    print(f"  Grammar: {'enabled' if args.grammar else 'disabled'}")
+    print(f"  Prompt template: {PROMPT_TEMPLATE_VERSION}")
+    print("=" * 70)
+    print()
+
+    # Health check + warmup
+    if not check_server_health(config['server_url']):
+        print("FATAL: Server health check failed.")
+        sys.exit(1)
+    run_warmup(config['server_url'], timeout_sec)
+    print()
+
+    trials = []
+    for i, prompt_row in enumerate(selected, 1):
+        prompt_id = prompt_row['prompt_id']
+        category = prompt_row['category']
+        base_prompt = prompt_row['prompt_text']
+        ground_truth = prompt_row['ground_truth']
+        is_log = (category == "LOG")
+
+        prompt_text = build_prompt(base_prompt, category)
+        n_pred = 6 if is_log else ACTION_BUDGETS[args.action]
+
+        grammar_file = None
+        if args.grammar:
+            grammar_file = config.get('grammar_yesno' if is_log else 'grammar_num')
+
+        content, latency_ms, timed_out, diag = run_inference(
+            prompt_text=prompt_text,
+            server_url=config['server_url'],
+            timeout_sec=timeout_sec,
+            n_pred=n_pred,
+            use_grammar=args.grammar,
+            grammar_file=grammar_file
+        )
+
+        if is_log:
+            answer_parsed = extract_yesno(content)
+        else:
+            answer_parsed = parse_numeric_robust(content)
+
+        parse_success = (answer_parsed != "")
+        correct = (answer_parsed == ground_truth)
+        error_code = determine_error_code(
+            category, answer_parsed, ground_truth, timed_out, parse_success
+        )
+
+        # Full diagnostic output
+        print(f"{'=' * 70}")
+        print(f"[{i}/{n_prompts}] {prompt_id} | {category} | expected={ground_truth}")
+        print(f"  n_pred={n_pred} | timeout={timeout_sec}s | grammar={'yes' if args.grammar else 'no'}")
+        print()
+        print(f"  FULL PROMPT SENT:")
+        print(f"  {'─' * 60}")
+        for line in prompt_text.split('\n'):
+            print(f"  │ {line}")
+        print(f"  {'─' * 60}")
+        print()
+        print(f"  FULL RESPONSE:")
+        print(f"  {'─' * 60}")
+        print(f"  │ {repr(content)}")
+        print(f"  {'─' * 60}")
+        print()
+        print(f"  http={diag['http_status']} | tokens_predicted={diag['tokens_predicted']} "
+              f"| stop_type={diag['stop_type']}")
+        print(f"  latency={latency_ms:.0f}ms | timed_out={timed_out} | prompt_chars={diag['prompt_len_chars']}")
+        print(f"  parsed={repr(answer_parsed)} | correct={correct} | error={error_code}")
+        if timed_out:
+            print(f"  >>> TIMEOUT after {latency_ms:.0f}ms (exception={diag['exception_type']})")
+        print()
+
+        trials.append({
+            "prompt_id": prompt_id, "category": category,
+            "error_code": error_code, "correct": int(correct),
+            "timeout_flag": int(timed_out), "latency_ms": f"{latency_ms:.0f}",
+            "answer_parsed": answer_parsed, "ground_truth": ground_truth,
+            "http_status": diag['http_status'],
+            "tokens_predicted": diag['tokens_predicted'],
+            "stop_type": diag['stop_type'],
+            "prompt_len_chars": diag['prompt_len_chars'],
+            "answer_raw": content.replace("\n", "\\n")[:300],
+        })
+
+    # Summary
+    print(f"{'=' * 70}")
+    print("PROBE SUMMARY:")
+    print(f"{'─' * 70}")
+    for cat in ['AR', 'ALG', 'WP', 'LOG']:
+        cat_trials = [t for t in trials if t['category'] == cat]
+        if not cat_trials:
+            continue
+        n = len(cat_trials)
+        ok = sum(t['correct'] for t in cat_trials)
+        e7 = sum(t['timeout_flag'] for t in cat_trials)
+        e8 = sum(1 for t in cat_trials if t['error_code'] == 'E8')
+        print(f"  {cat:4s}: {ok}/{n} correct | {e7} E7 (timeout) | {e8} E8 (parse fail)")
+
+    total_ok = sum(t['correct'] for t in trials)
+    total_e7 = sum(t['timeout_flag'] for t in trials)
+    total_e8 = sum(1 for t in trials if t['error_code'] == 'E8')
+    print(f"{'─' * 70}")
+    print(f"  TOTAL: {total_ok}/{n_prompts} correct | {total_e7} E7 | {total_e8} E8")
+
+    if total_e7 == 0 and total_e8 == 0:
+        print(f"\n  ALL PROMPTS RESPONDED. Prompt format + timeout look good.")
+        print(f"  Safe to proceed with full baseline matrix.")
+    elif total_e7 > 0:
+        print(f"\n  TIMEOUTS DETECTED. Do NOT run full baseline yet.")
+        print(f"  Check server load and consider increasing timeout.")
+    else:
+        print(f"\n  No timeouts but some parse failures. Check model output format.")
+
+    # Save probe CSV
+    probe_csv = args.out_trials.replace('.csv', '_probe.csv')
+    os.makedirs(os.path.dirname(probe_csv), exist_ok=True)
+    if trials:
+        with open(probe_csv, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=trials[0].keys())
+            writer.writeheader()
+            writer.writerows(trials)
+        print(f"\nProbe CSV saved to: {probe_csv}")
+
+
+# ============================================================
 # MAIN
 # ============================================================
 def load_config(config_path):
@@ -458,6 +830,10 @@ def main():
                     help="Debug mode: run only these prompt IDs with full diagnostics")
     ap.add_argument("--smoke", action="store_true",
                     help="Smoke test: 1 prompt per category, 1 repeat")
+    ap.add_argument("--debug_quick", action="store_true",
+                    help="Debug run: 2 prompts per category, 1 repeat, full logging")
+    ap.add_argument("--probe", action="store_true",
+                    help="Probe mode: 3 AR, 3 ALG, 2 WP, 2 LOG, 1 repeat, full diagnostics")
     args = ap.parse_args()
 
     config = load_config(args.config)
@@ -486,19 +862,40 @@ def main():
             print(f"Smoke CSV saved to: {smoke_csv}")
         return
 
+    # Debug quick mode: 2 prompts per category, 1 repeat, full logging
+    if args.debug_quick:
+        run_debug_quick(args, config, prompts)
+        return
+
+    # Probe mode: 3 AR, 3 ALG, 2 WP, 2 LOG, 1 repeat
+    if args.probe:
+        run_probe(args, config, prompts)
+        return
+
     # ========================================================
     # FULL RUN
     # ========================================================
     n_pred_base = ACTION_BUDGETS[args.action]
+    timeout_sec = ACTION_TIMEOUTS[args.action]
     system_name = f"v1_{args.action.lower()}_{'grammar' if args.grammar else 'nogrammar'}"
 
     print(f"Running {system_name}")
     print(f"Action: {args.action} (max_tokens={n_pred_base})")
+    print(f"Timeout: {timeout_sec}s")
     print(f"Grammar: {'enabled' if args.grammar else 'disabled'}")
     print(f"Parser: {PARSER_VERSION}")
     print(f"Prompt template: {PROMPT_TEMPLATE_VERSION}")
     print(f"Prompts: {len(prompts)}")
     print(f"Repeats: {config['repeats']}")
+    print()
+
+    # Health check
+    if not check_server_health(config['server_url']):
+        print("FATAL: Server health check failed. Is llama-server running?")
+        sys.exit(1)
+
+    # Warmup inference
+    run_warmup(config['server_url'], timeout_sec)
     print()
 
     # Energy measurement
@@ -536,10 +933,10 @@ def main():
             grammar_file = config.get('grammar_yesno' if is_log else 'grammar_num')
 
         for repeat_idx in range(1, config['repeats'] + 1):
-            content, latency_ms, timed_out = run_inference(
+            content, latency_ms, timed_out, diag = run_inference(
                 prompt_text=prompt_text,
                 server_url=config['server_url'],
-                timeout_sec=config['timeout_sec'],
+                timeout_sec=timeout_sec,
                 n_pred=n_pred,
                 use_grammar=args.grammar,
                 grammar_file=grammar_file
@@ -590,12 +987,19 @@ def main():
 
                 "error_code": error_code,
 
+                "e7_http_status": diag.get('http_status', ''),
+                "e7_exception_type": diag.get('exception_type', ''),
+                "e7_tokens_predicted": diag.get('tokens_predicted', ''),
+                "e7_stop_type": diag.get('stop_type', ''),
+                "e7_prompt_len_chars": diag.get('prompt_len_chars', ''),
+                "e7_raw_preview": content.replace("\n", "\\n")[:100] if timed_out else "",
+
                 "model_name": config['model_name'],
                 "quantization": config['quantization'],
                 "temperature": 0.0,
                 "top_p": 1.0,
                 "seed": 42,
-                "timeout_sec": config['timeout_sec'],
+                "timeout_sec": timeout_sec,
                 "config_version": config['config_version'],
             }
 
@@ -649,6 +1053,8 @@ def main():
         "energy_start_mwh", "energy_end_mwh", "energy_delta_mwh",
         "energy_per_prompt_mwh",
         "error_code",
+        "e7_http_status", "e7_exception_type", "e7_tokens_predicted",
+        "e7_stop_type", "e7_prompt_len_chars", "e7_raw_preview",
         "model_name", "quantization", "temperature", "top_p", "seed",
         "timeout_sec", "config_version"
     ]
@@ -678,6 +1084,18 @@ def main():
     print(f"  Median latency: {median_lat:.0f}ms")
     print(f"  Parser: {PARSER_VERSION}")
     print(f"  Prompt template: {PROMPT_TEMPLATE_VERSION}")
+
+    # Per-category breakdown
+    categories = sorted(set(t['category'] for t in trials))
+    print(f"\n  Per-category breakdown:")
+    for cat in categories:
+        cat_trials = [t for t in trials if t['category'] == cat]
+        n = len(cat_trials)
+        ok = sum(t['correct'] for t in cat_trials)
+        e7 = sum(t['timeout_flag'] for t in cat_trials)
+        e8 = sum(1 for t in cat_trials if t['error_code'] == 'E8')
+        print(f"    {cat:4s}: {ok:2d}/{n} correct | {e7} E7 (timeout) | {e8} E8 (parse fail)")
+
     print(f"\nSaved to: {args.out_trials}")
 
 

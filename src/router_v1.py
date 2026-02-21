@@ -261,13 +261,14 @@ class RouterV1:
             else:
                 grammar_file = self.config.get('grammar_num')
 
-        # Build request
+        # Build request — stop on newline and Phi special tokens
         request = {
             "prompt": prompt_text,
             "n_predict": n_pred,
             "temperature": 0.0,
             "top_p": 1.0,
             "seed": 42,
+            "stop": ["\n", "<|end|>", "<|endoftext|>"],
         }
 
         if grammar_file:
