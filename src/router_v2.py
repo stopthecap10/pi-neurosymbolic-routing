@@ -76,19 +76,69 @@ SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing el
 INT_RE = re.compile(r"[-+]?\d+")
 FLOAT_RE = re.compile(r"[-+]?\d+\.?\d*")
 
-# P2_numeric_robust parser (matches run_v1_baseline_matrix.py)
+# P3_numeric_context parser (matches run_v1_baseline_matrix.py)
 NUM_TOKEN_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?")
+CUE_RE = re.compile(
+    r'(?:answer\s*(?:is|:)|final\s+(?:numeric\s+)?answer\s*(?:is|:)?'
+    r'|answer\b.{0,20}\bis'
+    r'|(?:^|\s)[a-z]\s*=)\s*'
+    r'([-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?)',
+    re.IGNORECASE
+)
+TRAILING_EQ_RE = re.compile(r'^(.+?)\s*=\s*$')
+CLEAN_EXPR_RE = re.compile(r'^[\d\s+\-*/().]+$')
+HAS_LETTERS_RE = re.compile(r'[a-zA-Z]')
 
-def parse_numeric_robust(text: str) -> str:
-    """Extract the LAST valid numeric token from text.
-    Supports integers, decimals, simple fractions. Normalizes integral values."""
-    if not text:
-        return ""
-    cleaned = text.strip().replace(",", "")
-    tokens = NUM_TOKEN_RE.findall(cleaned)
-    if not tokens:
-        return ""
-    raw_token = tokens[-1].lstrip('+')
+
+def _safe_eval_expr(expr: str) -> float:
+    """Safely evaluate a simple math expression (no eval())."""
+    import ast
+    import operator
+    if len(expr) > 50:
+        raise ValueError("Expression too long")
+    if not CLEAN_EXPR_RE.match(expr):
+        raise ValueError("Non-math characters")
+    try:
+        tree = ast.parse(expr.strip(), mode='eval')
+    except SyntaxError:
+        raise ValueError("Invalid syntax")
+    _ops = {
+        ast.Add: operator.add, ast.Sub: operator.sub,
+        ast.Mult: operator.mul, ast.Div: operator.truediv,
+        ast.USub: operator.neg, ast.UAdd: operator.pos,
+    }
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        elif isinstance(node, ast.BinOp):
+            op_func = _ops.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Unsupported op: {type(node.op).__name__}")
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            if isinstance(node.op, ast.Div) and right == 0:
+                raise ValueError("Division by zero")
+            return op_func(left, right)
+        elif isinstance(node, ast.UnaryOp):
+            op_func = _ops.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Unsupported unary op")
+            return op_func(_eval_node(node.operand))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        else:
+            raise ValueError(f"Unsupported node: {type(node).__name__}")
+    return _eval_node(tree)
+
+
+def _normalize_value(value: float) -> str:
+    if abs(value - round(value)) < 1e-9:
+        return str(int(round(value)))
+    return str(value)
+
+
+def _parse_single_token(raw_token: str) -> str:
+    raw_token = raw_token.lstrip('+')
     try:
         if '/' in raw_token:
             parts = raw_token.split('/')
@@ -97,17 +147,85 @@ def parse_numeric_robust(text: str) -> str:
                 den = float(parts[1])
                 if den == 0:
                     return ""
-                value = num / den
-            else:
-                return ""
-        else:
-            value = float(raw_token)
-        if abs(value - round(value)) < 1e-9:
-            return str(int(round(value)))
-        else:
-            return str(value)
+                return _normalize_value(num / den)
+            return ""
+        return _normalize_value(float(raw_token))
     except (ValueError, ZeroDivisionError):
         return ""
+
+
+def parse_numeric_robust(text: str) -> str:
+    """P3_numeric_context: Context-aware numeric extraction.
+    Priority: direct -> cue phrase -> expression rescue -> single number -> E8."""
+    if not text:
+        return ""
+    cleaned = text.strip().replace(",", "")
+    tokens = NUM_TOKEN_RE.findall(cleaned)
+    if not tokens:
+        return ""
+    # Rule 1: Direct numeric output
+    direct = re.sub(r'[.\s]+$', '', cleaned)
+    if NUM_TOKEN_RE.fullmatch(direct):
+        return _parse_single_token(direct)
+    # Rule 2: Cue phrase extraction
+    cue_matches = CUE_RE.findall(cleaned)
+    if cue_matches:
+        result = _parse_single_token(cue_matches[-1])
+        if result:
+            return result
+    var_eq_matches = re.findall(
+        r'(?:^|\s)([a-zA-Z])\s*=\s*([-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?)',
+        cleaned
+    )
+    if var_eq_matches:
+        all_eq_parts = re.split(r'\s*=\s*', cleaned)
+        last_part = all_eq_parts[-1].strip()
+        last_token_match = NUM_TOKEN_RE.search(last_part)
+        if last_token_match:
+            result = _parse_single_token(last_token_match.group())
+            if result:
+                return result
+        result = _parse_single_token(var_eq_matches[-1][1])
+        if result:
+            return result
+    # Rule 2b: Result after equals (non-variable)
+    if '=' in cleaned and not var_eq_matches:
+        all_eq_parts = re.split(r'\s*=\s*', cleaned)
+        last_part = all_eq_parts[-1].strip()
+        if last_part:
+            last_token_match = NUM_TOKEN_RE.search(last_part)
+            if last_token_match and not HAS_LETTERS_RE.search(last_part):
+                result = _parse_single_token(last_token_match.group())
+                if result:
+                    return result
+    # Rule 3: Expression rescue
+    eq_match = TRAILING_EQ_RE.match(cleaned)
+    if eq_match:
+        expr = eq_match.group(1).strip()
+        if not HAS_LETTERS_RE.search(expr) and CLEAN_EXPR_RE.match(expr):
+            try:
+                value = _safe_eval_expr(expr)
+                return _normalize_value(value)
+            except (ValueError, ZeroDivisionError):
+                pass
+        return ""
+    # Rule 4: Single standalone number (only if minimal text)
+    if len(tokens) == 1:
+        has_text = HAS_LETTERS_RE.search(cleaned)
+        if not has_text:
+            return _parse_single_token(tokens[0])
+        word_count = len(cleaned.split())
+        if word_count <= 5:
+            return _parse_single_token(tokens[0])
+        return ""
+    # Rule 5: Ambiguity -> E8
+    has_text = HAS_LETTERS_RE.search(cleaned)
+    if has_text:
+        return ""
+    has_operators = bool(re.search(r'\d\s*[+\-*/]\s*\d', cleaned))
+    if len(tokens) > 2 and has_operators:
+        return ""
+    return _parse_single_token(tokens[-1])
 
 def _derive_base_url(server_url):
     """Derive base URL from server_url (strips /completion path)."""

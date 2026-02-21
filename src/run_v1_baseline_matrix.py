@@ -3,7 +3,7 @@
 V1 Baseline Matrix Runner
 Runs 2x2 factorial: (A1/A2) × (grammar/no-grammar)
 
-Parser version: P2_numeric_robust
+Parser version: P3_numeric_context
 Prompt template version: PT2_frozen
 """
 
@@ -18,45 +18,100 @@ import requests
 import yaml
 
 # ============================================================
-# PARSER: P2_numeric_robust
+# PARSER: P3_numeric_context
 # ============================================================
-PARSER_VERSION = "P2_numeric_robust"
+PARSER_VERSION = "P3_numeric_context"
 
 # Matches signed integers, decimals, and simple fractions
 # Examples: 12, -4, 3.0, -0.5, -5/2
 NUM_TOKEN_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?")
 
+# Cue phrases: "answer is 6", "final answer: 6", "x = 6"
+CUE_RE = re.compile(
+    r'(?:answer\s*(?:is|:)|final\s+(?:numeric\s+)?answer\s*(?:is|:)?'
+    r'|answer\b.{0,20}\bis'
+    r'|(?:^|\s)[a-z]\s*=)\s*'
+    r'([-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?)',
+    re.IGNORECASE
+)
 
-def parse_numeric_robust(text: str) -> str:
+# Matches "expr =" at end of string (expression rescue)
+TRAILING_EQ_RE = re.compile(r'^(.+?)\s*=\s*$')
+
+# Clean math expression: only digits, operators, parens, whitespace, decimals
+CLEAN_EXPR_RE = re.compile(r'^[\d\s+\-*/().]+$')
+
+# Detects letters (for ambiguity check)
+HAS_LETTERS_RE = re.compile(r'[a-zA-Z]')
+
+
+def _safe_eval_expr(expr: str) -> float:
     """
-    Extract the LAST valid numeric token from text.
-
-    Supports:
-    - Integers: 12, -4, +7
-    - Decimals: 3.0, -0.5
-    - Simple fractions: -5/2, 3/4
-
-    Normalization:
-    - If value is exactly integral (e.g., 3.0, 6/2), return as integer string
-    - Preserves sign correctly
-    - Returns "" if no valid numeric token found
+    Safely evaluate a simple math expression (no eval()).
+    Supports: +, -, *, /, parentheses, integers, decimals.
+    Raises ValueError if expression is invalid or too complex.
     """
-    if not text:
-        return ""
+    import ast
+    import operator
 
-    # Clean up common model artifacts
-    cleaned = text.strip().replace(",", "")
+    if len(expr) > 50:
+        raise ValueError("Expression too long")
 
-    # Find all numeric tokens
-    tokens = NUM_TOKEN_RE.findall(cleaned)
-    if not tokens:
-        return ""
+    # Only allow clean math characters
+    if not CLEAN_EXPR_RE.match(expr):
+        raise ValueError("Non-math characters in expression")
 
-    # Take the last token
-    raw_token = tokens[-1].lstrip('+')
-
+    # Parse and evaluate using AST
     try:
-        # Handle fractions: "5/2" -> 2.5
+        tree = ast.parse(expr.strip(), mode='eval')
+    except SyntaxError:
+        raise ValueError("Invalid expression syntax")
+
+    _ops = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        elif isinstance(node, ast.BinOp):
+            op_func = _ops.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            if isinstance(node.op, ast.Div) and right == 0:
+                raise ValueError("Division by zero")
+            return op_func(left, right)
+        elif isinstance(node, ast.UnaryOp):
+            op_func = _ops.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Unsupported unary op: {type(node.op).__name__}")
+            return op_func(_eval_node(node.operand))
+        elif isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        else:
+            raise ValueError(f"Unsupported node: {type(node).__name__}")
+
+    return _eval_node(tree)
+
+
+def _normalize_value(value: float) -> str:
+    """Normalize a numeric value: integral values become int strings."""
+    if abs(value - round(value)) < 1e-9:
+        return str(int(round(value)))
+    return str(value)
+
+
+def _parse_single_token(raw_token: str) -> str:
+    """Parse a single numeric token (int, decimal, or fraction). Returns "" on failure."""
+    raw_token = raw_token.lstrip('+')
+    try:
         if '/' in raw_token:
             parts = raw_token.split('/')
             if len(parts) == 2:
@@ -64,20 +119,126 @@ def parse_numeric_robust(text: str) -> str:
                 den = float(parts[1])
                 if den == 0:
                     return ""
-                value = num / den
-            else:
-                return ""
-        else:
-            value = float(raw_token)
-
-        # Normalize: if exactly integral, return as int string
-        if abs(value - round(value)) < 1e-9:
-            return str(int(round(value)))
-        else:
-            # Return decimal as-is (will likely be E8 for integer-expected tasks)
-            return str(value)
+                return _normalize_value(num / den)
+            return ""
+        return _normalize_value(float(raw_token))
     except (ValueError, ZeroDivisionError):
         return ""
+
+
+def parse_numeric_robust(text: str) -> str:
+    """
+    P3_numeric_context: Context-aware numeric extraction.
+
+    Priority order (first match wins):
+    1. Direct numeric output (entire text is a single number)
+    2. Cue phrase extraction ("answer is X", "x = X")
+    3. Expression rescue (text ends with "=", evaluate clean math expr)
+    4. Single standalone number in simple context
+    5. Ambiguity -> "" (E8) if multiple numbers with no clear cue
+
+    Returns "" if no valid answer can be extracted.
+    """
+    if not text:
+        return ""
+
+    cleaned = text.strip().replace(",", "")
+
+    # Find all numeric tokens
+    tokens = NUM_TOKEN_RE.findall(cleaned)
+    if not tokens:
+        return ""
+
+    # ── Rule 1: Direct numeric output ──
+    # If entire text is just a number (possibly with trailing period)
+    direct = re.sub(r'[.\s]+$', '', cleaned)  # strip trailing dots/spaces
+    if NUM_TOKEN_RE.fullmatch(direct):
+        return _parse_single_token(direct)
+
+    # ── Rule 2: Cue phrase extraction ──
+    # Look for "answer is X", "final answer X", "var = X"
+    cue_matches = CUE_RE.findall(cleaned)
+    if cue_matches:
+        # Take the last cue match (closest to end of output)
+        result = _parse_single_token(cue_matches[-1])
+        if result:
+            return result
+
+    # Also check for "VAR = NUM" pattern more broadly (single-letter = number)
+    var_eq_matches = re.findall(
+        r'(?:^|\s)([a-zA-Z])\s*=\s*([-+]?\d+(?:\.\d+)?(?:/[-+]?\d+(?:\.\d+)?)?)',
+        cleaned
+    )
+    if var_eq_matches:
+        # If there are chained equals like "o = 8/94 = 4/47", take the last one
+        all_eq_parts = re.split(r'\s*=\s*', cleaned)
+        last_part = all_eq_parts[-1].strip()
+        last_token_match = NUM_TOKEN_RE.search(last_part)
+        if last_token_match:
+            result = _parse_single_token(last_token_match.group())
+            if result:
+                return result
+        # Otherwise use the last var=num match
+        result = _parse_single_token(var_eq_matches[-1][1])
+        if result:
+            return result
+
+    # ── Rule 2b: Result after equals (non-variable) ──
+    # Handle "expr = result" where expr isn't a variable assignment
+    # e.g. "(-2)/(-3) = 2/3" -> extract 2/3 after the last =
+    if '=' in cleaned and not var_eq_matches:
+        all_eq_parts = re.split(r'\s*=\s*', cleaned)
+        last_part = all_eq_parts[-1].strip()
+        if last_part:  # There's content after the last =
+            last_token_match = NUM_TOKEN_RE.search(last_part)
+            if last_token_match and not HAS_LETTERS_RE.search(last_part):
+                result = _parse_single_token(last_token_match.group())
+                if result:
+                    return result
+
+    # ── Rule 3: Expression rescue ──
+    # If text ends with "=" and the expression before it is clean math
+    eq_match = TRAILING_EQ_RE.match(cleaned)
+    if eq_match:
+        expr = eq_match.group(1).strip()
+        # Only evaluate if it's a clean math expression (no letters/units)
+        if not HAS_LETTERS_RE.search(expr) and CLEAN_EXPR_RE.match(expr):
+            try:
+                value = _safe_eval_expr(expr)
+                return _normalize_value(value)
+            except (ValueError, ZeroDivisionError):
+                pass
+        # Expression has text/units -> fall through to Rule 5 (E8)
+        return ""
+
+    # ── Rule 4: Single standalone number ──
+    # Only if there's minimal surrounding text (not mid-reasoning)
+    if len(tokens) == 1:
+        has_text = HAS_LETTERS_RE.search(cleaned)
+        if not has_text:
+            return _parse_single_token(tokens[0])
+        # If text is present, only extract if text is very short
+        # (e.g., "The value is 10." is fine, but "Grandma spends 40 minutes
+        # walking on the beach, which" is reasoning)
+        word_count = len(cleaned.split())
+        if word_count <= 5:
+            return _parse_single_token(tokens[0])
+        # Long text with a single embedded number -> E8
+        return ""
+
+    # ── Rule 5: Ambiguity check ──
+    # Multiple numbers present with text -> E8 (reasoning, not an answer)
+    has_text = HAS_LETTERS_RE.search(cleaned)
+    if has_text:
+        return ""
+
+    # Multiple numbers, no text, with operators -> E8
+    has_operators = bool(re.search(r'\d\s*[+\-*/]\s*\d', cleaned))
+    if len(tokens) > 2 and has_operators:
+        return ""
+
+    # Last resort: take last token (pure numeric strings only)
+    return _parse_single_token(tokens[-1])
 
 
 def extract_yesno(text: str) -> str:
