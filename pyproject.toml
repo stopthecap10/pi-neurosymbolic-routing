@@ -33,10 +33,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+viz = [
+    "matplotlib>=3.7.0",
+]
 dev = [
     "pytest>=7.0.0",
     "black>=22.0.0",
     "flake8>=4.0.0",
+    "matplotlib>=3.7.0",
 ]
 
 [project.scripts]
