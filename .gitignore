@@ -1,30 +1,49 @@
-# python
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
 .venv/
 venv/
+dist/
+build/
 
-# local runs + logs
+# Local runs + logs (regenerated per experiment)
 runs*/
-runs_server/
-runs_hybrid_v1/
-runs_hybrid_v2/
 */logs/
 *.log
 
-# big artifacts / exports
+# Big artifacts / exports
 artifacts/
 *.tar.gz
 
-# dataset cache (HuggingFace cache + DeepMind tarball)
+# Dataset cache (HuggingFace + DeepMind tarball, ~2GB)
 data/cache/
 
-# old benchmark iterations (superseded by data/splits/)
+# Old benchmark iterations (superseded by data/splits/)
 data/benchmarks/
 
 # OS
 .DS_Store
+Thumbs.db
 
-# generated outputs
-sheet_summary.csv
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Generated outputs (regenerated per experiment run)
 outputs/
+sheet_summary.csv
+
+# Temporary / debug files
+out.txt
+err.txt
+BASELINE_CONFIG.txt
+*.bak
+*.restorebak.*
+*.BROKEN.*
+
+# Archive of old backups (not needed for replication)
+archive/backup_scripts/

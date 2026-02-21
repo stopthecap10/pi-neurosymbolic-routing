@@ -14,7 +14,7 @@ import operator as op
 
 # Import SymPy for A4
 try:
-    from sympy import symbols, Eq, solve, sympify
+    from sympy import symbols, Eq, solve
     from sympy.parsing.sympy_parser import parse_expr
     SYMPY_AVAILABLE = True
 except ImportError:
@@ -561,7 +561,7 @@ class RouterV2:
                             else:
                                 answer = str(sol_float)
                             return (answer, True, True)
-                        except:
+                        except (ValueError, TypeError, OverflowError):
                             return (str(sol), True, True)
 
             # If we get here, parsing failed

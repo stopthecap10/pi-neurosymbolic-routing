@@ -11,10 +11,10 @@ echo "HYBRID V2 - FULL T1 RUN"
 echo "======================================================================"
 echo ""
 echo "This will run:"
-echo "  - 38 prompts (official T1)"
+echo "  - 40 prompts (official T1 v2, balanced)"
 echo "  - 3 repeats per prompt"
 echo "  - Enhanced routing with A4 symbolic solver"
-echo "  - Total: 114 trials"
+echo "  - Total: 120 trials"
 echo ""
 echo "Routing map (V2):"
 echo "  AR  → A5 → A1 → A2 (symbolic direct with 2-level fallback)"
@@ -37,7 +37,7 @@ echo ""
 
 # Config paths
 CONFIG="configs/run_tier1.yaml"
-CSV="data/splits/industry_tier1_40.csv"
+CSV="data/splits/industry_tier1_40_v2.csv"
 OUT_DIR="outputs/official"
 
 # Create output directory
