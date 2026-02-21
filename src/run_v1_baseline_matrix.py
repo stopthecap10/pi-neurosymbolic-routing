@@ -661,6 +661,7 @@ def run_debug_quick(args, config, prompts):
 # PROBE MODE
 # ============================================================
 PROBE_COUNTS = {"AR": 3, "ALG": 3, "WP": 2, "LOG": 2}  # 10 total
+LOG_PROBE_MAX_CHARS = 500  # Skip LOG prompts longer than this in probe mode
 
 
 def run_probe(args, config, prompts):
@@ -668,15 +669,26 @@ def run_probe(args, config, prompts):
     Prints full prompt_text, answer_raw, timeout flag, parsed answer.
     Goal: verify prompt format + timeout are fixed before full baselines."""
 
-    # Select prompts per category
+    # Select prompts per category (prefer shorter LOG prompts)
     cat_counts = {}
     selected = []
+    skipped_log = []
     for p in prompts:
         cat = p['category']
         cat_counts.setdefault(cat, 0)
-        if cat_counts[cat] < PROBE_COUNTS.get(cat, 0):
-            selected.append(p)
-            cat_counts[cat] += 1
+        if cat_counts[cat] >= PROBE_COUNTS.get(cat, 0):
+            continue
+        # LOG length guard: skip overly long LOG prompts in probe
+        if cat == "LOG" and len(p['prompt_text']) > LOG_PROBE_MAX_CHARS:
+            skipped_log.append(f"{p['prompt_id']} ({len(p['prompt_text'])} chars)")
+            continue
+        selected.append(p)
+        cat_counts[cat] += 1
+
+    if skipped_log:
+        print(f"  [LOG guard] Skipped {len(skipped_log)} long LOG prompts: {', '.join(skipped_log)}")
+        print(f"  [LOG guard] Threshold: {LOG_PROBE_MAX_CHARS} chars (diagnostic only, not scoring)")
+        print()
 
     timeout_sec = ACTION_TIMEOUTS[args.action]
     n_prompts = len(selected)
