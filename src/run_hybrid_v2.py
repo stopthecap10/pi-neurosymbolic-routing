@@ -95,10 +95,14 @@ def main():
     ap.add_argument("--out_trials", required=True, help="Output CSV")
     ap.add_argument("--split_role", choices=["official", "dev"], default="dev",
                     help="Set to 'official' to enforce provenance guardrails")
+    ap.add_argument("--api_mode", choices=["chat", "completion"], default="chat",
+                    help="Inference API mode: 'chat' uses /v1/chat/completions (default), "
+                         "'completion' uses /completion")
     args = ap.parse_args()
 
     # Load config and routing decisions
     config = load_config(args.config)
+    config['api_mode'] = args.api_mode  # Pass to router
     routing_decisions = load_routing_decisions(args.decisions)
 
     # Load prompts

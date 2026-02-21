@@ -104,6 +104,25 @@ SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric an
 SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
 
 
+def _derive_base_url(server_url):
+    """Derive base URL from server_url (strips /completion path)."""
+    if '/completion' in server_url:
+        return server_url.rsplit('/completion', 1)[0]
+    return server_url.rstrip('/')
+
+
+def _extract_chat_parts(prompt_text, category):
+    """Extract system_msg and user_question from Phi template for chat API."""
+    if "<|user|>" in prompt_text:
+        user_start = prompt_text.find("<|user|>") + len("<|user|>")
+        user_end = prompt_text.find("<|end|>", user_start)
+        user_question = prompt_text[user_start:user_end] if user_end > user_start else prompt_text
+    else:
+        user_question = prompt_text
+    system_msg = SYSTEM_MSG_YESNO if category == "LOG" else SYSTEM_MSG_NUMERIC
+    return system_msg, user_question
+
+
 def build_prompt(base_prompt: str, category: str) -> str:
     """Build the full prompt using Phi-4 chat template format.
 
@@ -178,8 +197,7 @@ def determine_error_code(category: str, pred: str, expected: str,
 # ============================================================
 def check_server_health(server_url, timeout=10):
     """Check if llama.cpp server is healthy before starting run."""
-    # Derive health URL from completion URL
-    base_url = server_url.rsplit('/', 1)[0]
+    base_url = _derive_base_url(server_url)
     health_url = f"{base_url}/health"
 
     try:
@@ -201,20 +219,37 @@ def check_server_health(server_url, timeout=10):
         return False
 
 
-def run_warmup(server_url, timeout_sec):
+def run_warmup(server_url, timeout_sec, api_mode="chat"):
     """Send a trivial warmup prompt to prime KV cache and model loading."""
-    print("[warmup] Sending warmup prompt: '2+2='")
-    warmup_req = {
-        "prompt": "2+2=",
-        "n_predict": 4,
-        "temperature": 0.0,
-        "seed": 42,
-    }
+    print(f"[warmup] Sending warmup prompt: '2+2=' (mode={api_mode})")
     t0 = time.time()
     try:
-        r = requests.post(server_url, json=warmup_req, timeout=(10.0, float(timeout_sec)))
-        j = r.json()
-        content = j.get("content", "")
+        if api_mode == "chat":
+            base_url = _derive_base_url(server_url)
+            chat_url = f"{base_url}/v1/chat/completions"
+            warmup_req = {
+                "messages": [
+                    {"role": "system", "content": "You are a math assistant."},
+                    {"role": "user", "content": "What is 2+2?"},
+                ],
+                "max_tokens": 4,
+                "temperature": 0.0,
+                "seed": 42,
+            }
+            r = requests.post(chat_url, json=warmup_req, timeout=(10.0, float(timeout_sec)))
+            j = r.json()
+            choices = j.get("choices", [])
+            content = choices[0]["message"]["content"] if choices else ""
+        else:
+            warmup_req = {
+                "prompt": "2+2=",
+                "n_predict": 4,
+                "temperature": 0.0,
+                "seed": 42,
+            }
+            r = requests.post(server_url, json=warmup_req, timeout=(10.0, float(timeout_sec)))
+            j = r.json()
+            content = j.get("content", "")
         latency_ms = (time.time() - t0) * 1000
         print(f"[warmup] Response: {repr(content[:40])} in {latency_ms:.0f}ms")
         return True
@@ -223,24 +258,18 @@ def run_warmup(server_url, timeout_sec):
         return False
 
 
-def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, grammar_file):
-    """Run single inference - FROZEN params."""
-    request = {
-        "prompt": prompt_text,
-        "n_predict": int(n_pred),
-        "temperature": 0.0,
-        "top_p": 1.0,
-        "seed": 42,
-        "stop": ["\n", "<|end|>", "<|endoftext|>"],
-    }
+def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, grammar_file,
+                  api_mode="chat", category="AR"):
+    """Run single inference - supports both /completion and /v1/chat/completions.
 
-    if use_grammar and grammar_file:
-        try:
-            with open(grammar_file, 'r') as f:
-                request["grammar"] = f.read()
-        except Exception as e:
-            print(f"WARNING: Grammar file {grammar_file} failed to load: {e}",
-                  file=sys.stderr)
+    api_mode="chat": Uses /v1/chat/completions with messages array (default).
+                     Grammar not supported in this mode — falls back to completion.
+    api_mode="completion": Uses /completion with raw prompt string (legacy).
+    """
+    # If grammar is requested, must use completion mode (chat API doesn't support grammar)
+    effective_mode = api_mode
+    if use_grammar and grammar_file and api_mode == "chat":
+        effective_mode = "completion"
 
     t0 = time.time()
     content = ""
@@ -250,27 +279,81 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
     tokens_predicted = None
     stop_type = None
 
-    try:
-        r = requests.post(
-            server_url,
-            json=request,
-            timeout=(10.0, float(timeout_sec)),
-        )
-        http_status = r.status_code
-        j = r.json()
-        content = j.get("content", "") or ""
-        tokens_predicted = j.get("tokens_predicted", None)
-        stop_type = j.get("stop_type", None)
-    except requests.exceptions.Timeout:
-        timed_out = True
-        exception_type = "Timeout"
-    except requests.exceptions.ConnectionError:
-        exception_type = "ConnectionError"
-        content = ""
-    except Exception as e:
-        exception_type = type(e).__name__
-        print(f"ERROR: {e}", file=sys.stderr)
-        content = ""
+    if effective_mode == "chat":
+        # Chat API mode: /v1/chat/completions
+        base_url = _derive_base_url(server_url)
+        chat_url = f"{base_url}/v1/chat/completions"
+        system_msg, user_question = _extract_chat_parts(prompt_text, category)
+
+        request = {
+            "messages": [
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_question},
+            ],
+            "max_tokens": int(n_pred),
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "seed": 42,
+            "stop": ["\n"],
+        }
+
+        try:
+            r = requests.post(chat_url, json=request, timeout=(10.0, float(timeout_sec)))
+            http_status = r.status_code
+            j = r.json()
+            choices = j.get("choices", [])
+            if choices:
+                msg = choices[0].get("message", {})
+                content = msg.get("content", "") or ""
+                stop_type = choices[0].get("finish_reason")
+            usage = j.get("usage", {})
+            tokens_predicted = usage.get("completion_tokens")
+        except requests.exceptions.Timeout:
+            timed_out = True
+            exception_type = "Timeout"
+        except requests.exceptions.ConnectionError:
+            exception_type = "ConnectionError"
+        except Exception as e:
+            exception_type = type(e).__name__
+            print(f"ERROR: {e}", file=sys.stderr)
+    else:
+        # Completion mode: /completion
+        request = {
+            "prompt": prompt_text,
+            "n_predict": int(n_pred),
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "seed": 42,
+            "stop": ["\n", "<|end|>", "<|endoftext|>"],
+        }
+
+        if use_grammar and grammar_file:
+            try:
+                with open(grammar_file, 'r') as f:
+                    request["grammar"] = f.read()
+            except Exception as e:
+                print(f"WARNING: Grammar file {grammar_file} failed to load: {e}",
+                      file=sys.stderr)
+
+        try:
+            r = requests.post(
+                server_url,
+                json=request,
+                timeout=(10.0, float(timeout_sec)),
+            )
+            http_status = r.status_code
+            j = r.json()
+            content = j.get("content", "") or ""
+            tokens_predicted = j.get("tokens_predicted", None)
+            stop_type = j.get("stop_type", None)
+        except requests.exceptions.Timeout:
+            timed_out = True
+            exception_type = "Timeout"
+        except requests.exceptions.ConnectionError:
+            exception_type = "ConnectionError"
+        except Exception as e:
+            exception_type = type(e).__name__
+            print(f"ERROR: {e}", file=sys.stderr)
 
     latency_ms = (time.time() - t0) * 1000
 
@@ -383,7 +466,9 @@ def run_debug_mode(args, config, prompts, debug_ids):
             timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
-            grammar_file=grammar_file
+            grammar_file=grammar_file,
+            api_mode=args.api_mode,
+            category=category
         )
 
         if is_log:
@@ -489,7 +574,9 @@ def run_smoke_test(args, config, prompts):
             timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
-            grammar_file=grammar_file
+            grammar_file=grammar_file,
+            api_mode=args.api_mode,
+            category=category
         )
 
         if is_log:
@@ -565,7 +652,7 @@ def run_debug_quick(args, config, prompts):
     if not check_server_health(config['server_url']):
         print("FATAL: Server health check failed.")
         sys.exit(1)
-    run_warmup(config['server_url'], timeout_sec)
+    run_warmup(config['server_url'], timeout_sec, api_mode=args.api_mode)
     print()
 
     trials = []
@@ -589,7 +676,9 @@ def run_debug_quick(args, config, prompts):
             timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
-            grammar_file=grammar_file
+            grammar_file=grammar_file,
+            api_mode=args.api_mode,
+            category=category
         )
 
         if is_log:
@@ -708,7 +797,7 @@ def run_probe(args, config, prompts):
     if not check_server_health(config['server_url']):
         print("FATAL: Server health check failed.")
         sys.exit(1)
-    run_warmup(config['server_url'], timeout_sec)
+    run_warmup(config['server_url'], timeout_sec, api_mode=args.api_mode)
     print()
 
     trials = []
@@ -732,7 +821,9 @@ def run_probe(args, config, prompts):
             timeout_sec=timeout_sec,
             n_pred=n_pred,
             use_grammar=args.grammar,
-            grammar_file=grammar_file
+            grammar_file=grammar_file,
+            api_mode=args.api_mode,
+            category=category
         )
 
         if is_log:
@@ -846,6 +937,9 @@ def main():
                     help="Debug run: 2 prompts per category, 1 repeat, full logging")
     ap.add_argument("--probe", action="store_true",
                     help="Probe mode: 3 AR, 3 ALG, 2 WP, 2 LOG, 1 repeat, full diagnostics")
+    ap.add_argument("--api_mode", choices=["chat", "completion"], default="chat",
+                    help="Inference API mode: 'chat' uses /v1/chat/completions (default), "
+                         "'completion' uses /completion")
     args = ap.parse_args()
 
     config = load_config(args.config)
@@ -897,6 +991,7 @@ def main():
     print(f"Grammar: {'enabled' if args.grammar else 'disabled'}")
     print(f"Parser: {PARSER_VERSION}")
     print(f"Prompt template: {PROMPT_TEMPLATE_VERSION}")
+    print(f"API mode: {args.api_mode}")
     print(f"Prompts: {len(prompts)}")
     print(f"Repeats: {config['repeats']}")
     print()
@@ -907,7 +1002,7 @@ def main():
         sys.exit(1)
 
     # Warmup inference
-    run_warmup(config['server_url'], timeout_sec)
+    run_warmup(config['server_url'], timeout_sec, api_mode=args.api_mode)
     print()
 
     # Energy measurement
@@ -951,7 +1046,9 @@ def main():
                 timeout_sec=timeout_sec,
                 n_pred=n_pred,
                 use_grammar=args.grammar,
-                grammar_file=grammar_file
+                grammar_file=grammar_file,
+                api_mode=args.api_mode,
+                category=category
             )
 
             if is_log:

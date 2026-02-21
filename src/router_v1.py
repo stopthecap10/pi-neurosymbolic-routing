@@ -58,6 +58,10 @@ def safe_eval_arithmetic(expr: str) -> Optional[float]:
     except Exception:
         return None
 
+# System messages for chat API
+SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
+SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
+
 # Regex patterns
 INT_RE = re.compile(r"[-+]?\d+")
 FLOAT_RE = re.compile(r"[-+]?\d+\.?\d*")
@@ -95,6 +99,25 @@ def parse_numeric_robust(text: str) -> str:
     except (ValueError, ZeroDivisionError):
         return ""
 
+def _derive_base_url(server_url):
+    """Derive base URL from server_url (strips /completion path)."""
+    if '/completion' in server_url:
+        return server_url.rsplit('/completion', 1)[0]
+    return server_url.rstrip('/')
+
+
+def _extract_chat_parts(prompt_text, category):
+    """Extract system_msg and user_question from Phi template for chat API."""
+    if "<|user|>" in prompt_text:
+        user_start = prompt_text.find("<|user|>") + len("<|user|>")
+        user_end = prompt_text.find("<|end|>", user_start)
+        user_question = prompt_text[user_start:user_end] if user_end > user_start else prompt_text
+    else:
+        user_question = prompt_text
+    system_msg = SYSTEM_MSG_YESNO if category == "LOG" else SYSTEM_MSG_NUMERIC
+    return system_msg, user_question
+
+
 class RouterV1:
     """Deterministic rule-based router for Hybrid V1"""
 
@@ -109,6 +132,7 @@ class RouterV1:
         self.config = config
         self.decisions = routing_decisions
         self.max_escalations = routing_decisions.get('max_escalations', 1)
+        self.api_mode = config.get('api_mode', 'chat')
 
     def route(self, prompt_id: str, category: str, prompt_text: str, ground_truth: str) -> Dict[str, Any]:
         """
@@ -243,7 +267,7 @@ class RouterV1:
 
     def _execute_llm_action(self, prompt_text: str, max_tokens: int,
                            category: str, grammar_enabled: bool) -> Dict[str, Any]:
-        """Execute LLM inference (A1 or A2)"""
+        """Execute LLM inference (A1 or A2). Supports chat and completion API modes."""
 
         is_log = (category == 'LOG')
 
@@ -261,41 +285,80 @@ class RouterV1:
             else:
                 grammar_file = self.config.get('grammar_num')
 
-        # Build request — stop on newline and Phi special tokens
-        request = {
-            "prompt": prompt_text,
-            "n_predict": n_pred,
-            "temperature": 0.0,
-            "top_p": 1.0,
-            "seed": 42,
-            "stop": ["\n", "<|end|>", "<|endoftext|>"],
-        }
-
-        if grammar_file:
-            try:
-                with open(grammar_file, 'r') as f:
-                    request["grammar"] = f.read()
-            except Exception as e:
-                print(f"WARNING: Grammar file {grammar_file} failed to load: {e}")
+        # Determine effective API mode (grammar forces completion mode)
+        effective_mode = self.api_mode
+        if grammar_enabled and grammar_file and self.api_mode == "chat":
+            effective_mode = "completion"
 
         # Execute
         t0 = time.time()
         content = ""
         timed_out = False
 
-        try:
-            r = requests.post(
-                self.config['server_url'],
-                json=request,
-                timeout=(10.0, float(self.config['timeout_sec'])),
-            )
-            j = r.json()
-            content = j.get("content", "") or ""
-        except requests.exceptions.Timeout:
-            timed_out = True
-        except Exception as e:
-            print(f"ERROR in LLM call: {e}")
-            content = ""
+        if effective_mode == "chat":
+            # Chat API mode: /v1/chat/completions
+            base_url = _derive_base_url(self.config['server_url'])
+            chat_url = f"{base_url}/v1/chat/completions"
+            system_msg, user_question = _extract_chat_parts(prompt_text, category)
+
+            request = {
+                "messages": [
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_question},
+                ],
+                "max_tokens": n_pred,
+                "temperature": 0.0,
+                "top_p": 1.0,
+                "seed": 42,
+                "stop": ["\n"],
+            }
+
+            try:
+                r = requests.post(
+                    chat_url, json=request,
+                    timeout=(10.0, float(self.config['timeout_sec'])),
+                )
+                j = r.json()
+                choices = j.get("choices", [])
+                if choices:
+                    msg = choices[0].get("message", {})
+                    content = msg.get("content", "") or ""
+            except requests.exceptions.Timeout:
+                timed_out = True
+            except Exception as e:
+                print(f"ERROR in LLM call: {e}")
+                content = ""
+        else:
+            # Completion mode: /completion
+            request = {
+                "prompt": prompt_text,
+                "n_predict": n_pred,
+                "temperature": 0.0,
+                "top_p": 1.0,
+                "seed": 42,
+                "stop": ["\n", "<|end|>", "<|endoftext|>"],
+            }
+
+            if grammar_file:
+                try:
+                    with open(grammar_file, 'r') as f:
+                        request["grammar"] = f.read()
+                except Exception as e:
+                    print(f"WARNING: Grammar file {grammar_file} failed to load: {e}")
+
+            try:
+                r = requests.post(
+                    self.config['server_url'],
+                    json=request,
+                    timeout=(10.0, float(self.config['timeout_sec'])),
+                )
+                j = r.json()
+                content = j.get("content", "") or ""
+            except requests.exceptions.Timeout:
+                timed_out = True
+            except Exception as e:
+                print(f"ERROR in LLM call: {e}")
+                content = ""
 
         latency_ms = (time.time() - t0) * 1000
 
