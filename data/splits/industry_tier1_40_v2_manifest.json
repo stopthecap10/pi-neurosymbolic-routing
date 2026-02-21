@@ -1,0 +1,59 @@
+{
+  "split_file": "industry_tier1_40_v2.csv",
+  "split_version": "v2",
+  "previous_version": "industry_tier1_40.csv (38 rows, 2 ALG removed)",
+  "build_timestamp": "2026-02-20T16:55:51.605260",
+  "builder_script": "src/rebuild_t1_balanced.py",
+  "total_rows": 40,
+  "per_category": {
+    "AR": 10,
+    "ALG": 10,
+    "WP": 10,
+    "LOG": 10
+  },
+  "dropped_rows": {
+    "ALG_000004": "algebra__polynomial_roots multi-value answer (removed in v1)",
+    "ALG_000005": "algebra__polynomial_roots multi-value answer (removed in v1)"
+  },
+  "replacement_rows": {
+    "ALG_000004": {
+      "source_record_id": "algebra__linear_2d_easy_555214",
+      "source_module": "algebra__linear_2d",
+      "ground_truth": "5",
+      "reason": "replacement for corrupted multi-value ALG row"
+    },
+    "ALG_000005": {
+      "source_record_id": "algebra__polynomial_roots_easy_260110",
+      "source_module": "algebra__polynomial_roots",
+      "ground_truth": "54",
+      "reason": "replacement for corrupted multi-value ALG row"
+    }
+  },
+  "replacement_seed": 142,
+  "filtering_rules": [
+    "Source: DeepMind Mathematics v1.0, algebra modules (linear_1d, linear_2d, polynomial_roots)",
+    "Difficulty: train-easy",
+    "Reject answers containing commas (multi-value polynomial roots)",
+    "Reject non-integer answers",
+    "Exclude source_record_ids already in T1/T2/T3",
+    "Deterministic sample with seed=142"
+  ],
+  "dataset_source": {
+    "name": "DeepMind Mathematics v1.0",
+    "url": "https://storage.googleapis.com/mathematics-dataset/mathematics_dataset-v1.0.tar.gz",
+    "modules": [
+      "algebra__linear_1d",
+      "algebra__linear_2d",
+      "algebra__polynomial_roots"
+    ],
+    "difficulty": "train-easy",
+    "citation": "Saxton et al., 2019 (arXiv:1904.01557)"
+  },
+  "validation": {
+    "total_rows": 40,
+    "balanced": true,
+    "duplicate_prompt_ids": 0,
+    "duplicate_source_ids": 0,
+    "all_source_type_dataset_raw": true
+  }
+}
