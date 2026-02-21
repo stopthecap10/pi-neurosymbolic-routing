@@ -454,6 +454,7 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
             "max_tokens": int(n_pred),
             "temperature": 0.0,
             "top_p": 1.0,
+            "top_k": 1,
             "seed": 42,
             "stop": ["\n"],
         }
@@ -484,6 +485,7 @@ def run_inference(prompt_text, server_url, timeout_sec, n_pred, use_grammar, gra
             "n_predict": int(n_pred),
             "temperature": 0.0,
             "top_p": 1.0,
+            "top_k": 1,
             "seed": 42,
             "stop": ["\n", "<|end|>", "<|endoftext|>"],
         }
@@ -1268,6 +1270,7 @@ def main():
                 "quantization": config['quantization'],
                 "temperature": 0.0,
                 "top_p": 1.0,
+                "top_k": 1,
                 "seed": 42,
                 "timeout_sec": timeout_sec,
                 "config_version": config['config_version'],

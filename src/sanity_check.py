@@ -91,6 +91,7 @@ def test_completion_endpoint(base_url, prompt_text, n_predict, timeout_sec):
         "n_predict": n_predict,
         "temperature": 0.0,
         "top_p": 1.0,
+        "top_k": 1,
         "seed": 42,
         "stop": ["\n", "<|end|>", "<|endoftext|>"],
     }
@@ -109,6 +110,7 @@ def test_chat_endpoint(base_url, system_msg, user_msg, n_predict, timeout_sec):
         "max_tokens": n_predict,
         "temperature": 0.0,
         "top_p": 1.0,
+        "top_k": 1,
         "seed": 42,
         "stop": ["\n"],
     }

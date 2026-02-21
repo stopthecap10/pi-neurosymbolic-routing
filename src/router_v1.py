@@ -427,6 +427,7 @@ class RouterV1:
                 "max_tokens": n_pred,
                 "temperature": 0.0,
                 "top_p": 1.0,
+                "top_k": 1,
                 "seed": 42,
                 "stop": ["\n"],
             }
@@ -453,6 +454,7 @@ class RouterV1:
                 "n_predict": n_pred,
                 "temperature": 0.0,
                 "top_p": 1.0,
+                "top_k": 1,
                 "seed": 42,
                 "stop": ["\n", "<|end|>", "<|endoftext|>"],
             }

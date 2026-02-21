@@ -84,6 +84,7 @@ def send_request(server_url, prompt, n_predict, timeout_sec):
         "n_predict": n_predict,
         "temperature": 0.0,
         "top_p": 1.0,
+        "top_k": 1,
         "seed": 42,
         "stop": ["\n", "<|end|>", "<|endoftext|>"],
     }

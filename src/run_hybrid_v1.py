@@ -229,6 +229,7 @@ def main():
                 "quantization": config['quantization'],
                 "temperature": 0.0,
                 "top_p": 1.0,
+                "top_k": 1,
                 "seed": 42,
                 "timeout_sec": config['timeout_sec'],
                 "config_version": config['config_version'],
