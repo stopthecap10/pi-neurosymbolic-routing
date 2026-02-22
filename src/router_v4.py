@@ -179,14 +179,12 @@ class RouterV4(RouterV3):
         previous_raw = result.get('answer_raw', '')
 
         if category == "WP":
-            # WP: escalate to A3R if p_correct < tau and result is salvageable
+            # WP: escalate to A3R if p < tau (or no calibrator) and A2 failed
             if result['timeout'] or not result['parse_success']:
                 if self.calibrator_loaded and p_correct >= 0 and p_correct >= self.tau:
                     decision_reason = f"accept_p>=tau (p={p_correct:.3f}>=tau={self.tau})"
-                elif result['timeout'] and not previous_raw.strip():
-                    decision_reason = f"stop_empty_timeout (p={p_correct:.3f})"
                 else:
-                    # Escalate to A3R
+                    # Escalate to A3R (p < tau or calibrator unavailable)
                     escalated = True
                     decision_reason = f"escalate_p<tau (p={p_correct:.3f}<tau={self.tau})"
 
