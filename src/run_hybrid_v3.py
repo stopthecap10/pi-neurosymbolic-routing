@@ -271,6 +271,11 @@ def main():
                 # Error
                 "error_code": result['error_code'],
 
+                # Timeout policy (V3 hybrid cost caps)
+                "timeout_policy_version": result.get('timeout_policy_version', ''),
+                "action_timeout_sec_used": result.get('action_timeout_sec_used', ''),
+                "timeout_reason": result.get('timeout_reason', ''),
+
                 # Reproducibility (all frozen)
                 "model_name": config['model_name'],
                 "quantization": config['quantization'],
@@ -307,10 +312,22 @@ def main():
                 mode_indicator += "+"
             mode_str = f" [{mode_indicator}]" if mode_indicator else ""
 
+            # Per-step latency breakdown
+            step_lat_str = ""
+            step_latencies = result.get('step_latencies', [])
+            if len(step_latencies) > 1:
+                parts = []
+                for act, ms in step_latencies:
+                    label = act
+                    if act == 'A3':
+                        label = "A3R" if category == "WP" else ("A3L" if category == "LOG" else "A3")
+                    parts.append(f"{label}={ms:.0f}ms")
+                step_lat_str = f" ({'+'.join(parts)})"
+
             print(f"{status} {prompt_id} {category} #{repeat_idx}/{config['repeats']} "
                   f"route={route_display}{mode_str} "
                   f"mode={result['reasoning_mode']} "
-                  f"lat={result['total_latency_ms']:.0f}ms "
+                  f"lat={result['total_latency_ms']:.0f}ms{step_lat_str} "
                   f"ans={result['answer_final']} exp={ground_truth} err={result['error_code']}")
 
             # Small delay
@@ -358,6 +375,7 @@ def main():
         "repair_attempted", "repair_success", "repair_trigger_reason", "previous_raw_len", "previous_action_id",
         "answer_raw", "answer_parsed", "parse_success", "ground_truth", "correct",
         "total_latency_ms", "timeout_flag",
+        "timeout_policy_version", "action_timeout_sec_used", "timeout_reason",
         "energy_start_mwh", "energy_end_mwh", "energy_delta_mwh", "energy_per_prompt_mwh",
         "error_code",
         "model_name", "quantization", "temperature", "top_p", "top_k", "seed", "timeout_sec", "config_version", "router_version"

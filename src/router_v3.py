@@ -385,6 +385,10 @@ class RouterV3:
             'repair_trigger_reason': repair_trigger_reason,
             'previous_raw_len': previous_raw_len,
             'previous_action_id': previous_action_id,
+            'step_latencies': [(r['action'], r['result']['latency_ms']) for r in route_log if 'result' in r],
+            'timeout_policy_version': self.TIMEOUT_POLICY_VERSION,
+            'action_timeout_sec_used': result.get('action_timeout_sec_used', ''),
+            'timeout_reason': result.get('timeout_reason', ''),
             'route_log': route_log
         }
 
@@ -414,8 +418,19 @@ class RouterV3:
         else:
             raise ValueError(f"Unknown action: {action}")
 
-    # Action-specific timeouts (match baseline runner)
+    # Baseline-compatible default timeouts (unchanged from V1/V2)
     ACTION_TIMEOUTS = {"A1": 45, "A2": 60}
+
+    # V3 hybrid policy: per-action cost caps (frozen before evaluation)
+    # These are declared as part of the hybrid controller design, not ad-hoc changes.
+    # Baselines use ACTION_TIMEOUTS only. V3 uses CATEGORY_TIMEOUTS where defined.
+    TIMEOUT_POLICY_VERSION = "v3_cost_cap_1"
+    CATEGORY_TIMEOUTS = {
+        ("WP", "A2"): 20,   # WP primary: 30 tok should finish in ~15s on Pi
+        ("WP", "A3"): 20,   # WP repair: 12 tok, just final answer
+        ("LOG", "A1"): 15,  # LOG primary: 6 tok, one word
+        ("LOG", "A3"): 15,  # LOG retry: 6 tok, one word
+    }
 
     def _execute_llm_action(self, prompt_text: str, max_tokens: int,
                            category: str, grammar_enabled: bool) -> Dict[str, Any]:
@@ -429,7 +444,11 @@ class RouterV3:
             n_pred = max_tokens
 
         action_name = "A1" if max_tokens <= 12 else "A2"
-        timeout_sec = self.ACTION_TIMEOUTS.get(action_name, self.config['timeout_sec'])
+        # Use category-specific timeout if available, else default
+        timeout_sec = self.CATEGORY_TIMEOUTS.get(
+            (category, action_name),
+            self.ACTION_TIMEOUTS.get(action_name, self.config['timeout_sec'])
+        )
 
         grammar_file = None
         if grammar_enabled:
@@ -523,6 +542,10 @@ class RouterV3:
 
         parse_success = (answer_parsed != "")
 
+        # Determine timeout source for logging
+        cat_key = (category, action_name)
+        timeout_reason = "action_cap" if cat_key in self.CATEGORY_TIMEOUTS else "global"
+
         return {
             'answer_raw': content,
             'answer_parsed': answer_parsed,
@@ -532,7 +555,9 @@ class RouterV3:
             'symbolic_failed': False,
             'symbolic_parse_success': False,
             'sympy_solve_success': False,
-            'final_source': 'llm'
+            'final_source': 'llm',
+            'action_timeout_sec_used': timeout_sec,
+            'timeout_reason': timeout_reason,
         }
 
     def _execute_repair_action(self, prompt_text: str, category: str,
@@ -582,7 +607,11 @@ class RouterV3:
                 'final_source': 'none'
             }
 
-        timeout_sec = self.ACTION_TIMEOUTS.get("A1", 45)
+        # Use category-specific timeout for A3 (cost-capped)
+        timeout_sec = self.CATEGORY_TIMEOUTS.get(
+            (category, "A3"),
+            self.ACTION_TIMEOUTS.get("A1", 45)
+        )
 
         t0 = time.time()
         content = ""
@@ -643,7 +672,9 @@ class RouterV3:
             'symbolic_failed': False,
             'symbolic_parse_success': False,
             'sympy_solve_success': False,
-            'final_source': 'repair'
+            'final_source': 'repair',
+            'action_timeout_sec_used': timeout_sec,
+            'timeout_reason': 'action_cap',
         }
 
     def _extract_user_question(self, prompt_text: str) -> str:
