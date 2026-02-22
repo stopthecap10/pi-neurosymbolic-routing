@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Hybrid V3 Router - WP/LOG Repair Layer
+Hybrid V3 Router - WP Repair Layer (V3.1)
 AR→A5, ALG→A4 (frozen from V2)
 WP→A2 with A3 repair fallback
-LOG→A1 with A3 strict retry fallback
+LOG→A1 only (A3L disabled after V3.0 regression: 60%→36.7%)
 """
 
 import re
@@ -424,12 +424,11 @@ class RouterV3:
     # V3 hybrid policy: per-action cost caps (frozen before evaluation)
     # These are declared as part of the hybrid controller design, not ad-hoc changes.
     # Baselines use ACTION_TIMEOUTS only. V3 uses CATEGORY_TIMEOUTS where defined.
-    TIMEOUT_POLICY_VERSION = "v3_cost_cap_1"
+    TIMEOUT_POLICY_VERSION = "v3.1_cost_cap_2"
     CATEGORY_TIMEOUTS = {
         ("WP", "A2"): 20,   # WP primary: 30 tok should finish in ~15s on Pi
         ("WP", "A3"): 20,   # WP repair: 12 tok, just final answer
-        ("LOG", "A1"): 15,  # LOG primary: 6 tok, one word
-        ("LOG", "A3"): 15,  # LOG retry: 6 tok, one word
+        # LOG: uses baseline ACTION_TIMEOUTS (A3L disabled in V3.1)
     }
 
     def _execute_llm_action(self, prompt_text: str, max_tokens: int,
@@ -920,11 +919,11 @@ class RouterV3:
 
     def _get_fallback_action(self, current_action: str, category: str, reason: str, escalation_level: int) -> Optional[str]:
         """
-        V3 fallback chains:
+        V3.1 fallback chains:
         - AR: A5 -> A1 -> A2
         - ALG: A4 -> A1 -> A2
         - WP: A2 -> A3 (repair)
-        - LOG: A1 -> A3 (repair)
+        - LOG: A1 only (no fallback — A3L disabled after V3.0 regression)
         """
 
         if escalation_level == 1:
@@ -934,9 +933,8 @@ class RouterV3:
                 return 'A1'
             elif current_action == 'A2' and category == 'WP':
                 return 'A3'  # WP: A2 failed -> repair
-            elif current_action == 'A1' and category == 'LOG':
-                return 'A3'  # LOG: A1 failed -> strict retry
-            elif current_action == 'A1':
+            # LOG: no fallback (A3L disabled in V3.1)
+            elif current_action == 'A1' and category != 'LOG':
                 return 'A2'
             else:
                 return None

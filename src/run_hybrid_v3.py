@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Hybrid V3 Runner - WP/LOG Repair Layer
-AR/ALG frozen from V2, WP gets A3 repair, LOG gets strict retry
+Hybrid V3 Runner (V3.1) - WP Repair Layer
+AR/ALG frozen from V2, WP gets A3 repair
+LOG stays A1 only (A3L disabled after V3.0 regression)
 """
 
 import argparse
 import csv
 import os
+import re
 import sys
 import time
 from datetime import datetime
@@ -134,7 +136,7 @@ def main():
     system_name = "hybrid_v3"
 
     print(f"Running {system_name}")
-    print(f"Router: V3 with A3 repair for WP/LOG")
+    print(f"Router: V3.1 with A3 repair for WP only (A3L disabled)")
     if args.probe:
         print(f"MODE: PROBE (1 per category x 1 repeat)")
     print(f"Prompts: {len(prompts)}")
@@ -145,11 +147,11 @@ def main():
         action = route_info['action']
         print(f"  {cat:4} -> {action} (grammar: {route_info['grammar_enabled']})")
     print()
-    print("V3 fallback chains:")
+    print("V3.1 fallback chains:")
     print("  AR:  A5 -> A1 -> A2")
     print("  ALG: A4 -> A1 -> A2")
     print("  WP:  A2 -> A3R (repair)")
-    print("  LOG: A1 -> A3L (strict retry on parse fail)")
+    print("  LOG: A1 only (no fallback)")
     print()
 
     # Energy measurement
@@ -159,12 +161,14 @@ def main():
     print("Check your USB power meter now.")
     print()
     start_mwh_str = input("Enter STARTING mWh reading (just the number): ").strip()
+    # Strip hidden chars (escape sequences from terminal)
+    start_mwh_clean = re.sub(r'[^\d.\-+]', '', start_mwh_str)
 
     try:
-        start_mwh = float(start_mwh_str)
-        print(f"Recorded starting: {start_mwh} mWh")
+        start_mwh = float(start_mwh_clean)
+        print(f"Recorded starting: {start_mwh} mWh (raw input: '{start_mwh_str}')")
     except ValueError:
-        print("Invalid input, energy will be marked as NA")
+        print(f"Invalid input (raw: '{start_mwh_str}', cleaned: '{start_mwh_clean}'), energy will be marked as NA")
         start_mwh = None
 
     print("=" * 60)
@@ -285,7 +289,7 @@ def main():
                 "seed": 42,
                 "timeout_sec": config['timeout_sec'],
                 "config_version": config['config_version'],
-                "router_version": "v3.0",
+                "router_version": "v3.1",
             }
 
             trials.append(trial)
@@ -342,10 +346,11 @@ def main():
     print("Check your USB power meter now.")
     print()
     end_mwh_str = input("Enter ENDING mWh reading (just the number): ").strip()
+    end_mwh_clean = re.sub(r'[^\d.\-+]', '', end_mwh_str)
 
     try:
-        end_mwh = float(end_mwh_str)
-        print(f"Recorded ending: {end_mwh} mWh")
+        end_mwh = float(end_mwh_clean)
+        print(f"Recorded ending: {end_mwh} mWh (raw input: '{end_mwh_str}')")
 
         if start_mwh is not None:
             delta_mwh = end_mwh - start_mwh
@@ -361,7 +366,7 @@ def main():
                 trial['energy_delta_mwh'] = f"{delta_mwh:.2f}"
                 trial['energy_per_prompt_mwh'] = f"{energy_per_prompt:.2f}"
     except ValueError:
-        print("Invalid input, energy marked as NA")
+        print(f"Invalid input (raw: '{end_mwh_str}', cleaned: '{end_mwh_clean}'), energy marked as NA")
 
     print("=" * 60)
     print()
