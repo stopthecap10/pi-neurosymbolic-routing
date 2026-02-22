@@ -313,7 +313,7 @@ def main():
         "total_latency_ms", "timeout_flag",
         "energy_start_mwh", "energy_end_mwh", "energy_delta_mwh", "energy_per_prompt_mwh",
         "error_code",
-        "model_name", "quantization", "temperature", "top_p", "seed", "timeout_sec", "config_version", "router_version"
+        "model_name", "quantization", "temperature", "top_p", "top_k", "seed", "timeout_sec", "config_version", "router_version"
     ]
 
     with open(args.out_trials, 'w', newline='', encoding='utf-8') as f:

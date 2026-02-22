@@ -1328,7 +1328,7 @@ def main():
         "error_code",
         "e7_http_status", "e7_exception_type", "e7_tokens_predicted",
         "e7_stop_type", "e7_prompt_len_chars", "e7_raw_preview",
-        "model_name", "quantization", "temperature", "top_p", "seed",
+        "model_name", "quantization", "temperature", "top_p", "top_k", "seed",
         "timeout_sec", "config_version"
     ]
 
