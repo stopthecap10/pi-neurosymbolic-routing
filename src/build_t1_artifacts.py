@@ -507,7 +507,19 @@ def main():
     category_summaries_all = {}
     system_metrics_all = {}
 
-    for system_name, df in all_trials.items():
+    # Filter to only QA-passed systems
+    passed_systems = {name: df for name, df in all_trials.items()
+                      if qa_reports.get(name, {}).get("passed", False)}
+    if not passed_systems:
+        print("\n  WARNING: No systems passed QA. Nothing to process.")
+        _print_done(args.output_dir)
+        return
+
+    skipped = set(all_trials.keys()) - set(passed_systems.keys())
+    if skipped:
+        print(f"\n  Skipping QA-failed systems: {', '.join(sorted(skipped))}")
+
+    for system_name, df in passed_systems.items():
         csv_path = run_paths[system_name]
         print(f"\n  Processing {system_name}...")
 
@@ -580,7 +592,7 @@ def main():
     print("  -> comparisons/system_comparison.csv")
 
     # 4b. Error taxonomy
-    error_tax = compute_error_taxonomy(all_trials)
+    error_tax = compute_error_taxonomy(passed_systems)
     error_tax.to_csv(
         args.output_dir / "comparisons" / "error_taxonomy.csv",
         index=False,
@@ -603,7 +615,7 @@ def main():
 
     # 4e. Infra stability CSV (cross-system)
     infra_rows = []
-    for system_name, df in all_trials.items():
+    for system_name, df in passed_systems.items():
         infra_rows.append(_build_infra_report(df, system_name))
     pd.DataFrame(infra_rows).to_csv(
         args.output_dir / "comparisons" / "infra_stability.csv",
@@ -612,7 +624,7 @@ def main():
     print("  -> comparisons/infra_stability.csv")
 
     # 4f. Route usage tables (hybrid systems)
-    route_by_system, route_by_category = _build_route_usage(all_trials)
+    route_by_system, route_by_category = _build_route_usage(passed_systems)
     if len(route_by_system) > 0:
         route_by_system.to_csv(
             args.output_dir / "comparisons" / "route_usage_by_system.csv",
@@ -666,7 +678,7 @@ def main():
     _write_failure_case_studies(prompt_medians_all, args.output_dir)
 
     # 5e. Route examples for poster
-    route_examples = _build_route_examples(all_trials, prompt_medians_all)
+    route_examples = _build_route_examples(passed_systems, prompt_medians_all)
     if len(route_examples) > 0:
         route_examples.to_csv(
             args.output_dir / "poster" / "route_examples.csv",
@@ -675,7 +687,7 @@ def main():
         print(f"  -> poster/route_examples.csv ({len(route_examples)} examples)")
 
     # 5f. Prompt characteristics table
-    prompt_chars = _build_prompt_characteristics(all_trials, prompt_medians_all)
+    prompt_chars = _build_prompt_characteristics(passed_systems, prompt_medians_all)
     prompt_chars.to_csv(
         args.output_dir / "tables" / "prompt_characteristics.csv",
         index=False,
@@ -685,7 +697,7 @@ def main():
     # ── Step 6: Figures ───────────────────────────────────
     if not args.no_figures:
         _generate_figures_stage(
-            args, all_trials, system_metrics_all,
+            args, passed_systems, system_metrics_all,
             category_summaries_all, error_tax,
         )
     else:
