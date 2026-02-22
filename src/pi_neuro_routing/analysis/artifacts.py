@@ -107,12 +107,23 @@ def load_trials_df(csv_path: Path) -> pd.DataFrame:
     return df
 
 
-def detect_system_type(df: pd.DataFrame) -> str:
-    """Detect whether a DataFrame is baseline, hybrid_v1, or hybrid_v2."""
+def detect_system_type(df: pd.DataFrame, system_name: str = "") -> str:
+    """Detect whether a DataFrame is baseline, hybrid_v1, hybrid_v2, or probe."""
+    # Name-based detection first (most reliable)
+    name_lower = system_name.lower()
+    if "probe" in name_lower:
+        return "probe"
+    if name_lower.startswith("v1_a") and "hybrid" not in name_lower:
+        return "baseline"
+
+    # Column-based detection fallback
     cols = set(df.columns)
-    if "symbolic_parse_success" in cols or "sympy_solve_success" in cols:
+    has_sympy = "symbolic_parse_success" in cols or "sympy_solve_success" in cols
+    has_route = "route_chosen" in cols and df["route_chosen"].notna().any() and (df["route_chosen"] != "").any()
+
+    if has_sympy and has_route:
         return "hybrid_v2"
-    if "route_chosen" in cols and df["route_chosen"].notna().any() and (df["route_chosen"] != "").any():
+    if has_route:
         return "hybrid_v1"
     return "baseline"
 

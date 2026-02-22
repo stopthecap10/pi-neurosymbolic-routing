@@ -457,7 +457,7 @@ def main():
         print(f"\n  Loading {system_name}...")
         df = load_trials_df(csv_path)
         all_trials[system_name] = df
-        sys_type = detect_system_type(df)
+        sys_type = detect_system_type(df, system_name)
         print(f"    {len(df)} rows, type={sys_type}")
 
     # ── Step 2: QA Validation ─────────────────────────────
