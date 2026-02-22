@@ -383,6 +383,9 @@ class RouterV1:
         else:
             raise ValueError(f"Unknown action: {action}")
 
+    # Action-specific timeouts (match baseline runner)
+    ACTION_TIMEOUTS = {"A1": 45, "A2": 60}
+
     def _execute_llm_action(self, prompt_text: str, max_tokens: int,
                            category: str, grammar_enabled: bool) -> Dict[str, Any]:
         """Execute LLM inference (A1 or A2). Supports chat and completion API modes."""
@@ -394,6 +397,10 @@ class RouterV1:
             n_pred = 6
         else:
             n_pred = max_tokens
+
+        # Use action-specific timeout (A1=45s, A2=60s) instead of config default
+        action_name = "A1" if max_tokens <= 12 else "A2"
+        timeout_sec = self.ACTION_TIMEOUTS.get(action_name, self.config['timeout_sec'])
 
         # Get grammar file
         grammar_file = None
@@ -435,7 +442,7 @@ class RouterV1:
             try:
                 r = requests.post(
                     chat_url, json=request,
-                    timeout=(10.0, float(self.config['timeout_sec'])),
+                    timeout=(10.0, float(timeout_sec)),
                 )
                 j = r.json()
                 choices = j.get("choices", [])
@@ -470,7 +477,7 @@ class RouterV1:
                 r = requests.post(
                     self.config['server_url'],
                     json=request,
-                    timeout=(10.0, float(self.config['timeout_sec'])),
+                    timeout=(10.0, float(timeout_sec)),
                 )
                 j = r.json()
                 content = j.get("content", "") or ""
@@ -482,7 +489,7 @@ class RouterV1:
 
         latency_ms = (time.time() - t0) * 1000
 
-        if latency_ms >= self.config['timeout_sec'] * 1000:
+        if latency_ms >= timeout_sec * 1000:
             timed_out = True
 
         # Parse answer (P2_numeric_robust for numeric, word-boundary for yesno)
@@ -502,6 +509,15 @@ class RouterV1:
             'symbolic_failed': False
         }
 
+    def _extract_user_question(self, prompt_text: str) -> str:
+        """Extract the raw user question from Phi chat template."""
+        if "<|user|>" in prompt_text and "<|end|>" in prompt_text:
+            start = prompt_text.find("<|user|>") + len("<|user|>")
+            end = prompt_text.find("<|end|>", start)
+            if end > start:
+                return prompt_text[start:end].strip()
+        return prompt_text
+
     def _execute_symbolic_direct(self, prompt_text: str, category: str) -> Dict[str, Any]:
         """
         A5: Direct symbolic computation for simple arithmetic
@@ -509,9 +525,9 @@ class RouterV1:
         """
         t0 = time.time()
 
-        # Extract arithmetic expression from prompt
-        # Look for patterns like "594 divided by 3", "847 + 253", etc.
-        expr = self._extract_arithmetic_expression(prompt_text)
+        # Extract raw question from chat template before parsing
+        raw_question = self._extract_user_question(prompt_text)
+        expr = self._extract_arithmetic_expression(raw_question)
 
         answer_parsed = ""
         symbolic_failed = False
