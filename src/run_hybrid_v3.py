@@ -399,18 +399,17 @@ def main():
     symbolic_parse_count = sum(t['symbolic_parse_success'] for t in trials)
     sympy_solve_count = sum(t['sympy_solve_success'] for t in trials)
 
-    latencies = [float(t['total_latency_ms']) for t in trials if not t['timeout_flag']]
-    if latencies:
-        latencies.sort()
-        median_lat = latencies[len(latencies)//2]
-    else:
-        median_lat = 0
+    all_latencies = sorted(float(t['total_latency_ms']) for t in trials)
+    nontimeout_latencies = sorted(float(t['total_latency_ms']) for t in trials if not t['timeout_flag'])
+    median_all = all_latencies[len(all_latencies)//2] if all_latencies else 0
+    median_nontimeout = nontimeout_latencies[len(nontimeout_latencies)//2] if nontimeout_latencies else 0
 
     print(f"SUMMARY:")
     print(f"  Accuracy: {correct_count}/{total} ({100*correct_count/total:.1f}%)")
     print(f"  Timeouts: {timeout_count}/{total}")
     print(f"  Parse failures: {parse_fail_count}/{total}")
-    print(f"  Median latency: {median_lat:.0f}ms")
+    print(f"  Median latency (all trials): {median_all:.0f}ms")
+    print(f"  Median latency (non-timeout): {median_nontimeout:.0f}ms")
     print(f"  Total escalations: {total_escalations}")
     print(f"  Prompts needing fallback: {prompts_with_escalation}/{len(prompts)}")
     print(f"  Symbolic parse success: {symbolic_parse_count}/{total}")
