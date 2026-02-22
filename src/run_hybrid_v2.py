@@ -14,7 +14,7 @@ import yaml
 
 from router_v2 import RouterV2
 
-PARSER_VERSION = "P2_numeric_robust"
+PARSER_VERSION = "P3_numeric_context"
 PROMPT_TEMPLATE_VERSION = "PT3_phi_chat"
 
 # System messages for Phi chat format
@@ -98,6 +98,8 @@ def main():
     ap.add_argument("--api_mode", choices=["chat", "completion"], default="chat",
                     help="Inference API mode: 'chat' uses /v1/chat/completions (default), "
                          "'completion' uses /completion")
+    ap.add_argument("--probe", action="store_true",
+                    help="Quick probe: 1 prompt per category × 1 repeat")
     args = ap.parse_args()
 
     # Load config and routing decisions
@@ -113,6 +115,18 @@ def main():
     if args.split_role == "official":
         verify_official_split(args.csv, prompts)
 
+    # Probe mode: 1 prompt per category × 1 repeat
+    if args.probe:
+        seen_cats = set()
+        probe_prompts = []
+        for p in prompts:
+            cat = p['category']
+            if cat not in seen_cats:
+                seen_cats.add(cat)
+                probe_prompts.append(p)
+        prompts = probe_prompts
+        config['repeats'] = 1
+
     # Initialize router
     router = RouterV2(config, routing_decisions)
 
@@ -120,6 +134,8 @@ def main():
 
     print(f"Running {system_name}")
     print(f"Router: Enhanced with A4 (LLM extract + SymPy solve)")
+    if args.probe:
+        print(f"MODE: PROBE (1 per category × 1 repeat)")
     print(f"Prompts: {len(prompts)}")
     print(f"Repeats: {config['repeats']}")
     print()
@@ -343,7 +359,7 @@ def main():
     else:
         median_lat = 0
 
-    print(f"📊 SUMMARY:")
+    print(f"SUMMARY:")
     print(f"  Accuracy: {correct_count}/{total} ({100*correct_count/total:.1f}%)")
     print(f"  Timeouts: {timeout_count}/{total}")
     print(f"  Parse failures: {parse_fail_count}/{total}")
@@ -352,7 +368,28 @@ def main():
     print(f"  Prompts needing fallback: {prompts_with_escalation}/{len(prompts)}")
     print(f"  Symbolic parse success: {symbolic_parse_count}/{total}")
     print(f"  SymPy solve success: {sympy_solve_count}/{total}")
-    print(f"\n✅ Saved to: {args.out_trials}")
+
+    # Per-category accuracy
+    print(f"\n  Per-category:")
+    from collections import Counter
+    cat_correct = Counter()
+    cat_total = Counter()
+    route_counts = Counter()
+    for t in trials:
+        cat = t['category']
+        cat_total[cat] += 1
+        cat_correct[cat] += t['correct']
+        route_counts[t['route_chosen']] += 1
+    for cat in sorted(cat_total.keys()):
+        c, n = cat_correct[cat], cat_total[cat]
+        print(f"    {cat:4}: {c}/{n} correct ({100*c/n:.1f}%)")
+
+    # Route usage
+    print(f"\n  Route usage:")
+    for route, count in sorted(route_counts.items(), key=lambda x: -x[1]):
+        print(f"    {route}: {count}")
+
+    print(f"\nSaved to: {args.out_trials}")
 
 if __name__ == "__main__":
     main()

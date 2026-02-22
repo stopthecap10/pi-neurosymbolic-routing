@@ -416,6 +416,9 @@ class RouterV2:
         else:
             raise ValueError(f"Unknown action: {action}")
 
+    # Action-specific timeouts (match baseline runner)
+    ACTION_TIMEOUTS = {"A1": 45, "A2": 60}
+
     def _execute_llm_action(self, prompt_text: str, max_tokens: int,
                            category: str, grammar_enabled: bool) -> Dict[str, Any]:
         """Execute LLM inference (A1 or A2). Supports chat and completion API modes."""
@@ -427,6 +430,10 @@ class RouterV2:
             n_pred = 6
         else:
             n_pred = max_tokens
+
+        # Use action-specific timeout (A1=45s, A2=60s)
+        action_name = "A1" if max_tokens <= 12 else "A2"
+        timeout_sec = self.ACTION_TIMEOUTS.get(action_name, self.config['timeout_sec'])
 
         # Get grammar file
         grammar_file = None
@@ -468,7 +475,7 @@ class RouterV2:
             try:
                 r = requests.post(
                     chat_url, json=request,
-                    timeout=(10.0, float(self.config['timeout_sec'])),
+                    timeout=(10.0, float(timeout_sec)),
                 )
                 j = r.json()
                 choices = j.get("choices", [])
@@ -503,7 +510,7 @@ class RouterV2:
                 r = requests.post(
                     self.config['server_url'],
                     json=request,
-                    timeout=(10.0, float(self.config['timeout_sec'])),
+                    timeout=(10.0, float(timeout_sec)),
                 )
                 j = r.json()
                 content = j.get("content", "") or ""
@@ -515,7 +522,7 @@ class RouterV2:
 
         latency_ms = (time.time() - t0) * 1000
 
-        if latency_ms >= self.config['timeout_sec'] * 1000:
+        if latency_ms >= timeout_sec * 1000:
             timed_out = True
 
         # Parse answer (P2_numeric_robust for numeric, word-boundary for yesno)
@@ -538,6 +545,15 @@ class RouterV2:
             'final_source': 'llm'
         }
 
+    def _extract_user_question(self, prompt_text: str) -> str:
+        """Extract the raw user question from Phi chat template."""
+        if "<|user|>" in prompt_text and "<|end|>" in prompt_text:
+            start = prompt_text.find("<|user|>") + len("<|user|>")
+            end = prompt_text.find("<|end|>", start)
+            if end > start:
+                return prompt_text[start:end].strip()
+        return prompt_text
+
     def _execute_symbolic_direct(self, prompt_text: str, category: str) -> Dict[str, Any]:
         """
         A5: Direct symbolic computation for simple arithmetic
@@ -545,8 +561,9 @@ class RouterV2:
         """
         t0 = time.time()
 
-        # Extract arithmetic expression from prompt
-        expr = self._extract_arithmetic_expression(prompt_text)
+        # Extract raw question from chat template before parsing
+        raw_question = self._extract_user_question(prompt_text)
+        expr = self._extract_arithmetic_expression(raw_question)
 
         answer_parsed = ""
         symbolic_failed = False
@@ -583,10 +600,9 @@ class RouterV2:
 
     def _execute_symbolic_extract_solve(self, prompt_text: str, category: str) -> Dict[str, Any]:
         """
-        A4: LLM extracts equation, SymPy solves
-        For algebra problems
-
-        ROBUST VERSION: Fail fast with strict extraction
+        A4: Deterministic equation extraction + SymPy solve for ALG.
+        Parses structured prompts like "Solve 27 = -4*d - 5*z - 9, 4*z + 12 = d for d."
+        No LLM needed — equations and target variable are already in the prompt.
         """
         t0 = time.time()
 
@@ -603,93 +619,52 @@ class RouterV2:
                 'final_source': 'none'
             }
 
-        # Step 1: Extract BASE prompt (remove instruction suffix to avoid template collision)
-        # prompt_text format: "{base_prompt}\n{instruction}\nAnswer:"
-        # We need just the base prompt for clean extraction
-        # Strip instruction suffix - handle both old and new templates
-        base_prompt = prompt_text.split('\nReturn only')[0].strip()
-        base_prompt = base_prompt.split('\nAnswer with only')[0].strip()
+        # Extract raw question from chat template
+        raw_question = self._extract_user_question(prompt_text)
 
-        # Build CLEAN extraction prompt (no collision with answer template)
-        # STRICT: Only ask for equation, short generation
-        extraction_prompt = f"{base_prompt}\nWrite only the equation:"
+        # Step 1: Extract target variable ("for d", "for c", "What is t?")
+        target_var = None
+        target_match = re.search(r'\bfor\s+([a-zA-Z])\b\s*[.?]?\s*$', raw_question)
+        if target_match:
+            target_var = target_match.group(1)
+        else:
+            # "What is t?" pattern
+            what_match = re.search(r'\bwhat\s+is\s+([a-zA-Z])\b\s*[.?]?\s*$', raw_question, re.IGNORECASE)
+            if what_match:
+                target_var = what_match.group(1)
 
-        # Call LLM with STRICT limits (8 tokens max for equation like "2*x-6=x")
-        extraction_request = {
-            "prompt": extraction_prompt,
-            "n_predict": 12,  # Strict: just enough for equation
-            "temperature": 0.0,
-            "top_p": 1.0,
-            "top_k": 1,
-            "seed": 42,
-            "stop": ["\n", "###", "<|end|>", "<|endoftext|>"],
-        }
+        if not target_var:
+            return self._a4_fail(t0, "target_var_missing", raw_question)
 
-        extraction_t0 = time.time()
-        extraction_content = ""
-        extraction_timeout = False
+        # Step 2: Extract equations from the prompt
+        # Strip "Solve " prefix and "for x." suffix
+        eq_text = raw_question
+        eq_text = re.sub(r'^(Solve|Let)\s+', '', eq_text, flags=re.IGNORECASE)
+        eq_text = re.sub(r'\s+for\s+[a-zA-Z]\s*[.?]?\s*$', '', eq_text)
+        eq_text = re.sub(r'\s*What\s+is\s+[a-zA-Z]\s*[.?]?\s*$', '', eq_text, flags=re.IGNORECASE)
+        eq_text = eq_text.strip().rstrip('.')
 
+        if not eq_text or '=' not in eq_text:
+            return self._a4_fail(t0, "eq_extract_fail", raw_question)
+
+        # Split multiple equations (comma-separated)
+        eq_strings = [e.strip() for e in eq_text.split(',') if '=' in e]
+        if not eq_strings:
+            return self._a4_fail(t0, "eq_extract_fail", raw_question)
+
+        # Step 3: Solve with SymPy
         try:
-            r = requests.post(
-                self.config['server_url'],
-                json=extraction_request,
-                timeout=(10.0, 20.0),  # Shorter timeout for extraction only
+            answer_parsed, sympy_success, parse_success = self._solve_with_sympy(
+                eq_strings, target_var
             )
-            j = r.json()
-            extraction_content = j.get("content", "") or ""
-        except requests.exceptions.Timeout:
-            extraction_timeout = True
-        except Exception as e:
-            print(f"ERROR in A4 extraction: {e}")
-            extraction_content = ""
-
-        extraction_latency = (time.time() - extraction_t0) * 1000
-
-        # Fail fast if extraction timed out or is empty
-        if extraction_timeout or not extraction_content.strip():
-            return {
-                'answer_raw': f"[A4 extraction failed: timeout={extraction_timeout}]",
-                'answer_parsed': "",
-                'parse_success': False,
-                'timeout': extraction_timeout,
-                'latency_ms': extraction_latency,
-                'symbolic_failed': True,
-                'symbolic_parse_success': False,
-                'sympy_solve_success': False,
-                'final_source': 'none'
-            }
-
-        # Step 2: Parse equation and solve with SymPy
-        equation_text = extraction_content.strip()
-
-        # Quick validation: must contain '=' and variable 'x'
-        if '=' not in equation_text or 'x' not in equation_text.lower():
-            return {
-                'answer_raw': f"[A4 parse failed: {equation_text}]",
-                'answer_parsed': "",
-                'parse_success': False,
-                'timeout': False,
-                'latency_ms': extraction_latency,
-                'symbolic_failed': True,
-                'symbolic_parse_success': False,
-                'sympy_solve_success': False,
-                'final_source': 'none'
-            }
-
-        try:
-            # Try to solve with SymPy
-            sympy_t0 = time.time()
-            answer_parsed, sympy_success, parse_success = self._solve_with_sympy(equation_text)
-            sympy_latency = (time.time() - sympy_t0) * 1000
-
-            total_latency = extraction_latency + sympy_latency
+            latency_ms = (time.time() - t0) * 1000
 
             return {
-                'answer_raw': f"[A4: {equation_text[:50]} → {answer_parsed}]",
+                'answer_raw': f"[A4: {eq_strings} solve {target_var} → {answer_parsed}]",
                 'answer_parsed': answer_parsed,
                 'parse_success': parse_success,
                 'timeout': False,
-                'latency_ms': total_latency,
+                'latency_ms': latency_ms,
                 'symbolic_failed': not sympy_success,
                 'symbolic_parse_success': parse_success,
                 'sympy_solve_success': sympy_success,
@@ -697,61 +672,96 @@ class RouterV2:
             }
 
         except Exception as e:
-            total_latency = extraction_latency + ((time.time() - t0) * 1000 - extraction_latency)
-            return {
-                'answer_raw': f"[A4 SymPy error: {str(e)[:50]}]",
-                'answer_parsed': "",
-                'parse_success': False,
-                'timeout': False,
-                'latency_ms': total_latency,
-                'symbolic_failed': True,
-                'symbolic_parse_success': False,
-                'sympy_solve_success': False,
-                'final_source': 'none'
-            }
+            return self._a4_fail(t0, f"sympy_error: {str(e)[:40]}", raw_question)
 
-    def _solve_with_sympy(self, equation_text: str) -> Tuple[str, bool, bool]:
+    def _a4_fail(self, t0, reason, raw_question):
+        """Helper for A4 failure returns."""
+        return {
+            'answer_raw': f"[A4 failed: {reason}] {raw_question[:60]}",
+            'answer_parsed': "",
+            'parse_success': False,
+            'timeout': False,
+            'latency_ms': (time.time() - t0) * 1000,
+            'symbolic_failed': True,
+            'symbolic_parse_success': False,
+            'sympy_solve_success': False,
+            'final_source': 'none'
+        }
+
+    def _solve_with_sympy(self, eq_strings: list, target_var: str) -> Tuple[str, bool, bool]:
         """
-        Solve equation with SymPy
+        Solve system of equations with SymPy for a given target variable.
+        Args:
+            eq_strings: List of equation strings, e.g. ["27 = -4*d - 5*z - 9", "4*z + 12 = d"]
+            target_var: Variable to solve for, e.g. "d"
         Returns: (answer_str, sympy_solve_success, parse_success)
         """
         try:
-            # Define common variables
-            x = symbols('x')
+            # Collect all single-letter variables used across all equations
+            all_vars_set = set()
+            for eq_str in eq_strings:
+                found = re.findall(r'\b([a-zA-Z])\b', eq_str)
+                all_vars_set.update(found)
 
-            # Try different equation formats
-            # Format 1: "x = expression" → solve for x
-            if '=' in equation_text:
-                parts = equation_text.split('=')
-                if len(parts) == 2:
-                    lhs = parts[0].strip()
-                    rhs = parts[1].strip()
+            # Create SymPy symbols for all variables
+            sym_dict = {v: symbols(v) for v in all_vars_set}
+            target_sym = sym_dict.get(target_var)
+            if target_sym is None:
+                return ("", False, False)
 
-                    # Parse both sides
-                    lhs_expr = parse_expr(lhs, local_dict={'x': x})
-                    rhs_expr = parse_expr(rhs, local_dict={'x': x})
+            # Parse each equation into SymPy Eq objects
+            equations = []
+            for eq_str in eq_strings:
+                if '=' not in eq_str:
+                    continue
+                parts = eq_str.split('=')
+                if len(parts) != 2:
+                    continue
+                lhs = parts[0].strip()
+                rhs = parts[1].strip()
+                lhs_expr = parse_expr(lhs, local_dict=sym_dict)
+                rhs_expr = parse_expr(rhs, local_dict=sym_dict)
+                equations.append(Eq(lhs_expr, rhs_expr))
 
-                    # Solve equation
-                    equation = Eq(lhs_expr, rhs_expr)
-                    solutions = solve(equation, x)
+            if not equations:
+                return ("", False, False)
 
-                    if solutions and len(solutions) > 0:
-                        # Take first solution
-                        sol = solutions[0]
-                        # Convert to float if possible
-                        try:
-                            sol_float = float(sol)
-                            # Round to int if close
-                            if abs(sol_float - round(sol_float)) < 1e-9:
-                                answer = str(int(round(sol_float)))
-                            else:
-                                answer = str(sol_float)
-                            return (answer, True, True)
-                        except (ValueError, TypeError, OverflowError):
-                            return (str(sol), True, True)
+            # Solve the system for the target variable
+            solutions = solve(equations, list(sym_dict.values()))
 
-            # If we get here, parsing failed
-            return ("", False, False)
+            # Extract the target variable's value
+            answer_val = None
+            if isinstance(solutions, dict):
+                # solve() returns dict for determined systems
+                answer_val = solutions.get(target_sym)
+            elif isinstance(solutions, list) and len(solutions) > 0:
+                # solve() returns list of tuples for some systems
+                sol = solutions[0]
+                if isinstance(sol, dict):
+                    answer_val = sol.get(target_sym)
+                elif isinstance(sol, tuple):
+                    var_list = list(sym_dict.values())
+                    if target_sym in var_list:
+                        idx = var_list.index(target_sym)
+                        if idx < len(sol):
+                            answer_val = sol[idx]
+                else:
+                    # Single equation, single variable — solve returns list of values
+                    answer_val = sol
+
+            if answer_val is None:
+                return ("", False, False)
+
+            # Convert to numeric string
+            try:
+                sol_float = float(answer_val)
+                if abs(sol_float - round(sol_float)) < 1e-9:
+                    answer = str(int(round(sol_float)))
+                else:
+                    answer = str(sol_float)
+                return (answer, True, True)
+            except (ValueError, TypeError, OverflowError):
+                return (str(answer_val), True, True)
 
         except Exception as e:
             return ("", False, False)
