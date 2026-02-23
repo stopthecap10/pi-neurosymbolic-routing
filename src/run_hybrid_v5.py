@@ -79,7 +79,13 @@ def main():
                     help="Quick probe: 1 prompt per category x 1 repeat")
     ap.add_argument("--wp_tokens", type=int, default=30,
                     help="WP A2 token budget (default: 30, try 60 or 80)")
+    ap.add_argument("--wp_cot", action="store_true",
+                    help="Enable chain-of-thought prompting for WP")
     args = ap.parse_args()
+
+    # If CoT enabled but tokens not explicitly set, default to 150
+    if args.wp_cot and args.wp_tokens == 30:
+        args.wp_tokens = 150
 
     config = load_config(args.config)
     config['api_mode'] = args.api_mode
@@ -104,13 +110,22 @@ def main():
         config['repeats'] = 1
 
     # Initialize V5 router
-    router = RouterV5(config, routing_decisions, wp_token_budget=args.wp_tokens)
+    router = RouterV5(config, routing_decisions,
+                      wp_token_budget=args.wp_tokens,
+                      wp_cot=args.wp_cot)
 
-    system_name = "hybrid_v5" if args.wp_tokens == 30 else f"hybrid_v5_wp{args.wp_tokens}"
+    if args.wp_cot:
+        system_name = f"hybrid_v5_cot{args.wp_tokens}"
+    elif args.wp_tokens != 30:
+        system_name = f"hybrid_v5_wp{args.wp_tokens}"
+    else:
+        system_name = "hybrid_v5"
 
     print(f"Running {system_name}")
     print(f"Router: V5 (A6 symbolic logic for LOG)")
-    if args.wp_tokens != 30:
+    if args.wp_cot:
+        print(f"WP mode: Chain-of-Thought ({args.wp_tokens} tokens)")
+    elif args.wp_tokens != 30:
         print(f"WP token budget: {args.wp_tokens} (ablation from default 30)")
     if args.probe:
         print(f"MODE: PROBE (1 per category x 1 repeat)")
