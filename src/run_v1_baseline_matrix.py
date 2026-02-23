@@ -131,6 +131,7 @@ def parse_numeric_robust(text: str) -> str:
     P3_numeric_context: Context-aware numeric extraction.
 
     Priority order (first match wins):
+    0. \\boxed{X} (Qwen-Math native format)
     1. Direct numeric output (entire text is a single number)
     2. Cue phrase extraction ("answer is X", "x = X")
     3. Expression rescue (text ends with "=", evaluate clean math expr)
@@ -141,6 +142,14 @@ def parse_numeric_robust(text: str) -> str:
     """
     if not text:
         return ""
+
+    # ── Rule 0: \boxed{X} (Qwen-Math native output) ──
+    boxed_match = re.search(r'\\boxed\{([-+]?\d+(?:,\d{3})*(?:\.\d+)?)\}', text)
+    if boxed_match:
+        val = boxed_match.group(1).replace(",", "")
+        result = _parse_single_token(val)
+        if result:
+            return result
 
     cleaned = text.strip().replace(",", "")
 
@@ -256,13 +265,42 @@ def extract_yesno(text: str) -> str:
 
 
 # ============================================================
-# PROMPT TEMPLATES (FROZEN)
+# PROMPT TEMPLATES
 # ============================================================
+
+# --- Phi template (original, frozen) ---
+PROMPT_TEMPLATES = {
+    "phi": {
+        "version": "PT3_phi_chat",
+        "system_numeric": "You are a math assistant. Return only the final numeric answer, nothing else.",
+        "system_yesno": "You are a logic assistant. Return only Yes or No, nothing else.",
+    },
+    # --- Qwen-Math template ---
+    "qwen": {
+        "version": "PT4_qwen_math",
+        "system_numeric": "Solve this problem. Put your final answer in \\boxed{}.",
+        "system_yesno": "You are a logic assistant. Answer with only Yes or No.",
+    },
+}
+
+# Default (backwards compatible)
 PROMPT_TEMPLATE_VERSION = "PT3_phi_chat"
 
-# System message for Phi chat format
-SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
-SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
+# Active system messages (set by select_prompt_template)
+SYSTEM_MSG_NUMERIC = PROMPT_TEMPLATES["phi"]["system_numeric"]
+SYSTEM_MSG_YESNO = PROMPT_TEMPLATES["phi"]["system_yesno"]
+
+
+def select_prompt_template(template_name: str):
+    """Select prompt template by name. Updates global system messages."""
+    global PROMPT_TEMPLATE_VERSION, SYSTEM_MSG_NUMERIC, SYSTEM_MSG_YESNO
+    if template_name not in PROMPT_TEMPLATES:
+        print(f"WARNING: Unknown template '{template_name}', using 'phi'")
+        template_name = "phi"
+    tpl = PROMPT_TEMPLATES[template_name]
+    PROMPT_TEMPLATE_VERSION = tpl["version"]
+    SYSTEM_MSG_NUMERIC = tpl["system_numeric"]
+    SYSTEM_MSG_YESNO = tpl["system_yesno"]
 
 
 def _derive_base_url(server_url):
@@ -273,7 +311,7 @@ def _derive_base_url(server_url):
 
 
 def _extract_chat_parts(prompt_text, category):
-    """Extract system_msg and user_question from Phi template for chat API."""
+    """Extract system_msg and user_question from template for chat API."""
     if "<|user|>" in prompt_text:
         user_start = prompt_text.find("<|user|>") + len("<|user|>")
         user_end = prompt_text.find("<|end|>", user_start)
@@ -284,30 +322,29 @@ def _extract_chat_parts(prompt_text, category):
     return system_msg, user_question
 
 
-def build_prompt(base_prompt: str, category: str) -> str:
-    """Build the full prompt using Phi-4 chat template format.
-
-    Format: <|system|>{system}<|end|><|user|>{question}<|end|><|assistant|>
-    """
-    is_log = (category == "LOG")
-
-    # Strip any existing instruction suffix from official CSVs
-    # (e.g. "...\nReturn only Yes or No.\nAnswer:")
+def _strip_csv_suffixes(base_prompt: str) -> str:
+    """Strip trailing instruction suffixes from official CSVs."""
     question = base_prompt
     for suffix in ["\nReturn only Yes or No.\nAnswer:",
                    "\nReturn only the final numeric answer.\nAnswer:"]:
         if question.rstrip().endswith(suffix.strip()):
             question = question[:question.rfind(suffix.split('\n')[1].strip().split()[0]) - 1]
             break
-    # Simpler approach: strip trailing "Answer:" and instruction lines
     lines = question.rstrip().split('\n')
     while lines and lines[-1].strip() in ("Answer:", ""):
         lines.pop()
     while lines and lines[-1].strip().startswith("Return only"):
         lines.pop()
-    question = '\n'.join(lines).strip()
+    return '\n'.join(lines).strip()
 
-    if is_log:
+
+def build_prompt(base_prompt: str, category: str) -> str:
+    """Build the full prompt. Uses Phi template tags for completion mode,
+    but chat mode extracts the raw question via _extract_chat_parts().
+    """
+    question = _strip_csv_suffixes(base_prompt)
+
+    if category == "LOG":
         system_msg = SYSTEM_MSG_YESNO
     else:
         system_msg = SYSTEM_MSG_NUMERIC
@@ -1103,7 +1140,12 @@ def main():
     ap.add_argument("--api_mode", choices=["chat", "completion"], default="chat",
                     help="Inference API mode: 'chat' uses /v1/chat/completions (default), "
                          "'completion' uses /completion")
+    ap.add_argument("--prompt_template", choices=["phi", "qwen"], default="phi",
+                    help="Prompt template: 'phi' (default) or 'qwen' (boxed output)")
     args = ap.parse_args()
+
+    # Select prompt template before anything else
+    select_prompt_template(args.prompt_template)
 
     config = load_config(args.config)
 
