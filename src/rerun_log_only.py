@@ -69,7 +69,7 @@ def main():
         for row in existing:
             if row.get('category') != 'LOG':
                 continue
-            key = (row['prompt_id'], row.get('repeat_num', row.get('repeat', '')))
+            key = (row['prompt_id'], row.get('repeat_idx', row.get('repeat_num', row.get('repeat', ''))))
             if key in new_lookup:
                 nr = new_lookup[key]
                 row['answer_parsed'] = nr['answer']
