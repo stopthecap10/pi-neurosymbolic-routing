@@ -27,7 +27,7 @@ from a6_logic_engine import solve_logic
 
 # CoT system prompt for WP
 SYSTEM_MSG_WP_COT = (
-    "Solve this math problem. Put your final answer in \\boxed{}."
+    "Solve this math problem. Put your final answer in \\boxed{}. Answer with the fewest amount of words."
 )
 
 
