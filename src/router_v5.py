@@ -27,8 +27,7 @@ from a6_logic_engine import solve_logic
 
 # CoT system prompt for WP
 SYSTEM_MSG_WP_COT = (
-    "You are a math assistant. Solve the problem step by step. "
-    "End your response with: Answer: [number]"
+    "Solve this math problem. Put your final answer in \\boxed{}."
 )
 
 
@@ -155,12 +154,25 @@ class RouterV5(RouterV3):
         Extract final numeric answer from chain-of-thought output.
 
         Priority:
+        0. \\boxed{X} (Qwen-Math native format)
         1. "Answer: X" or "answer is X" pattern
         2. Last number after "=" in the text
         3. Fall back to parse_numeric_robust
         """
         if not text:
             return ""
+
+        # 0. Look for \boxed{X} (Qwen-Math native output)
+        boxed_match = re.search(r'\\boxed\{([-+]?\d+(?:\.\d+)?)\}', text)
+        if boxed_match:
+            val = boxed_match.group(1)
+            try:
+                f = float(val)
+                if abs(f - round(f)) < 1e-9:
+                    return str(int(round(f)))
+                return str(f)
+            except ValueError:
+                pass
 
         # 1. Look for explicit "Answer: X" pattern
         answer_match = re.search(
