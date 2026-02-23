@@ -77,6 +77,8 @@ def main():
     ap.add_argument("--api_mode", choices=["chat", "completion"], default="chat")
     ap.add_argument("--probe", action="store_true",
                     help="Quick probe: 1 prompt per category x 1 repeat")
+    ap.add_argument("--wp_only", action="store_true",
+                    help="Run only WP prompts (for quick WP ablation testing)")
     ap.add_argument("--wp_tokens", type=int, default=30,
                     help="WP A2 token budget (default: 30, try 60 or 80)")
     ap.add_argument("--wp_cot", action="store_true",
@@ -97,6 +99,11 @@ def main():
 
     if args.split_role == "official":
         verify_official_split(args.csv, prompts)
+
+    if args.wp_only:
+        prompts = [p for p in prompts if p['category'] == 'WP']
+        config['repeats'] = 1
+        print(f"WP-ONLY mode: {len(prompts)} WP prompts x 1 repeat")
 
     if args.probe:
         seen_cats = set()
