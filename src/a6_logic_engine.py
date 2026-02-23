@@ -21,23 +21,36 @@ def forward_chain(facts: List[Fact], rules: List[Rule],
     """
     Forward-chain rules over facts until fixed point.
 
+    Uses eager/immediate application: each new fact is added to known
+    immediately so that subsequent rule checks in the same iteration
+    see it. This prevents spurious derivations where a positive rule
+    and a negation-checking rule race in the same batch.
+
     Returns the complete set of derived facts (including originals).
     """
     known = set(facts)
     iteration = 0
 
+    # Sort rules: positive-conclusion rules first, then rules with
+    # negation conditions. This ensures facts are derived before
+    # negation checks run.
+    def _rule_priority(rule):
+        has_neg_cond = any(c["type"] in ("negprop", "negrel") for c in rule.conditions)
+        return 1 if has_neg_cond else 0
+    sorted_rules = sorted(rules, key=_rule_priority)
+
     while iteration < MAX_ITERATIONS:
-        new_facts = set()
-        for rule in rules:
+        changed = False
+        for rule in sorted_rules:
             derived = _apply_rule(rule, known, entities)
             for f in derived:
                 if f not in known:
-                    new_facts.add(f)
+                    known.add(f)
+                    changed = True
 
-        if not new_facts:
+        if not changed:
             break  # Fixed point reached
 
-        known |= new_facts
         iteration += 1
 
     return known
@@ -143,6 +156,11 @@ def _check_specific_conditions(conditions: list, known: Set[Fact]) -> bool:
             target = Fact("prop", (entity, cond["prop"]))
             if target in known:
                 return False
+        elif ctype == "negrel":
+            subj = cond.get("subj", "")
+            target = Fact("rel", (subj, cond["verb"], cond["obj"]))
+            if target in known:
+                return False  # Relation IS known, so "not rel" fails
         elif ctype == "rel":
             subj = cond.get("subj", "")
             target = Fact("rel", (subj, cond["verb"], cond["obj"]))

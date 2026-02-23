@@ -146,6 +146,18 @@ def parse_fact_sentence(sentence: str) -> Optional[Fact]:
         prop = normalize(m.group(2))
         return Fact("negprop", (entity, prop))
 
+    # Try "X does not verb Y" (negated relation fact)
+    for vb in KNOWN_VERBS:
+        base = normalize_verb(vb)
+        pattern = re.compile(
+            r'^(.+?)\s+does\s+not\s+' + base + r'\s+(.+)$', re.IGNORECASE
+        )
+        m = pattern.match(s)
+        if m:
+            subj = normalize_entity(m.group(1))
+            obj = normalize_entity(m.group(2))
+            return Fact("negrel", (subj, base, obj))
+
     # Try "X verb Y" (before "X is P" to avoid "X is P" matching relations)
     m = RE_RELATION.match(s)
     if m:
@@ -237,24 +249,50 @@ def _parse_conditions(text: str) -> Optional[list]:
             return conditions
         return None
 
-    # Specific entity rule: "the bald eagle likes the cat"
-    # or "Anne is nice"
-    m_named = re.match(r'^(.+?)\s+is\s+(\w+)$', text, re.IGNORECASE)
-    if m_named:
-        entity = normalize_entity(m_named.group(1))
-        prop = normalize(m_named.group(2))
-        conditions.append({"type": "prop", "entity": entity, "prop": prop, "var": None})
-        return conditions
+    # Specific entity rule — may have multiple conditions joined by "and"
+    # e.g. "Anne is nice", "Gary is smart and Gary is not rough",
+    #       "Erin is quiet and Erin is cold"
+    clauses = _split_and(text)
+    for clause in clauses:
+        clause = clause.strip()
+        # "Entity is not P"
+        m_neg = re.match(r'^(.+?)\s+is\s+not\s+(\w+)$', clause, re.IGNORECASE)
+        if m_neg:
+            entity = normalize_entity(m_neg.group(1))
+            prop = normalize(m_neg.group(2))
+            conditions.append({"type": "negprop", "entity": entity, "prop": prop, "var": None})
+            continue
+        # "Entity is P"
+        m_named = re.match(r'^(.+?)\s+is\s+(\w+)$', clause, re.IGNORECASE)
+        if m_named:
+            entity = normalize_entity(m_named.group(1))
+            prop = normalize(m_named.group(2))
+            conditions.append({"type": "prop", "entity": entity, "prop": prop, "var": None})
+            continue
+        # "Entity does not verb Object"
+        for vb in KNOWN_VERBS:
+            base = normalize_verb(vb)
+            m_negrel = re.match(
+                r'^(.+?)\s+does\s+not\s+' + base + r'\s+(.+)$', clause, re.IGNORECASE
+            )
+            if m_negrel:
+                subj = normalize_entity(m_negrel.group(1))
+                obj = normalize_entity(m_negrel.group(2))
+                conditions.append({"type": "negrel", "subj": subj, "verb": base, "obj": obj, "var": None})
+                break
+        else:
+            # "Entity verb Object"
+            m_rel = RE_RELATION.match(clause)
+            if m_rel:
+                subj = normalize_entity(m_rel.group(1))
+                verb = normalize_verb(m_rel.group(2))
+                obj = normalize_entity(m_rel.group(3))
+                conditions.append({"type": "rel", "subj": subj, "verb": verb, "obj": obj, "var": None})
+                continue
+            # Unparseable clause
+            return None
 
-    m_rel = RE_RELATION.match(text)
-    if m_rel:
-        subj = normalize_entity(m_rel.group(1))
-        verb = normalize_verb(m_rel.group(2))
-        obj = normalize_entity(m_rel.group(3))
-        conditions.append({"type": "rel", "subj": subj, "verb": verb, "obj": obj, "var": None})
-        return conditions
-
-    return None
+    return conditions if conditions else None
 
 
 def _split_and(text: str) -> List[str]:
@@ -298,6 +336,15 @@ def _parse_single_condition(clause: str, var: str = "?x") -> Optional[dict]:
     if m:
         return {"type": "negprop", "var": var, "prop": normalize(m.group(1))}
 
+    # "do not verb Y" / "does not verb Y" (negated relation for ?x)
+    for vb in KNOWN_VERBS:
+        base = normalize_verb(vb)
+        pattern = re.compile(r'^do(?:es)?\s+not\s+' + base + r'\s+(.+)$', re.IGNORECASE)
+        m = pattern.match(clause)
+        if m:
+            obj = normalize_entity(m.group(1))
+            return {"type": "negrel", "var": var, "verb": base, "obj": obj}
+
     # "verb Y" (e.g., "sees the cat", "eats the squirrel")
     for vb in KNOWN_VERBS:
         pattern = re.compile(r'^' + vb + r'\s+(.+)$', re.IGNORECASE)
@@ -305,6 +352,16 @@ def _parse_single_condition(clause: str, var: str = "?x") -> Optional[dict]:
         if m:
             obj = normalize_entity(m.group(1))
             return {"type": "rel", "var": var, "verb": normalize_verb(vb), "obj": obj}
+
+    # "the X does not verb Y" where subject is another specific entity
+    for vb in KNOWN_VERBS:
+        base = normalize_verb(vb)
+        pattern = re.compile(r'^(.+?)\s+does\s+not\s+' + base + r'\s+(.+)$', re.IGNORECASE)
+        m = pattern.match(clause)
+        if m:
+            subj = normalize_entity(m.group(1))
+            obj = normalize_entity(m.group(2))
+            return {"type": "negrel", "subj": subj, "verb": base, "obj": obj}
 
     # "the X verb Y" where subject is another entity (not variable)
     m = RE_RELATION.match(clause)
@@ -403,27 +460,31 @@ def _parse_all_are(s: str) -> Optional[Rule]:
 
 
 def _parse_adj_list_are(s: str) -> Optional[Rule]:
-    """Parse 'P, Q things are R' (no 'All' prefix)."""
+    """Parse 'P, Q things are [not] R' or 'P things are [not] R' (no 'All' prefix)."""
+    # Try with "not" in conclusion
     m = re.match(
-        r'^(.+?)\s+(?:things|people)\s+are\s+(\w+)$',
+        r'^(.+?)\s+(?:things|people)\s+are\s+not\s+(\w+)$',
         s, re.IGNORECASE
     )
+    conc_negated = bool(m)
+    if not m:
+        m = re.match(
+            r'^(.+?)\s+(?:things|people)\s+are\s+(\w+)$',
+            s, re.IGNORECASE
+        )
     if not m:
         return None
 
     adj_text = m.group(1).strip()
     result_prop = normalize(m.group(2))
 
-    # Must have comma or "and" to distinguish from facts
-    if ',' not in adj_text and ' and ' not in adj_text.lower():
-        return None
-
     adjs = _parse_adj_list(adj_text)
-    if len(adjs) < 2:
+    if len(adjs) < 1:
         return None
 
     conditions = [{"type": "prop", "var": "?x", "prop": normalize(a)} for a in adjs]
-    conclusion = {"type": "prop", "var": "?x", "prop": result_prop}
+    conc_type = "negprop" if conc_negated else "prop"
+    conclusion = {"type": conc_type, "var": "?x", "prop": result_prop}
 
     return Rule(conditions, conclusion, raw=s)
 
@@ -533,7 +594,7 @@ def parse_prompt(prompt_text: str) -> Dict[str, Any]:
             # Track entities
             if fact.kind == "prop" or fact.kind == "negprop":
                 entities.add(fact.args[0])
-            elif fact.kind == "rel":
+            elif fact.kind in ("rel", "negrel"):
                 entities.add(fact.args[0])
                 entities.add(fact.args[2])
             continue
