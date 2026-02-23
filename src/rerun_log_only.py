@@ -75,7 +75,7 @@ def main():
                 row['answer_parsed'] = nr['answer']
                 row['correct'] = '1' if nr['correct'] else '0'
                 row['error_code'] = 'E0' if nr['correct'] else 'E2'
-                row['latency_ms'] = f"{nr['latency_ms']:.2f}"
+                row['total_latency_ms'] = f"{nr['latency_ms']:.2f}"
                 patched += 1
 
         # Write back
