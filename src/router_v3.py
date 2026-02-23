@@ -751,6 +751,11 @@ class RouterV3:
             what_match = re.search(r'\bwhat\s+is\s+([a-zA-Z])\b\s*[.?]?\s*$', raw_question, re.IGNORECASE)
             if what_match:
                 target_var = what_match.group(1)
+            else:
+                # "Determine c, given that ..."
+                det_match = re.search(r'^Determine\s+([a-zA-Z])\b', raw_question, re.IGNORECASE)
+                if det_match:
+                    target_var = det_match.group(1)
 
         if not target_var:
             return self._a4_fail(t0, "target_var_missing", raw_question)
@@ -758,6 +763,7 @@ class RouterV3:
         # Extract equations
         eq_text = raw_question
         eq_text = re.sub(r'^(Solve|Let)\s+', '', eq_text, flags=re.IGNORECASE)
+        eq_text = re.sub(r'^Determine\s+[a-zA-Z]\s*,?\s*given\s+that\s+', '', eq_text, flags=re.IGNORECASE)
         eq_text = re.sub(r'\s+for\s+[a-zA-Z]\s*[.?]?\s*$', '', eq_text)
         eq_text = re.sub(r'\s*What\s+is\s+[a-zA-Z]\s*[.?]?\s*$', '', eq_text, flags=re.IGNORECASE)
         eq_text = eq_text.strip().rstrip('.')
@@ -903,15 +909,15 @@ class RouterV3:
             if len(nums) >= 2:
                 return f"{nums[0]} / {nums[1]}"
 
-        if 'plus' in text:
+        if ('plus' in text) or (text.strip().startswith('add ')):
             if len(nums) >= 2:
                 return f"{nums[0]} + {nums[1]}"
 
-        if ('times' in text) or ('multiplied by' in text):
+        if ('times' in text) or ('multiplied by' in text) or ('multiply' in text):
             if len(nums) >= 2:
                 return f"{nums[0]} * {nums[1]}"
 
-        if 'minus' in text:
+        if ('minus' in text) or ('subtract' in text):
             if len(nums) >= 2:
                 return f"{nums[0]} - {nums[1]}"
 
