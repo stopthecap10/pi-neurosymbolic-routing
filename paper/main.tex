@@ -1,0 +1,536 @@
+\documentclass[journal]{IEEEtai}
+\pdfoutput=1
+
+\usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\begin{document}
+
+\title{Neurosymbolic Routing for Reliable Reasoning on Resource-Constrained Edge Devices}
+
+\author{Anonymous
+\thanks{Manuscript submitted for review.}}
+
+\markboth{IEEE Transactions on Artificial Intelligence}
+{Neurosymbolic Routing for Reliable Reasoning on Resource-Constrained Edge Devices}
+
+\maketitle
+
+\begin{abstract}
+Small language models (SLMs) deployed on edge devices suffer from poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic. We present a neurosymbolic routing architecture that classifies each incoming query and dispatches it to the cheapest solver capable of producing a correct answer: deterministic symbolic engines for structured tasks and an SLM only for open-ended word problems. Evaluated entirely offline on a Raspberry Pi~4B (8\,GB RAM, no GPU) using prompts drawn from three established benchmarks (DeepMind Mathematics, GSM8K, RuleTaker), our best system achieves 99.0\% overall accuracy (95\% CI: [97.1\%, 99.8\%]) across 100 prompts (300 trials), compared to 37.3\% for the best SLM-only baseline at an equivalent token budget. At matched token budgets, routing provides a 42.4 percentage-point improvement over SLM-only inference (79.7\% vs.\ 37.3\% at 30 tokens), and an estimated 11.7-point gain at 512 tokens. Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond latency, while the system median latency drops from 8.6\,s to 6\,ms (though word problems remain slow at approximately 137\,s per prompt). An ablation study across five system versions reveals that each symbolic solver contributes a discrete accuracy gain, and that naive post-processing layers can cause regressions when applied across problem types. A token-budget ablation quantifies the accuracy--energy tradeoff: increasing the generation budget from 30 to 512 tokens raises word-problem accuracy from 18.7\% to 96.0\% at a cost of 6.9$\times$ higher energy per prompt. All experiments, data, and code are publicly available.
+\end{abstract}
+
+\begin{IEEEImpStatement}
+Edge devices such as Raspberry Pi computers increasingly serve as platforms for intelligent applications in healthcare, agriculture, and education---contexts where cloud connectivity may be unavailable or undesirable for privacy reasons. However, small language models running on such devices achieve only 37\% accuracy on structured reasoning tasks. Our neurosymbolic routing architecture raises this to 99\% by dispatching queries to purpose-built symbolic solvers when appropriate, reserving the language model for genuinely open-ended problems. This approach enables reliable offline reasoning on hardware costing under \$100, with three categories of queries resolved in under 12 milliseconds. The architecture is model-agnostic and could be integrated into educational tutoring systems, offline scientific calculators, or field-deployed decision support tools where correctness and low latency are critical.
+\end{IEEEImpStatement}
+
+\begin{IEEEkeywords}
+Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic reasoning
+\end{IEEEkeywords}
+
+% ======================================================================
+\section{Introduction}
+\label{sec:intro}
+% ======================================================================
+
+\IEEEPARstart{E}{dge} deployment of language models is motivated by latency, privacy, and connectivity constraints that preclude cloud inference~\cite{xu2024edgellm}. However, small language models (SLMs) achieve limited accuracy on reasoning tasks when constrained to the CPU-only, memory-limited hardware typical of edge devices such as single-board computers.
+
+Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters, consistent with recent usage~\cite{schick2023toolformer}. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
+
+A key observation is that many ``reasoning'' queries presented to language models are structurally deterministic: arithmetic expressions have unique numeric answers, algebraic equations can be solved symbolically, and formal logic queries admit closed-form evaluation. Routing these structured tasks to purpose-built symbolic solvers---rather than forcing a probabilistic language model to approximate their answers---should yield both higher accuracy and lower latency.
+
+We propose a \textit{neurosymbolic adaptive router} that classifies each query into one of four categories---arithmetic (AR), algebra (ALG), formal logic (LOG), and word problems (WP)---and dispatches it to the appropriate solver:
+\begin{itemize}
+    \item \textbf{AR} $\rightarrow$ safe arithmetic evaluator (Python \texttt{ast}),
+    \item \textbf{ALG} $\rightarrow$ SymPy symbolic algebra solver,
+    \item \textbf{LOG} $\rightarrow$ forward-chaining logic engine with closed-world assumption,
+    \item \textbf{WP} $\rightarrow$ SLM with chain-of-thought prompting.
+\end{itemize}
+
+Only word problems---which require natural-language comprehension and multi-step reasoning---are routed to the language model. The remaining 75\% of queries are handled by deterministic solvers that are both faster and provably correct for their input domains.
+
+We evaluate this architecture on a Raspberry Pi~4B running two quantized SLMs (Phi-4-mini 3.8B, Q6\_K; Qwen2.5-Math-1.5B, Q6\_K) across 100 prompts drawn from three established benchmarks---DeepMind Mathematics~\cite{saxton2019deepmind}, GSM8K~\cite{cobbe2021gsm8k}, and RuleTaker~\cite{clark2020ruletaker}---with three repeats per prompt (300 total trials). Our contributions are:
+
+\begin{enumerate}
+    \item A neurosymbolic routing architecture for edge devices that achieves 99.0\% accuracy versus 37.3\% for SLM-only baselines, with a 42.4 percentage-point gain at matched token budgets (30 tokens).
+    \item An ablation across five system versions demonstrating the marginal contribution of each symbolic solver.
+    \item A token-budget ablation quantifying the accuracy--energy tradeoff for word problems on constrained hardware.
+    \item A forward-chaining logic engine for RuleTaker-style queries achieving 100\% accuracy with $<$\,1\,ms latency.
+    \item Open-source release of all code, data, and experimental logs for reproducibility.
+\end{enumerate}
+
+% ======================================================================
+\section{Related Work}
+\label{sec:related}
+% ======================================================================
+
+\subsection{Edge Inference}
+Deploying language models on resource-constrained devices has been explored through quantization~\cite{dettmers2022gptint8, frantar2023gptq}, pruning~\cite{sun2024simpleprune}, and knowledge distillation~\cite{hinton2015distilling}. Frameworks such as llama.cpp~\cite{llamacpp2023} and Ollama enable CPU-only inference for quantized models on commodity hardware. Our work is complementary: we reduce the \textit{number} of queries routed to the SLM rather than optimizing the model itself.
+
+\subsection{Neurosymbolic AI}
+Combining neural and symbolic reasoning has a long history~\cite{garcez2019neuralsymbolic, kautz2022third}. Recent work integrates tool use into SLM pipelines: Toolformer~\cite{schick2023toolformer} teaches models to call APIs, while PAL~\cite{gao2023pal} generates executable code. Our approach differs in that routing decisions are made \textit{before} the SLM is invoked, using a lightweight regex-based classifier, rather than relying on the model to decide when to use tools.
+
+\subsection{LLM Routing and Cascading}
+FrugalGPT~\cite{chen2023frugalgpt} cascades queries through progressively larger models. Router-based systems like RouteLLM~\cite{ong2024routellm} learn to dispatch queries to strong or weak models. Our router operates at a different granularity: rather than choosing between models of different sizes, it chooses between \textit{qualitatively different solvers}---symbolic engines versus neural inference.
+
+\subsection{Mathematical Reasoning}
+Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023selfconsistency} improve mathematical reasoning but remain probabilistic. Tool-augmented approaches~\cite{cobbe2021gsm8k} combine models with calculators. We extend this paradigm by routing entire categories to symbolic solvers, not just individual arithmetic operations within a generation.
+
+% ======================================================================
+\section{System Architecture}
+\label{sec:architecture}
+% ======================================================================
+
+\subsection{Overview}
+
+The system processes each query $q$ in two stages: (1)~a \textit{classifier} $C(q) \in \{\texttt{AR}, \texttt{ALG}, \texttt{LOG}, \texttt{WP}\}$ determines the problem category, and (2)~a \textit{dispatcher} routes $q$ to the corresponding solver. The classifier is a deterministic, regex-based function with zero inference cost. The dispatcher invokes one of four solver modules.
+
+\subsubsection{Solver Naming Convention}
+Solvers are labeled A1--A7 following the project's internal development order, not the order of introduction in this paper. For clarity:
+\begin{itemize}
+    \item \textbf{A1}: Fast SLM inference (12 tokens, used as fallback).
+    \item \textbf{A2}: Extended SLM inference (30--512 tokens, primary for WP).
+    \item \textbf{A3}: Post-processing repair layer (re-prompts SLM with prior context).
+    \item \textbf{A4}: SymPy algebra solver (deterministic, for ALG).
+    \item \textbf{A5}: Safe arithmetic evaluator (deterministic, for AR).
+    \item \textbf{A6}: Forward-chaining logic engine (deterministic, for LOG).
+\end{itemize}
+
+A1 and A3 serve as fallback and repair actions respectively; the primary solvers are A5 (AR), A4 (ALG), A6 (LOG), and A2 (WP).
+
+\subsection{Primary Solvers}
+
+\begin{itemize}
+    \item \textbf{A5: Arithmetic evaluator.} Extracts numeric expressions from the query using regex, parses them into a Python AST, and evaluates using a whitelist of safe operators (\texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}, \texttt{**}, \texttt{\%}, \texttt{//}). Only \texttt{ast.Constant} and \texttt{ast.BinOp} nodes are permitted; exponents are capped at 10{,}000.
+    \item \textbf{A4: Algebra solver.} Extracts equations and target variables, inserts implicit multiplication (e.g., \texttt{3x} $\rightarrow$ \texttt{3*x}), and solves via \texttt{sympy.solve()}. Supports single- and multi-variable linear systems.
+    \item \textbf{A6: Logic engine.} Parses natural-language facts, rules, and queries from RuleTaker-style prompts into structured representations. Applies forward chaining with a closed-world assumption to derive new facts until a fixed point (bounded at 50 iterations), then evaluates the query against the derived fact set. See Section~\ref{sec:a6}.
+    \item \textbf{A2: SLM chain-of-thought.} Constructs a system prompt (``Solve this math problem. Put your final answer in \texttt{\textbackslash boxed\{\}}''), sends the query to a locally served SLM via llama.cpp HTTP API, and extracts the final numeric answer.
+\end{itemize}
+
+\subsection{Classifier Design}
+
+The classifier applies regex rules in priority order:
+
+\begin{enumerate}
+    \item \textbf{LOG}: Query matches RuleTaker patterns (``if someone,'' ``if\ldots then,'' ``all\ldots are'').
+    \item \textbf{ALG}: Query contains ``solve\ldots for [variable]'' or has variable--operator--digit patterns with an equals sign.
+    \item \textbf{AR}: A numeric arithmetic expression can be extracted.
+    \item \textbf{WP}: Default fallback for natural-language reasoning.
+\end{enumerate}
+
+This ordering ensures that structured queries are intercepted before reaching the SLM. The classifier achieves 100\% routing accuracy on our benchmark (all 100 prompts correctly classified across all system versions). It runs in $<$\,10\,ms on the Pi and requires no model inference. We note that this perfect accuracy is partly due to the well-separated nature of the benchmark categories; adversarial or ambiguous inputs could cause misclassification (see Section~\ref{sec:discussion}).
+
+\subsection{Fallback Chains}
+
+When a primary solver fails (e.g., SymPy cannot parse an equation), the system escalates through a fallback chain:
+\begin{itemize}
+    \item AR: A5 $\rightarrow$ A1 $\rightarrow$ A2
+    \item ALG: A4 $\rightarrow$ A1 $\rightarrow$ A2
+    \item LOG: A6 $\rightarrow$ A1
+    \item WP: A2 $\rightarrow$ A3 (repair)
+\end{itemize}
+
+\subsection{A6: Forward-Chaining Logic Engine}
+\label{sec:a6}
+
+The logic engine processes RuleTaker-style prompts through three stages:
+
+\subsubsection{Parsing} Natural-language statements are converted to structured facts and rules:
+\begin{itemize}
+    \item ``Felix is a cat'' $\rightarrow$ \texttt{fact(felix, is, cat)}
+    \item ``All cats are animals'' $\rightarrow$ \texttt{rule(?x, is, cat $\Rightarrow$ ?x, is, animal)}
+    \item ``Is Felix an animal?'' $\rightarrow$ \texttt{query(felix, is, animal)}
+\end{itemize}
+
+\subsubsection{Forward Chaining} The engine iteratively applies rules to the current fact set, deriving new facts until no new facts can be produced (fixed-point convergence) or a safety bound of 50 iterations is reached. New facts are added eagerly (immediately available for subsequent rule applications within the same iteration).
+
+\subsubsection{Query Evaluation} Under the closed-world assumption, a query is answered ``Yes'' if the queried fact exists in the derived set, and ``No'' otherwise.
+
+% ======================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+% ======================================================================
+
+\subsection{Hardware}
+
+All experiments run on a single Raspberry Pi~4 Model B with 8\,GB RAM, a quad-core ARM Cortex-A72 CPU (1.8\,GHz), and no GPU or neural accelerator. The operating system is Raspberry Pi OS (64-bit, Debian-based). Models are served via llama.cpp~\cite{llamacpp2023} in CPU-only mode with 4 threads.
+
+\subsection{Models}
+
+We evaluate two quantized SLMs:
+\begin{itemize}
+    \item \textbf{Phi-4-mini} (Microsoft, 3.8B parameters, Q6\_K quantization, 2.4\,GB)
+    \item \textbf{Qwen2.5-Math-1.5B} (Alibaba, 1.5B parameters, Q6\_K quantization)
+\end{itemize}
+
+All SLM calls use greedy decoding: temperature${}=0.0$, top-$k=1$, top-$p=1.0$, seed${}=42$. Generation stops at the first newline character. These settings ensure deterministic, reproducible outputs.
+
+\subsection{Dataset}
+\label{sec:dataset}
+
+The benchmark comprises 100 prompts sampled from four established datasets, with full provenance tracking (source dataset, record ID, and field mapping version recorded for every prompt):
+\begin{itemize}
+    \item \textbf{AR} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including addition/subtraction, multiplication, division, and mixed operations.
+    \item \textbf{ALG} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including linear 1D, linear 2D, and polynomial roots.
+    \item \textbf{LOG} (25 prompts): From \textit{RuleTaker}~\cite{clark2020ruletaker}, forward-chaining logical entailment queries over natural-language facts and rules.
+    \item \textbf{WP} (25 prompts): From \textit{GSM8K}~\cite{cobbe2021gsm8k}, multi-step grade-school word problems requiring natural-language comprehension.
+\end{itemize}
+
+Prompts were sampled with a fixed global seed (42) using stratified random sampling from the original dataset splits. No prompts were paraphrased, generated, or modified beyond whitespace normalization. Cross-tier disjointness was verified by both source key and text hash.
+
+The benchmark is intentionally small (100 prompts, 300 trials) due to the slow inference speed on the Pi (approximately 2 minutes per word problem at 512 tokens). We acknowledge this limits statistical power: the 99.0\% accuracy has a 95\% Wilson confidence interval of [97.1\%, 99.8\%]. Furthermore, the 3 repeats are primarily useful for measuring SLM variance on WP; the symbolic solvers are deterministic, so repeats add no information for AR, ALG, and LOG (effective $n=25$ per category). Larger-scale evaluation is an important direction for future work.
+
+Each prompt is run 3 times per system configuration, yielding 300 trials per system. Evaluation uses \textit{exact match}: a trial is correct if and only if the extracted numeric answer (or yes/no for LOG) matches the ground truth.
+
+\subsection{Metrics}
+
+\begin{itemize}
+    \item \textbf{Accuracy}: Fraction of trials with exact-match correct answers.
+    \item \textbf{Latency}: Wall-clock time per inference, measured from prompt submission to answer extraction (millisecond precision).
+    \item \textbf{Energy}: Total run energy measured via USB power meter (start/end mWh readings per run), divided by number of prompts.
+\end{itemize}
+
+\subsection{Error Taxonomy}
+
+We classify errors by category and failure mode. Error codes are assigned per category (gaps in numbering reflect unused codes):
+\begin{itemize}
+    \item \textbf{E0}: Correct answer.
+    \item \textbf{E1}: Arithmetic error (wrong numeric result on AR).
+    \item \textbf{E2}: Logic error (wrong yes/no on LOG).
+    \item \textbf{E3}: Algebra error (wrong numeric result on ALG).
+    \item \textbf{E5}: Word problem error (wrong numeric result on WP).
+    \item \textbf{E7}: Timeout (model exceeded time limit before producing output).
+    \item \textbf{E8}: Parse failure (could not extract a valid answer from model output).
+\end{itemize}
+
+% ======================================================================
+\section{System Versions and Ablation}
+\label{sec:versions}
+% ======================================================================
+
+We developed the system incrementally across five versions, each adding or modifying a single component. This progression serves as a natural ablation study.
+
+\subsection{Baseline: SLM-Only}
+
+All 100 prompts are sent directly to the SLM with no routing or symbolic solvers. We tested four baseline configurations varying two factors:
+\begin{itemize}
+    \item \textbf{Token budget}: C1 uses A1 (12 tokens); C2 uses A2 (30 tokens).
+    \item \textbf{Grammar constraints}: \textit{grammar} constrains the output format via a BNF grammar; \textit{nogrammar} allows free-form generation.
+\end{itemize}
+
+The best baseline (C2 with grammar, Phi-4-mini) achieves 37.3\% overall accuracy: 48\% on AR, 40\% on ALG, 53\% on LOG, and 8\% on WP. Parse failures (E8) account for 17\% of all trials.
+
+\subsection{V1: Add Arithmetic Solver (+A5)}
+
+AR queries are routed to the safe arithmetic evaluator.
+
+\textbf{Result}: AR accuracy jumps from 48\% to \textbf{100\%}, latency drops from 6.2\,s to \textbf{1\,ms}. Overall accuracy rises to 53.0\%.
+
+\subsection{V2: Add Algebra Solver (+A4)}
+
+ALG queries are additionally routed to SymPy.
+
+\textbf{Result}: ALG accuracy jumps from 40\% to \textbf{96--100\%}, overall accuracy reaches 67.0\%. ALG latency drops from 5.8\,s to \textbf{11\,ms}.
+
+\subsection{V3: Add Post-Processing Repair Layer (+A3)}
+
+An answer-repair module (A3) attempts to extract and correct answers from verbose SLM outputs. In V3.0, this was applied to \textit{both} WP and LOG.
+
+\textbf{Result}: WP accuracy improves modestly (8\% $\rightarrow$ 18.7\%). However, applying A3 to LOG causes a regression: LOG accuracy \textit{drops} from 64\% to 36.7\%. The repair layer, designed for numeric extraction, corrupts yes/no logic answers---e.g., by extracting spurious numbers from reasoning text.
+
+\textbf{V3.1 fix}: Disabling A3 for LOG restores LOG accuracy to 64\%. Overall: 70.7\%.
+
+\textbf{Observation}: This is an engineering error (applying a numeric extractor to yes/no outputs) rather than a deep methodological insight, but it illustrates that post-processing layers are format-sensitive and should not be applied across output types without validation.
+
+\subsection{V4: Add Confidence Calibration}
+
+A logistic regression calibrator estimates $P(\text{correct})$ for each SLM response based on features (response length, parse success, timeout status). If $P(\text{correct}) < \tau = 0.70$, the response is escalated to A3 repair.
+
+\textbf{Result}: 70.7\% accuracy---identical to V3.1. The calibrator correctly flags low-confidence answers, but the repair layer cannot produce correct alternatives from truncated 30-token responses. In retrospect, this is expected: if the model lacks sufficient tokens to reason through a problem, identifying the answer as probably wrong does not produce a correct one. The correct intervention is to remove the bottleneck (increase token budget), not to add detection around it.
+
+\subsection{V5: Add Logic Engine + Increase Token Budget (+A6, +CoT)}
+
+Two changes address the remaining bottlenecks:
+\begin{enumerate}
+    \item \textbf{A6 forward-chaining logic engine} replaces SLM inference for LOG, achieving 100\% accuracy with $<$\,1\,ms latency.
+    \item \textbf{Chain-of-thought prompting with 512 tokens} replaces the 30-token budget for WP, with the system prompt: ``Solve this math problem. Put your final answer in \texttt{\textbackslash boxed\{\}}.''
+\end{enumerate}
+
+\textbf{Result}: 99.0\% overall accuracy. AR, ALG, and LOG all achieve 100\%. WP reaches 96\% at 512 tokens. The single remaining failure is analyzed in Section~\ref{sec:error_analysis}.
+
+Fig.~\ref{fig:progression} shows the full system progression from baseline through V5, and Fig.~\ref{fig:progression_by_cat} breaks this down by category.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig1_system_progression.png}
+    \caption{System progression from baseline (37.3\%) through V5 (99.0\%), showing the accuracy gain from each added component. The plateau at V3--V4 (70.7\%) reflects the token-budget bottleneck that V5 resolves.}
+    \label{fig:progression}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig7_progression_by_category.png}
+    \caption{Per-category accuracy across system versions. Each symbolic solver produces a discrete jump in its target category: A5 for AR (V1), A4 for ALG (V2), A6 for LOG (V5). WP accuracy remains low until the token budget is increased in V5.}
+    \label{fig:progression_by_cat}
+\end{figure}
+
+% ======================================================================
+\section{Results}
+\label{sec:results}
+% ======================================================================
+
+\subsection{Main Results}
+
+Table~\ref{tab:main_results} summarizes the key systems. The neurosymbolic router (V5, Phi-4-mini, 512 tokens) achieves 99.0\% overall accuracy versus 37.3\% for the best SLM-only baseline.
+
+\textbf{A note on the baseline comparison.} The 37.3\% baseline uses a 30-token budget, which is restrictive. Part of V5's improvement comes from the increased token budget (30 $\rightarrow$ 512), not only from routing. To isolate the routing contribution, we note that V5 at 30 tokens (``V5 Default'' in Table~\ref{tab:main_results}) achieves 79.7\%---already a 42.4 percentage-point gain over baseline at the same token budget, entirely due to symbolic routing of AR, ALG, and LOG. We did not run a pure SLM-only baseline at 512 tokens; however, we can estimate an upper bound. Assuming optimistically that the SLM achieves 100\% on AR and ALG at 512 tokens, retains its baseline LOG accuracy of 53\%, and matches V5's WP accuracy of 96\%, the ceiling is $0.25 \times 1.0 + 0.25 \times 1.0 + 0.25 \times 0.53 + 0.25 \times 0.96 = 87.3\%$---still 11.7 percentage points below V5's 99.0\%.
+
+\begin{table*}[t]
+\centering
+\caption{Main Results (300 Trials Per System)}
+\label{tab:main_results}
+\begin{tabular}{lcccc}
+\hline
+\textbf{System} & \textbf{Acc.\ (\%)} & \textbf{Med.\ Latency (ms)} & \textbf{Energy (mWh/p)} & \textbf{Parse Fail (\%)} \\
+\hline
+Baseline (C2, grammar) & 37.3 & 8,612 & 75.0 & 17.0 \\
+Baseline (C2, no grammar) & 37.0 & 8,709 & 64.6 & 17.0 \\
+Baseline (C1, grammar) & 36.0 & 6,021 & 32.1 & 26.0 \\
+Baseline (C1, no grammar) & 33.0 & 9,080 & 59.9 & 26.0 \\
+\hline
+Hybrid V1 (+A5) & 53.0 & 4,147 & 75.9 & 15.0 \\
+Hybrid V2 (+A4) & 67.0 & 2,598 & 37.2 & 15.0 \\
+Hybrid V3.1 (+A3) & 70.7 & 1,413 & 34.0 & 4.3 \\
+Hybrid V4 (+Calibration) & 70.7 & 1,466 & 34.0 & 4.0 \\
+\hline
+V5 Default (30 tokens) & 79.7 & 6 & 30.6 & 4.0 \\
+V5 (Phi, 300 tokens) & 98.0 & 6 & 147.2 & 0.0 \\
+\textbf{V5 (Phi, 512 tokens)} & \textbf{99.0} & \textbf{6} & 211.1 & \textbf{0.0} \\
+V5 (Qwen, 512 tokens) & \textbf{99.0} & 6 & 147.6 & 0.0 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\subsection{Per-Category Accuracy}
+
+Table~\ref{tab:per_category} and Fig.~\ref{fig:category} show accuracy by problem category. Symbolic solvers achieve perfect accuracy on their respective domains.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig2_category_accuracy.png}
+    \caption{Per-category accuracy: baseline (C2) vs.\ V5 (512 tokens). Green annotations show the percentage-point gain per category. AR, ALG, and LOG reach 100\% via symbolic solvers; WP improves from 8\% to 96\% via chain-of-thought prompting.}
+    \label{fig:category}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Per-Category Accuracy (\%) Across Key Systems}
+\label{tab:per_category}
+\begin{tabular}{lccccc}
+\hline
+\textbf{System} & \textbf{AR} & \textbf{ALG} & \textbf{LOG} & \textbf{WP} & \textbf{All} \\
+\hline
+Baseline (best) & 48.0 & 40.0 & 53.3 & 8.0 & 37.3 \\
+V1 (+A5) & 100 & 40.0 & 64.0 & 8.0 & 53.0 \\
+V2 (+A4) & 100 & 96.0 & 64.0 & 8.0 & 67.0 \\
+V3.1 (+A3) & 100 & 100 & 64.0 & 18.7 & 70.7 \\
+V5 Default & 100 & 100 & 100 & 18.7 & 79.7 \\
+V5 (512tok) & 100 & 100 & 100 & 96.0 & 99.0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.85\columnwidth]{figures/fig5_route_usage.png}
+    \caption{Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP).}
+    \label{fig:route_usage}
+\end{figure}
+
+\subsection{Latency Analysis}
+
+Table~\ref{tab:latency} shows median latency by category for V5 (512 tokens) versus the best baseline. Symbolic solvers achieve three orders-of-magnitude speedups on structured categories:
+\begin{itemize}
+    \item AR: \textbf{1\,ms} (vs.\ 6.3\,s baseline, 6,300$\times$ speedup)
+    \item ALG: \textbf{11\,ms} (vs.\ 5.8\,s baseline, 530$\times$ speedup)
+    \item LOG: \textbf{2\,ms} (vs.\ 2.7\,s baseline, 1,350$\times$ speedup)
+    \item WP: \textbf{137\,s} (increased from 25\,s due to higher token budget)
+\end{itemize}
+
+The system-wide median of 6\,ms reflects the dominance of symbolic routes (75\% of queries). However, the WP latency of approximately 137\,s per prompt is a significant practical limitation for real-time applications. Fig.~\ref{fig:latency} visualizes this on a log scale.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig3_latency.png}
+    \caption{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 530--6,300$\times$ speedups on structured categories. WP latency increases due to the higher token budget.}
+    \label{fig:latency}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Median Latency by Category}
+\label{tab:latency}
+\begin{tabular}{lrrrr}
+\hline
+\textbf{System} & \textbf{AR (ms)} & \textbf{ALG (ms)} & \textbf{LOG (ms)} & \textbf{WP (s)} \\
+\hline
+Baseline (best) & 6,288 & 5,838 & 2,672 & 25.6 \\
+V5 (512tok) & 1 & 11 & 2 & 137.2 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Energy--Accuracy Tradeoff}
+
+Table~\ref{tab:wp_ablation} shows the effect of token budget on word-problem accuracy and energy. The tradeoff is substantial: 512 tokens yields 96\% WP accuracy but costs 6.9$\times$ more energy per prompt than 30 tokens.
+
+\textbf{Note on identical ``V5 Default'' numbers for Phi and Qwen.} Both models show 18.7\% WP accuracy at 30 tokens with identical latency and energy. This is because V5 Default routes 75\% of queries to deterministic solvers (identical results regardless of model), and the remaining WP queries at 30 tokens mostly time out or parse-fail---the model barely generates useful output, so both models fail on the same prompts. At higher token budgets where the models can actually reason, performance diverges: Phi achieves 92\% at 300 tokens versus Qwen's 64\%.
+
+\begin{table}[t]
+\centering
+\caption{Word-Problem Accuracy vs.\ Token Budget}
+\label{tab:wp_ablation}
+\begin{tabular}{llcccc}
+\hline
+\textbf{Model} & \textbf{Tok.} & \textbf{CoT} & \textbf{WP (\%)} & \textbf{Lat.\ (s)} & \textbf{E (mWh/p)} \\
+\hline
+Phi-4-mini & 30 & No & 18.7 & 26.0 & 30.6 \\
+Phi-4-mini & 300 & Yes & 92.0 & 128.6 & 147.2 \\
+Phi-4-mini & 512 & Yes & 96.0 & 135.2 & 211.1 \\
+\hline
+Qwen-1.5B & 30 & No & 18.7 & 26.0 & 30.6 \\
+Qwen-1.5B & 300 & Yes & 64.0 & 100.1 & 113.1 \\
+Qwen-1.5B & 512 & Yes & 96.0 & 128.2 & 147.6 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig4_wp_ablation.png}
+    \caption{Word-problem token budget ablation for two SLMs: accuracy (left) and energy cost (right) as a function of token budget. Both models converge to 96\% at 512 tokens, but Phi-4-mini is more token-efficient at 300 tokens.}
+    \label{fig:wp_ablation}
+\end{figure}
+
+Note that the best system (V5, Phi, 512tok) uses \textit{more} energy per prompt (211.1\,mWh) than the baseline (75.0\,mWh). The energy savings from symbolic routing on AR/ALG/LOG are outweighed by the increased token budget for WP. This tradeoff---higher accuracy at higher energy---is fundamental and is discussed further in Section~\ref{sec:discussion}. Fig.~\ref{fig:energy_configs} compares energy consumption across all system configurations.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig6_energy_configs.png}
+    \caption{Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems.}
+    \label{fig:energy_configs}
+\end{figure}
+
+\subsection{Error Distribution}
+
+Table~\ref{tab:errors} shows the error taxonomy for selected systems. V5 at 512 tokens eliminates all error types except E5 (3 word-problem errors out of 300 trials), corresponding to a single prompt that fails consistently across all 3 repeats.
+
+\begin{table}[t]
+\centering
+\caption{Error Distribution (300 Trials Each). E0 = Correct}
+\label{tab:errors}
+\begin{tabular}{lrrrrrrr}
+\hline
+\textbf{System} & \textbf{E0} & \textbf{E1} & \textbf{E2} & \textbf{E3} & \textbf{E5} & \textbf{E7} & \textbf{E8} \\
+\hline
+Baseline & 112 & 36 & 26 & 45 & 21 & 9 & 51 \\
+V1 (+A5) & 159 & 0 & 27 & 45 & 24 & 0 & 45 \\
+V2 (+A4) & 201 & 0 & 27 & 3 & 24 & 0 & 45 \\
+V3.1 (+A3) & 212 & 0 & 27 & 0 & 18 & 30 & 13 \\
+V5 (512) & 297 & 0 & 0 & 0 & 3 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+% ======================================================================
+\section{Analysis}
+\label{sec:analysis}
+% ======================================================================
+
+\subsection{Why Symbolic Routing Works}
+
+The accuracy gains from symbolic routing are not incremental: each solver produces a \textit{discrete jump} in its category. Adding A5 moves AR from 48\% to 100\%; adding A4 moves ALG from 40\% to 96--100\%; adding A6 moves LOG from 64\% to 100\%. These reflect the replacement of probabilistic approximation with deterministic computation.
+
+This suggests a design principle: \textit{when the structure of a problem is known, symbolic solvers dominate neural inference in both accuracy and efficiency.} The SLM's value lies in handling queries whose structure is not known in advance. Fig.~\ref{fig:version_categories} visualizes the category-level accuracy across all system versions and configurations tested.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig8_version_categories.png}
+    \caption{Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction.}
+    \label{fig:version_categories}
+\end{figure}
+
+\subsection{Error Analysis: The Single V5 Failure}
+\label{sec:error_analysis}
+
+The sole error in V5 (Phi-4-mini, 512 tokens) occurs on prompt WP\_000112 from GSM8K:
+
+\begin{quote}
+\small
+\textit{``At Allan's house, there is twice as much corn as cannolis. He has a total of 40 cannolis. Allan bought 60 more cannolis at the store and 40 fewer corns than the number of cannolis. Find the combined total of the number of corns and cannolis Allan has in the house?''}
+\end{quote}
+
+Expected answer: \textbf{200}. Both models consistently produce \textbf{240}. The chain-of-thought output reveals the error:
+
+\begin{quote}
+\small
+\textit{``Allan bought 60 more cannolis, so now he has $40 + 60 = 100$ cannolis. He also bought 40 fewer corns than the number of cannolis he bought, which means he bought $100 - 40 = 60$ corns.''}
+\end{quote}
+
+The model interprets ``40 fewer corns than the number of cannolis'' as referring to the \textit{updated} cannoli count (100) rather than the original count (40), yielding $100 - 40 = 60$ new corns instead of the intended $40 - 40 = 0$. This is a linguistic ambiguity in the problem statement: the referent of ``the number of cannolis'' is genuinely unclear. Both Phi-4-mini and Qwen2.5-Math produce the same interpretation across all trials, suggesting this is a systematic parsing bias rather than a stochastic error.
+
+\subsection{Model Comparison}
+
+At 512 tokens, both models achieve 99.0\% overall and 96.0\% WP accuracy. However, at 300 tokens, Phi-4-mini achieves 92.0\% WP accuracy versus Qwen's 64.0\%, suggesting Phi-4-mini is more token-efficient for word-problem reasoning despite Qwen's mathematics-specific pretraining.
+
+Both models achieve identical performance on symbolic categories (100\%) because these queries never reach the model.
+
+% ======================================================================
+\section{Discussion}
+\label{sec:discussion}
+% ======================================================================
+
+\subsection{Generalizability}
+Our benchmark covers four well-defined categories drawn from established datasets. Real-world queries may span additional categories (e.g., commonsense reasoning, spatial reasoning) that are neither fully symbolic nor standard word problems. Extending the router to handle such cases---perhaps with a learned classifier---is an important direction.
+
+\subsection{Classifier Robustness}
+\label{sec:classifier_robustness}
+The regex classifier achieves 100\% accuracy on our benchmark, but this reflects the well-separated nature of the benchmark categories rather than adversarial robustness. Misclassification would route a query to the wrong solver, potentially yielding an incorrect answer with high confidence. A learned classifier or a fallback mechanism that detects solver failures and re-routes would improve robustness.
+
+\subsection{Dataset Size}
+Our benchmark of 100 prompts (25 per category) is small by modern standards. The 95\% confidence interval on 99.0\% accuracy is [97.1\%, 99.8\%], which is reasonably tight, but per-category confidence intervals are wider (e.g., 96\% WP accuracy on 25 prompts has a 95\% CI of [80.5\%, 99.3\%]). Evaluation on larger subsets of the source benchmarks would strengthen the claims.
+
+\subsection{Energy--Accuracy Tradeoff}
+The best-accuracy system (V5, 512tok) uses 2.8$\times$ more energy than the baseline. The energy savings from symbolic routing on 75\% of queries are real but are outweighed by the 17$\times$ increase in WP generation cost. For battery-powered deployments, adaptive token budgets---starting low and escalating only when the model's output indicates insufficient reasoning---could reduce average energy while maintaining accuracy.
+
+\subsection{Scalability of Symbolic Solvers}
+Our solvers handle single-variable linear equations, basic arithmetic, and propositional logic. Extending to nonlinear equations, multi-variable systems, or first-order logic would require more powerful solvers, but the routing architecture would remain unchanged.
+
+\subsection{Practical WP Latency}
+Word problems take approximately 137\,s per prompt at 512 tokens on the Pi~4B's CPU. This is acceptable for batch processing or non-interactive applications but prohibitive for real-time use. Faster hardware (e.g., with neural accelerators) or more aggressive quantization could reduce this.
+
+% ======================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ======================================================================
+
+We presented a neurosymbolic routing architecture for edge devices that achieves 99.0\% accuracy on a 100-prompt reasoning benchmark drawn from DeepMind Mathematics, GSM8K, and RuleTaker, compared to 37.3\% for SLM-only baselines at 30 tokens and an estimated 87.3\% optimistic ceiling for SLM-only at 512 tokens. The system runs entirely offline on a Raspberry Pi~4B with no GPU.
+
+Our ablation demonstrates that each symbolic solver produces a discrete accuracy jump in its category. The system's remaining weakness is word problems, where accuracy depends on token budget and thus energy: 96\% WP accuracy at 512 tokens costs 6.9$\times$ more energy than 30 tokens. Future work will explore adaptive token allocation and extending symbolic solver coverage. More broadly, this work demonstrates that trustworthy reasoning on edge devices does not require larger models or cloud connectivity---it requires routing each query to the right solver.
+
+% Acknowledgment section removed for double-anonymous review.
+% Will be restored in camera-ready version.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
