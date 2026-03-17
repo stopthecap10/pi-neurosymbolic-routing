@@ -261,18 +261,55 @@ def run_experiments(args):
         print("\n" + "="*50)
         print("Experiment 4: Tool-calling agent baseline")
         print("="*50)
+
+        # Prompt for energy measurement
+        start_mwh = None
+        try:
+            start_mwh_str = input("Enter STARTING mWh reading from USB power meter (or press Enter to skip): ").strip()
+            if start_mwh_str:
+                import re as re_mod
+                start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', start_mwh_str))
+                print(f"Recorded starting: {start_mwh} mWh")
+        except (ValueError, EOFError):
+            print("Skipping energy measurement.")
+
         from src.agent_baseline import run_benchmark
         agent_results = run_benchmark(
             "data/splits/industry_tier2_100.csv",
             server_url=args.server,
             max_tokens=50,
         )
+
+        # Compute latency stats
+        latencies = [r['latency_ms'] for r in agent_results['results']]
+        avg_latency = sum(latencies) / len(latencies) if latencies else 0
+        median_latency = sorted(latencies)[len(latencies)//2] if latencies else 0
+
+        # Prompt for ending energy
+        end_mwh = None
+        energy_per_prompt = None
+        try:
+            end_mwh_str = input("Enter ENDING mWh reading (or press Enter to skip): ").strip()
+            if end_mwh_str and start_mwh is not None:
+                import re as re_mod
+                end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', end_mwh_str))
+                delta = end_mwh - start_mwh
+                energy_per_prompt = delta / len(latencies) if latencies else 0
+                print(f"Energy: {delta:.2f} mWh total, {energy_per_prompt:.2f} mWh/prompt")
+        except (ValueError, EOFError):
+            pass
+
         results['agent'] = {
             'total_accuracy': agent_results['total_accuracy'],
             'correct': agent_results['correct'],
             'total': agent_results['total'],
             'per_category': agent_results['per_category'],
             'tool_usage': agent_results['tool_usage'],
+            'avg_latency_ms': avg_latency,
+            'median_latency_ms': median_latency,
+            'energy_start_mwh': start_mwh,
+            'energy_end_mwh': end_mwh,
+            'energy_per_prompt_mwh': energy_per_prompt,
         }
 
     # ---- Experiment 5: Feature classifier (hand-coded baseline) ----
