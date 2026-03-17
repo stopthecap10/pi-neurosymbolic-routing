@@ -311,6 +311,7 @@ def run_experiments(args):
             "data/splits/industry_tier2_100.csv",
             server_url=args.server,
             max_tokens=50,
+            repeats=3,
         )
 
         # Compute latency stats
@@ -336,6 +337,7 @@ def run_experiments(args):
             'total_accuracy': agent_results['total_accuracy'],
             'correct': agent_results['correct'],
             'total': agent_results['total'],
+            'repeats': agent_results['repeats'],
             'per_category': agent_results['per_category'],
             'tool_usage': agent_results['tool_usage'],
             'avg_latency_ms': avg_latency,

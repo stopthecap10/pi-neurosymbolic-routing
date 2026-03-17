@@ -240,8 +240,14 @@ class ToolCallingAgent:
 
 
 def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
-                  max_tokens: int = 50) -> Dict[str, Any]:
+                  max_tokens: int = 50, repeats: int = 1) -> Dict[str, Any]:
     """Run the tool-calling agent on a benchmark CSV.
+
+    Args:
+        csv_path: Path to benchmark CSV.
+        server_url: llama.cpp server URL.
+        max_tokens: Max tokens for SLM generation.
+        repeats: Number of repeats per prompt (default 1, use 3 for paper).
 
     Note: Requires llama.cpp server running on the Pi.
     """
@@ -253,12 +259,25 @@ def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
     by_cat = defaultdict(lambda: {"correct": 0, "total": 0})
     tool_usage = defaultdict(int)
 
+    # Load prompts
+    prompts = []
     with open(csv_path) as f:
         for row in csv_mod.DictReader(f):
+            prompts.append(row)
+
+    total_trials = len(prompts) * repeats
+    trial_num = 0
+
+    for repeat in range(repeats):
+        if repeats > 1:
+            print(f"\n--- Repeat {repeat + 1}/{repeats} ---")
+        for row in prompts:
+            trial_num += 1
             result = agent.solve(row['prompt_text'], row['ground_truth'])
             result['prompt_id'] = row['prompt_id']
             result['category'] = row['category']
             result['ground_truth'] = row['ground_truth']
+            result['repeat'] = repeat + 1
             results.append(result)
 
             cat = row['category']
@@ -267,7 +286,8 @@ def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
                 by_cat[cat]['correct'] += 1
             tool_usage[result['tool_called']] += 1
 
-            print(f"{row['prompt_id']}: tool={result['tool_called']:<20s} "
+            print(f"[{trial_num}/{total_trials}] {row['prompt_id']} r{repeat+1}: "
+                  f"tool={result['tool_called']:<20s} "
                   f"correct={result['correct']}  "
                   f"latency={result['latency_ms']:.0f}ms")
 
@@ -278,6 +298,7 @@ def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
         'total_accuracy': correct / total if total else 0,
         'correct': correct,
         'total': total,
+        'repeats': repeats,
         'per_category': dict(by_cat),
         'tool_usage': dict(tool_usage),
         'results': results,
