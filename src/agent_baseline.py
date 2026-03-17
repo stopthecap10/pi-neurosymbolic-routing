@@ -28,32 +28,15 @@ from src.token_classifier import tokenize
 
 # ---- Tool definitions for the system prompt ----
 
-TOOL_CALLING_SYSTEM_PROMPT = """You are a math and logic assistant with access to tools.
-Given a problem, decide which ONE tool to call and output EXACTLY one line in this format:
-TOOL_NAME(arguments)
+TOOL_CALLING_SYSTEM_PROMPT = """You have tools. Output ONLY one tool call, nothing else.
+Tools: arithmetic_eval(expr), sympy_solve(eq, var), logic_engine(Yes or No), direct_answer(number)
+Examples:
+Calculate 4-(5-(3+2)). -> arithmetic_eval(4-(5-(3+2)))
+Solve 5*m-18=0 for m. -> sympy_solve(5*m-18=0, m)
+The cat is green. If green then kind. Is the cat kind? -> logic_engine(Yes)
+A bus goes 60mph for 5h. How far? -> direct_answer(300)"""
 
-Available tools:
-- arithmetic_eval(expression): Evaluate a pure arithmetic expression. Example: arithmetic_eval(4 - (5 - (3 + 2)))
-- sympy_solve(equation, variable): Solve an algebraic equation. Example: sympy_solve(5*m - 7 - 18 = 0, m)
-- logic_engine(answer): For logic questions, respond with Yes or No. Example: logic_engine(Yes)
-- direct_answer(answer): For word problems or when you know the answer. Example: direct_answer(42)
-
-Output ONLY the tool call, nothing else."""
-
-FEW_SHOT_EXAMPLES = """Examples:
-Problem: Calculate 4 - (5 - (3 + 2)).
-arithmetic_eval(4 - (5 - (3 + 2)))
-
-Problem: Solve 5*m - 7 - 18 = 0 for m.
-sympy_solve(5*m - 7 - 18 = 0, m)
-
-Problem: The cat is green. If something is green then it is kind. Is the cat kind?
-logic_engine(Yes)
-
-Problem: A bus travels 60 mph for 5 hours. How far did it go?
-direct_answer(300)
-
-"""
+FEW_SHOT_EXAMPLES = ""
 
 # ---- Tool call parser ----
 
@@ -160,7 +143,7 @@ class ToolCallingAgent:
     """Agent that uses SLM to decide which tool to call."""
 
     def __init__(self, server_url: str = "http://127.0.0.1:8080",
-                 max_tokens: int = 50, timeout: int = 60):
+                 max_tokens: int = 50, timeout: int = 120):
         self.server_url = server_url.rstrip('/')
         self.max_tokens = max_tokens
         self.timeout = timeout

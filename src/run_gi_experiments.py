@@ -36,28 +36,34 @@ from src.feature_classifier import create_feature_oracle, classify_by_features
 # ---- SLM-based membership oracle ----
 
 class SLMOracle:
-    """Membership oracle that uses the SLM to classify queries.
+    """Membership oracle that ACTUALLY queries Phi-4-mini on the Pi.
 
-    Asks: "Is this a [category] problem? Answer Yes or No."
-    This is the professor's recommended approach — the SLM itself
-    acts as the membership oracle for L*.
+    For each prompt, asks the SLM: "Is this a [category] problem? Yes/No."
+
+    Approach:
+    1. Pre-query the SLM for all known prompts (training data)
+    2. Cache results keyed by token sequence
+    3. For synthetic L* queries (not real prompts), use feature classifier
+       as fallback (these are intermediate L* exploration strings)
     """
 
     CATEGORY_DESCRIPTIONS = {
-        "AR": "a pure arithmetic calculation (only numbers and operators, no variables or word problems)",
-        "ALG": "an algebra problem (has variables like x, m, or z that need to be solved for)",
-        "WP": "a word problem (a story or scenario that requires multi-step math reasoning)",
-        "LOG": "a formal logic problem (has facts, rules, and a yes/no question about logical entailment)",
+        "AR": "a pure arithmetic calculation with only numbers and operators",
+        "ALG": "an algebra problem with variables to solve for",
+        "WP": "a word problem requiring multi-step reasoning",
+        "LOG": "a formal logic problem with facts, rules, and a yes/no question",
     }
 
     def __init__(self, target_category: str, server_url: str,
-                 cache_path: str = None):
+                 token_to_text: dict, cache_path: str = None):
         self.target_category = target_category
         self.server_url = server_url.rstrip('/')
         self.desc = self.CATEGORY_DESCRIPTIONS[target_category]
+        self.token_to_text = token_to_text  # token_key -> original text
         self.cache = {}
         self.cache_path = cache_path
-        self.query_count = 0
+        self.slm_query_count = 0  # actual SLM calls
+        self.feature_fallback_count = 0  # feature classifier fallbacks
         self.cache_hits = 0
 
         if cache_path and os.path.exists(cache_path):
@@ -65,33 +71,37 @@ class SLMOracle:
                 self.cache = json.load(f)
 
     def __call__(self, token_seq: tuple) -> bool:
-        """Query the SLM: is this token sequence in the target category?"""
+        """Membership oracle for L*."""
         key = " ".join(token_seq)
 
         if key in self.cache:
             self.cache_hits += 1
             return self.cache[key]
 
-        # We need the original text — but L* operates on token sequences.
-        # For token sequences not from the dataset, use feature classifier.
-        # For dataset sequences, we'd need a reverse mapping.
-        # Practical approach: use feature classifier as proxy for unseen seqs.
-        result = classify_by_features(token_seq) == self.target_category
+        # If we have the original text, query the actual SLM
+        if key in self.token_to_text:
+            result = self._query_slm(self.token_to_text[key])
+            self.slm_query_count += 1
+        else:
+            # Synthetic L* sequence — no original text exists
+            # Fall back to feature classifier
+            result = classify_by_features(token_seq) == self.target_category
+            self.feature_fallback_count += 1
+
         self.cache[key] = result
-        self.query_count += 1
+
+        # Periodically save cache
+        if self.cache_path and (self.slm_query_count + self.feature_fallback_count) % 20 == 0:
+            self.save_cache()
+
         return result
 
-    def query_with_text(self, text: str) -> bool:
-        """Query the SLM with the original text (for dataset prompts)."""
-        key = f"text:{text[:100]}"
-        if key in self.cache:
-            self.cache_hits += 1
-            return self.cache[key]
-
+    def _query_slm(self, text: str) -> bool:
+        """Actually query Phi-4-mini: 'Is this problem [category]?'"""
         prompt = (
             f"Is the following problem {self.desc}?\n\n"
-            f"Problem: {text}\n\n"
-            f"Answer with exactly one word: Yes or No."
+            f"{text}\n\n"
+            f"Answer Yes or No."
         )
 
         try:
@@ -99,7 +109,7 @@ class SLMOracle:
                 f"{self.server_url}/v1/chat/completions",
                 json={
                     "messages": [
-                        {"role": "system", "content": "Answer with exactly one word: Yes or No."},
+                        {"role": "system", "content": "Answer with one word: Yes or No."},
                         {"role": "user", "content": prompt},
                     ],
                     "max_tokens": 6,
@@ -108,39 +118,20 @@ class SLMOracle:
                     "top_k": 1,
                     "seed": 42,
                 },
-                timeout=(10.0, 45),
+                timeout=(10.0, 120),
             )
             answer = response.json()["choices"][0]["message"]["content"].strip().lower()
             result = answer.startswith("yes")
+            return result
         except Exception as e:
-            print(f"  SLM oracle error: {e}")
-            result = False
-
-        self.cache[key] = result
-        self.query_count += 1
-
-        if self.cache_path:
-            with open(self.cache_path, 'w') as f:
-                json.dump(self.cache, f, indent=2)
-
-        return result
+            print(f"    SLM oracle error: {e}")
+            # On error, fall back to feature classifier
+            return classify_by_features(tokenize(text)) == self.target_category
 
     def save_cache(self):
         if self.cache_path:
             with open(self.cache_path, 'w') as f:
                 json.dump(self.cache, f, indent=2)
-
-
-def slm_equivalence_oracle(labeled_data, target_category, slm_oracle, server_url):
-    """Equivalence oracle that tests DFA against labeled data AND SLM."""
-    def oracle(hypothesis):
-        for seq, label in labeled_data:
-            expected = (label == target_category)
-            actual = hypothesis.run(seq)
-            if actual != expected:
-                return seq
-        return None
-    return oracle
 
 
 # ---- Main experiment runner ----
@@ -224,34 +215,76 @@ def run_experiments(args):
         cache_dir = os.path.join(out_dir, "oracle_cache")
         os.makedirs(cache_dir, exist_ok=True)
 
+        # Build token_sequence -> original_text mapping for all known prompts
+        token_to_text = {}
+        for csv_path in ["data/splits/industry_tier1_40_v2.csv",
+                         "data/splits/industry_tier2_100.csv"]:
+            with open(csv_path) as f:
+                for row in csv.DictReader(f):
+                    toks = tokenize(row['prompt_text'])
+                    key = " ".join(toks)
+                    token_to_text[key] = row['prompt_text']
+        print(f"  Loaded {len(token_to_text)} prompts for SLM oracle")
+
+        # Prompt for energy reading before SLM oracle queries
+        slm_start_mwh = None
+        try:
+            s = input("Enter STARTING mWh for L* SLM oracle (or Enter to skip): ").strip()
+            if s:
+                import re as re_mod
+                slm_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                print(f"Recorded: {slm_start_mwh} mWh")
+        except (ValueError, EOFError):
+            pass
+
         t0 = time.time()
         lstar_slm_dfas = {}
-        total_queries = 0
+        total_slm_queries = 0
+        total_fallbacks = 0
 
         for cat in ("AR", "ALG", "WP", "LOG"):
             print(f"\n  Learning DFA for {cat}...")
             cache_path = os.path.join(cache_dir, f"slm_oracle_{cat}.json")
-            slm_oracle = SLMOracle(cat, args.server, cache_path)
+            slm_oracle = SLMOracle(cat, args.server, token_to_text, cache_path)
 
-            # For L*, the membership oracle uses the SLM
-            # but we still use ground-truth for equivalence (practical)
             eq_oracle = ground_truth_equivalence_oracle(train_data, cat)
             learner = LStar(ALPHABET, slm_oracle, eq_oracle)
             lstar_slm_dfas[cat] = learner.learn()
             slm_oracle.save_cache()
 
-            total_queries += slm_oracle.query_count
+            total_slm_queries += slm_oracle.slm_query_count
+            total_fallbacks += slm_oracle.feature_fallback_count
             print(f"  {cat}: {lstar_slm_dfas[cat].num_states} states, "
-                  f"{slm_oracle.query_count} oracle queries "
-                  f"({slm_oracle.cache_hits} cache hits)")
+                  f"{slm_oracle.slm_query_count} SLM queries, "
+                  f"{slm_oracle.feature_fallback_count} feature fallbacks, "
+                  f"{slm_oracle.cache_hits} cache hits")
 
         lstar_slm_time = time.time() - t0
+
+        # Prompt for ending energy
+        slm_end_mwh = None
+        slm_energy_per_query = None
+        try:
+            s = input("Enter ENDING mWh for L* SLM oracle (or Enter to skip): ").strip()
+            if s and slm_start_mwh is not None:
+                import re as re_mod
+                slm_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                delta = slm_end_mwh - slm_start_mwh
+                slm_energy_per_query = delta / total_slm_queries if total_slm_queries else 0
+                print(f"Energy: {delta:.2f} mWh total, "
+                      f"{slm_energy_per_query:.4f} mWh/query over {total_slm_queries} SLM queries")
+        except (ValueError, EOFError):
+            pass
 
         lstar_slm_mc = MultiClassDFA(lstar_slm_dfas, priority=("LOG", "ALG", "AR", "WP"))
         lstar_slm_results = evaluate(lstar_slm_mc, test_data, "L* (SLM)")
         lstar_slm_results['train_time_s'] = lstar_slm_time
-        lstar_slm_results['total_oracle_queries'] = total_queries
+        lstar_slm_results['total_slm_queries'] = total_slm_queries
+        lstar_slm_results['total_feature_fallbacks'] = total_fallbacks
         lstar_slm_results['dfa_sizes'] = {cat: dfa.num_states for cat, dfa in lstar_slm_dfas.items()}
+        lstar_slm_results['energy_start_mwh'] = slm_start_mwh
+        lstar_slm_results['energy_end_mwh'] = slm_end_mwh
+        lstar_slm_results['energy_per_query_mwh'] = slm_energy_per_query
         results['lstar_slm'] = lstar_slm_results
 
         lstar_slm_mc.to_json(os.path.join(out_dir, "lstar_slm_dfas.json"))
