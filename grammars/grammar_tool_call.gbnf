@@ -1,0 +1,4 @@
+root ::= tool-call
+tool-call ::= tool-name "(" args ")"
+tool-name ::= "arithmetic_eval" | "sympy_solve" | "logic_engine" | "direct_answer"
+args ::= [^)]+
