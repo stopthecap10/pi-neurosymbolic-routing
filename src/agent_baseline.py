@@ -268,16 +268,14 @@ def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
     total_trials = len(prompts) * repeats
     trial_num = 0
 
-    for repeat in range(repeats):
-        if repeats > 1:
-            print(f"\n--- Repeat {repeat + 1}/{repeats} ---")
-        for row in prompts:
+    for row in prompts:
+        for repeat in range(1, repeats + 1):
             trial_num += 1
             result = agent.solve(row['prompt_text'], row['ground_truth'])
             result['prompt_id'] = row['prompt_id']
             result['category'] = row['category']
             result['ground_truth'] = row['ground_truth']
-            result['repeat'] = repeat + 1
+            result['repeat'] = repeat
             results.append(result)
 
             cat = row['category']
@@ -286,7 +284,7 @@ def run_benchmark(csv_path: str, server_url: str = "http://127.0.0.1:8080",
                 by_cat[cat]['correct'] += 1
             tool_usage[result['tool_called']] += 1
 
-            print(f"[{trial_num}/{total_trials}] {row['prompt_id']} r{repeat+1}: "
+            print(f"[{trial_num}/{total_trials}] {row['prompt_id']} r{repeat}: "
                   f"tool={result['tool_called']:<20s} "
                   f"correct={result['correct']}  "
                   f"latency={result['latency_ms']:.0f}ms")
