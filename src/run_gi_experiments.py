@@ -407,9 +407,224 @@ def run_experiments(args):
             'energy_per_prompt_mwh': energy_per_prompt,
         }
 
-    # ---- Experiment 5: Feature classifier (hand-coded baseline) ----
+    # ---- Experiments 5 & 6: End-to-end with learned routing → V5 solver ----
+    if not args.no_slm:
+        from src.router_v5 import RouterV5
+
+        SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
+        SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
+
+        v5_routing_decisions = {
+            'category_routes': {
+                'AR': {'action': 'A5', 'grammar_enabled': False},
+                'ALG': {'action': 'A4', 'grammar_enabled': False},
+                'WP': {'action': 'A2', 'grammar_enabled': False},
+                'LOG': {'action': 'A6', 'grammar_enabled': False},
+            },
+            'max_escalations': 2,
+        }
+
+        v5_config = {
+            'model_name': 'Phi-4-Mini',
+            'quantization': 'Q6_K',
+            'server_url': f"{args.server}/completion",
+            'timeout_sec': 20,
+            'temperature': 0.0,
+            'top_p': 1.0,
+            'top_k': 1,
+            'seed': 42,
+            'repeats': 3,
+            'api_mode': 'chat',
+            'config_version': 'v1.0',
+            'n_pred_num': 12,
+            'n_pred_log': 6,
+        }
+
+        v5_router = RouterV5(v5_config, v5_routing_decisions)
+
+        # Load T2 prompts with full info
+        t2_prompts = []
+        with open("data/splits/industry_tier2_100.csv") as f:
+            for row in csv.DictReader(f):
+                t2_prompts.append(row)
+
+        def build_phi_prompt(base_prompt, category):
+            """Build Phi chat template from base prompt (same as run_hybrid_v5.py)."""
+            question = base_prompt
+            lines_q = question.rstrip().split('\n')
+            while lines_q and lines_q[-1].strip() in ("Answer:", ""):
+                lines_q.pop()
+            while lines_q and lines_q[-1].strip().startswith("Return only"):
+                lines_q.pop()
+            question = '\n'.join(lines_q).strip()
+            system_msg = SYSTEM_MSG_YESNO if category == "LOG" else SYSTEM_MSG_NUMERIC
+            return f"<|system|>{system_msg}<|end|><|user|>{question}<|end|><|assistant|>"
+
+        def run_e2e_experiment(exp_name, dfa_mc):
+            """Run end-to-end experiment: DFA classification → V5 solver pipeline."""
+            print(f"\n  Running 3 repeats per prompt (prompt-wise)...")
+
+            trials = []
+            by_cat = defaultdict(lambda: {'correct': 0, 'total': 0})
+            routing_correct = 0
+            trial_num = 0
+            total_trials = len(t2_prompts) * 3
+
+            for row in t2_prompts:
+                prompt_id = row['prompt_id']
+                true_cat = row['category']
+                ground_truth = row['ground_truth']
+
+                # DFA classification
+                toks = tokenize(row['prompt_text'])
+                predicted_cat = dfa_mc.classify(toks) or 'WP'  # fallback to WP
+
+                if predicted_cat == true_cat:
+                    routing_correct += 1
+
+                # Build prompt using PREDICTED category (determines system msg)
+                prompt_text = build_phi_prompt(row['prompt_text'], predicted_cat)
+
+                for repeat in range(1, 4):
+                    trial_num += 1
+                    result = v5_router.route(
+                        prompt_id=prompt_id,
+                        category=predicted_cat,
+                        prompt_text=prompt_text,
+                        ground_truth=ground_truth,
+                    )
+
+                    trials.append({
+                        'prompt_id': prompt_id,
+                        'true_category': true_cat,
+                        'predicted_category': predicted_cat,
+                        'category_match': predicted_cat == true_cat,
+                        'repeat': repeat,
+                        'correct': result['correct'],
+                        'answer': result['answer_final'],
+                        'ground_truth': ground_truth,
+                        'latency_ms': result['total_latency_ms'],
+                        'route_sequence': result['route_attempt_sequence'],
+                        'error_code': result['error_code'],
+                    })
+
+                    by_cat[true_cat]['total'] += 1
+                    if result['correct']:
+                        by_cat[true_cat]['correct'] += 1
+
+                    status = "OK" if result['correct'] else "X"
+                    cat_match = "=" if predicted_cat == true_cat else f"!={predicted_cat}"
+                    print(f"  [{trial_num}/{total_trials}] {prompt_id} r{repeat} "
+                          f"{true_cat}{cat_match} "
+                          f"correct={result['correct']} "
+                          f"lat={result['total_latency_ms']:.0f}ms")
+
+                    time.sleep(0.1)
+
+            total = len(trials)
+            correct = sum(1 for t in trials if t['correct'])
+            latencies = [t['latency_ms'] for t in trials]
+            avg_lat = sum(latencies) / len(latencies) if latencies else 0
+            median_lat = sorted(latencies)[len(latencies)//2] if latencies else 0
+
+            for cat in by_cat:
+                bc = by_cat[cat]
+                bc['accuracy'] = bc['correct'] / bc['total'] if bc['total'] else 0
+
+            return {
+                'total_accuracy': correct / total if total else 0,
+                'correct': correct,
+                'total': total,
+                'repeats': 3,
+                'routing_accuracy': routing_correct / len(t2_prompts),
+                'routing_correct': routing_correct,
+                'per_category': dict(by_cat),
+                'avg_latency_ms': avg_lat,
+                'median_latency_ms': median_lat,
+                'trials': trials,
+            }
+
+        # ---- Experiment 5: L* routing → V5 solver (end-to-end) ----
+        print("\n" + "="*50)
+        print("Experiment 5: L* learned routing -> V5 solver (END-TO-END)")
+        print("="*50)
+
+        # Use L* feature DFAs (100% routing accuracy, or SLM DFAs if available)
+        e2e_lstar_mc = lstar_slm_mc if 'lstar_slm' in results else lstar_feat_mc
+        e2e_lstar_label = "L* SLM" if 'lstar_slm' in results else "L* feature"
+        print(f"  Using {e2e_lstar_label} DFAs for classification")
+
+        lstar_e2e_start_mwh = None
+        try:
+            s = input(f"Enter STARTING mWh for {e2e_lstar_label} end-to-end (or Enter to skip): ").strip()
+            if s:
+                import re as re_mod
+                lstar_e2e_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                print(f"Recorded: {lstar_e2e_start_mwh} mWh")
+        except (ValueError, EOFError):
+            pass
+
+        lstar_e2e_results = run_e2e_experiment(e2e_lstar_label, e2e_lstar_mc)
+
+        lstar_e2e_end_mwh = None
+        lstar_e2e_energy = None
+        try:
+            s = input(f"Enter ENDING mWh for {e2e_lstar_label} end-to-end (or Enter to skip): ").strip()
+            if s and lstar_e2e_start_mwh is not None:
+                import re as re_mod
+                lstar_e2e_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                lstar_e2e_energy = lstar_e2e_end_mwh - lstar_e2e_start_mwh
+                num_unique = len(t2_prompts)
+                print(f"Energy: {lstar_e2e_energy:.2f} mWh total, {lstar_e2e_energy/num_unique:.2f} mWh/prompt")
+        except (ValueError, EOFError):
+            pass
+
+        lstar_e2e_results['energy_start_mwh'] = lstar_e2e_start_mwh
+        lstar_e2e_results['energy_end_mwh'] = lstar_e2e_end_mwh
+        lstar_e2e_results['energy_total_mwh'] = lstar_e2e_energy
+        lstar_e2e_results['energy_per_prompt_mwh'] = lstar_e2e_energy / len(t2_prompts) if lstar_e2e_energy is not None else None
+        lstar_e2e_results['dfa_source'] = e2e_lstar_label
+        results['lstar_e2e'] = lstar_e2e_results
+
+        # ---- Experiment 6: RPNI routing → V5 solver (end-to-end) ----
+        print("\n" + "="*50)
+        print("Experiment 6: RPNI learned routing -> V5 solver (END-TO-END)")
+        print("="*50)
+
+        rpni_e2e_start_mwh = None
+        try:
+            s = input("Enter STARTING mWh for RPNI end-to-end (or Enter to skip): ").strip()
+            if s:
+                import re as re_mod
+                rpni_e2e_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                print(f"Recorded: {rpni_e2e_start_mwh} mWh")
+        except (ValueError, EOFError):
+            pass
+
+        rpni_e2e_results = run_e2e_experiment("RPNI", rpni_mc)
+
+        rpni_e2e_end_mwh = None
+        rpni_e2e_energy = None
+        try:
+            s = input("Enter ENDING mWh for RPNI end-to-end (or Enter to skip): ").strip()
+            if s and rpni_e2e_start_mwh is not None:
+                import re as re_mod
+                rpni_e2e_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+                rpni_e2e_energy = rpni_e2e_end_mwh - rpni_e2e_start_mwh
+                num_unique = len(t2_prompts)
+                print(f"Energy: {rpni_e2e_energy:.2f} mWh total, {rpni_e2e_energy/num_unique:.2f} mWh/prompt")
+        except (ValueError, EOFError):
+            pass
+
+        rpni_e2e_results['energy_start_mwh'] = rpni_e2e_start_mwh
+        rpni_e2e_results['energy_end_mwh'] = rpni_e2e_end_mwh
+        rpni_e2e_results['energy_total_mwh'] = rpni_e2e_energy
+        rpni_e2e_results['energy_per_prompt_mwh'] = rpni_e2e_energy / len(t2_prompts) if rpni_e2e_energy is not None else None
+        results['rpni_e2e'] = rpni_e2e_results
+
+    # ---- Experiment 7: Feature classifier (hand-coded baseline) ----
     print("\n" + "="*50)
-    print("Experiment 5: Feature classifier (hand-coded)")
+    print("Experiment 7: Feature classifier (hand-coded)")
     print("="*50)
 
     feat_start_mwh = None
@@ -478,11 +693,11 @@ def run_experiments(args):
     print("="*60)
     print(f"{'System':<25s} {'AR':>5s} {'ALG':>5s} {'WP':>5s} {'LOG':>5s} {'All':>6s} {'Lat(ms)':>8s} {'mWh':>8s}")
     print("-" * 80)
-    for name, key in [("RPNI (passive)", "rpni"),
-                       ("L* (feature oracle)", "lstar_feature"),
-                       ("L* (SLM oracle)", "lstar_slm"),
-                       ("Tool-calling agent", "agent"),
-                       ("Feature classifier", "feature")]:
+    print("\n  --- Routing Classification Only ---")
+    for name, key in [("RPNI (classify)", "rpni"),
+                       ("L* feature (classify)", "lstar_feature"),
+                       ("L* SLM (classify)", "lstar_slm"),
+                       ("Feature clf (classify)", "feature")]:
         if key not in results:
             continue
         r = results[key]
@@ -499,6 +714,37 @@ def run_experiments(args):
         epp = r.get('energy_per_prompt_mwh')
         epp_str = f"{epp:8.3f}" if epp is not None else "     N/A"
         print(f"{name:<25s} {'  '.join(parts)}  {r['total_accuracy']:5.1%}  {lat_str}  {epp_str}")
+
+    # End-to-end comparison (the main paper table)
+    e2e_systems = [("L* routing -> V5", "lstar_e2e"),
+                   ("RPNI routing -> V5", "rpni_e2e"),
+                   ("Tool-calling agent", "agent")]
+    if any(k in results for _, k in e2e_systems):
+        print("\n  --- End-to-End Task Accuracy (3 repeats) ---")
+        print(f"{'System':<25s} {'AR':>5s} {'ALG':>5s} {'WP':>5s} {'LOG':>5s} {'All':>6s} {'Lat(ms)':>8s} {'mWh':>8s}")
+        print("-" * 80)
+        for name, key in e2e_systems:
+            if key not in results:
+                continue
+            r = results[key]
+            pc = r['per_category']
+            parts = []
+            for cat in ('AR', 'ALG', 'WP', 'LOG'):
+                if cat in pc:
+                    acc = pc[cat].get('accuracy', pc[cat].get('correct', 0) / max(pc[cat].get('total', 1), 1))
+                    parts.append(f"{acc:5.0%}")
+                else:
+                    parts.append("  N/A")
+            lat = r.get('avg_latency_ms')
+            lat_str = f"{lat:8.1f}" if lat is not None else "     N/A"
+            epp = r.get('energy_per_prompt_mwh')
+            epp_str = f"{epp:8.2f}" if epp is not None else "     N/A"
+            print(f"{name:<25s} {'  '.join(parts)}  {r['total_accuracy']:5.1%}  {lat_str}  {epp_str}")
+
+        # Show routing accuracy for learned systems
+        for name, key in [("L* routing", "lstar_e2e"), ("RPNI routing", "rpni_e2e")]:
+            if key in results and 'routing_accuracy' in results[key]:
+                print(f"  {name} classification accuracy: {results[key]['routing_accuracy']:.1%}")
 
     if 'rpni' in results:
         print(f"\nDFA sizes (states):")
