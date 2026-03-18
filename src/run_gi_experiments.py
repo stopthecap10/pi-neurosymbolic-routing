@@ -162,6 +162,17 @@ def run_experiments(args):
     print("\n" + "="*50)
     print("Experiment 1: RPNI (passive grammatical inference)")
     print("="*50)
+
+    rpni_start_mwh = None
+    try:
+        s = input("Enter STARTING mWh for RPNI experiment (or Enter to skip): ").strip()
+        if s:
+            import re as re_mod
+            rpni_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            print(f"Recorded: {rpni_start_mwh} mWh")
+    except (ValueError, EOFError):
+        pass
+
     t0 = time.time()
     rpni_dfas = rpni_learn(ALPHABET, train_data)
     rpni_time = time.time() - t0
@@ -170,6 +181,23 @@ def run_experiments(args):
     rpni_results = evaluate(rpni_mc, test_data, "RPNI")
     rpni_results['train_time_s'] = rpni_time
     rpni_results['dfa_sizes'] = {cat: dfa.num_states for cat, dfa in rpni_dfas.items()}
+
+    rpni_end_mwh = None
+    rpni_energy = None
+    try:
+        s = input("Enter ENDING mWh for RPNI experiment (or Enter to skip): ").strip()
+        if s and rpni_start_mwh is not None:
+            import re as re_mod
+            rpni_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            rpni_energy = rpni_end_mwh - rpni_start_mwh
+            print(f"Energy: {rpni_energy:.2f} mWh total")
+    except (ValueError, EOFError):
+        pass
+
+    rpni_results['energy_start_mwh'] = rpni_start_mwh
+    rpni_results['energy_end_mwh'] = rpni_end_mwh
+    rpni_results['energy_total_mwh'] = rpni_energy
+    rpni_results['energy_per_prompt_mwh'] = rpni_energy / len(test_data) if rpni_energy is not None else None
     results['rpni'] = rpni_results
 
     rpni_mc.to_json(os.path.join(out_dir, "rpni_dfas.json"))
@@ -178,6 +206,17 @@ def run_experiments(args):
     print("\n" + "="*50)
     print("Experiment 2: L* with feature-based oracle")
     print("="*50)
+
+    lstar_feat_start_mwh = None
+    try:
+        s = input("Enter STARTING mWh for L* feature experiment (or Enter to skip): ").strip()
+        if s:
+            import re as re_mod
+            lstar_feat_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            print(f"Recorded: {lstar_feat_start_mwh} mWh")
+    except (ValueError, EOFError):
+        pass
+
     t0 = time.time()
     lstar_feat_dfas = {}
     for cat in ("AR", "ALG", "WP", "LOG"):
@@ -192,6 +231,23 @@ def run_experiments(args):
     lstar_feat_results = evaluate(lstar_feat_mc, test_data, "L* (feature)")
     lstar_feat_results['train_time_s'] = lstar_feat_time
     lstar_feat_results['dfa_sizes'] = {cat: dfa.num_states for cat, dfa in lstar_feat_dfas.items()}
+
+    lstar_feat_end_mwh = None
+    lstar_feat_energy = None
+    try:
+        s = input("Enter ENDING mWh for L* feature experiment (or Enter to skip): ").strip()
+        if s and lstar_feat_start_mwh is not None:
+            import re as re_mod
+            lstar_feat_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            lstar_feat_energy = lstar_feat_end_mwh - lstar_feat_start_mwh
+            print(f"Energy: {lstar_feat_energy:.2f} mWh total")
+    except (ValueError, EOFError):
+        pass
+
+    lstar_feat_results['energy_start_mwh'] = lstar_feat_start_mwh
+    lstar_feat_results['energy_end_mwh'] = lstar_feat_end_mwh
+    lstar_feat_results['energy_total_mwh'] = lstar_feat_energy
+    lstar_feat_results['energy_per_prompt_mwh'] = lstar_feat_energy / len(test_data) if lstar_feat_energy is not None else None
     results['lstar_feature'] = lstar_feat_results
 
     lstar_feat_mc.to_json(os.path.join(out_dir, "lstar_feature_dfas.json"))
@@ -282,9 +338,12 @@ def run_experiments(args):
         lstar_slm_results['total_slm_queries'] = total_slm_queries
         lstar_slm_results['total_feature_fallbacks'] = total_fallbacks
         lstar_slm_results['dfa_sizes'] = {cat: dfa.num_states for cat, dfa in lstar_slm_dfas.items()}
+        slm_energy_total = (slm_end_mwh - slm_start_mwh) if (slm_end_mwh is not None and slm_start_mwh is not None) else None
         lstar_slm_results['energy_start_mwh'] = slm_start_mwh
         lstar_slm_results['energy_end_mwh'] = slm_end_mwh
+        lstar_slm_results['energy_total_mwh'] = slm_energy_total
         lstar_slm_results['energy_per_query_mwh'] = slm_energy_per_query
+        lstar_slm_results['energy_per_prompt_mwh'] = slm_energy_total / len(test_data) if slm_energy_total is not None else None
         results['lstar_slm'] = lstar_slm_results
 
         lstar_slm_mc.to_json(os.path.join(out_dir, "lstar_slm_dfas.json"))
@@ -328,8 +387,9 @@ def run_experiments(args):
                 import re as re_mod
                 end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', end_mwh_str))
                 delta = end_mwh - start_mwh
-                energy_per_prompt = delta / len(latencies) if latencies else 0
-                print(f"Energy: {delta:.2f} mWh total, {energy_per_prompt:.2f} mWh/prompt")
+                num_unique_prompts = len(test_data)  # 100 unique prompts, consistent with V1-V5
+                energy_per_prompt = delta / num_unique_prompts if num_unique_prompts else 0
+                print(f"Energy: {delta:.2f} mWh total, {energy_per_prompt:.2f} mWh/prompt (over {num_unique_prompts} unique prompts)")
         except (ValueError, EOFError):
             pass
 
@@ -351,14 +411,44 @@ def run_experiments(args):
     print("\n" + "="*50)
     print("Experiment 5: Feature classifier (hand-coded)")
     print("="*50)
+
+    feat_start_mwh = None
+    try:
+        s = input("Enter STARTING mWh for feature classifier experiment (or Enter to skip): ").strip()
+        if s:
+            import re as re_mod
+            feat_start_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            print(f"Recorded: {feat_start_mwh} mWh")
+    except (ValueError, EOFError):
+        pass
+
     feat_correct = 0
     feat_by_cat = defaultdict(lambda: [0, 0])
+    feat_latencies = []
     for toks, cat, pid in test_data:
+        t0 = time.time()
         pred = classify_by_features(toks)
+        feat_latencies.append((time.time() - t0) * 1000)
         feat_by_cat[cat][1] += 1
         if pred == cat:
             feat_correct += 1
             feat_by_cat[cat][0] += 1
+
+    feat_avg_latency = sum(feat_latencies) / len(feat_latencies) if feat_latencies else 0
+    feat_median_latency = sorted(feat_latencies)[len(feat_latencies)//2] if feat_latencies else 0
+
+    feat_end_mwh = None
+    feat_energy = None
+    try:
+        s = input("Enter ENDING mWh for feature classifier experiment (or Enter to skip): ").strip()
+        if s and feat_start_mwh is not None:
+            import re as re_mod
+            feat_end_mwh = float(re_mod.sub(r'[^\d.\-+]', '', s))
+            feat_energy = feat_end_mwh - feat_start_mwh
+            print(f"Energy: {feat_energy:.2f} mWh total")
+    except (ValueError, EOFError):
+        pass
+
     results['feature'] = {
         'total_accuracy': feat_correct / len(test_data),
         'correct': feat_correct,
@@ -366,8 +456,15 @@ def run_experiments(args):
         'per_category': {cat: {'correct': v[0], 'total': v[1],
                                'accuracy': v[0]/v[1] if v[1] else 0}
                          for cat, v in feat_by_cat.items()},
+        'avg_latency_ms': feat_avg_latency,
+        'median_latency_ms': feat_median_latency,
+        'energy_start_mwh': feat_start_mwh,
+        'energy_end_mwh': feat_end_mwh,
+        'energy_total_mwh': feat_energy,
+        'energy_per_prompt_mwh': feat_energy / len(test_data) if feat_energy is not None else None,
     }
     print(f"  Overall: {feat_correct}/{len(test_data)} = {feat_correct/len(test_data):.1%}")
+    print(f"  Avg classification latency: {feat_avg_latency:.3f} ms (median: {feat_median_latency:.3f} ms)")
 
     # ---- Save all results ----
     results_path = os.path.join(out_dir, f"results_{timestamp}.json")
@@ -379,8 +476,8 @@ def run_experiments(args):
     print("\n" + "="*60)
     print("SUMMARY")
     print("="*60)
-    print(f"{'System':<25s} {'AR':>5s} {'ALG':>5s} {'WP':>5s} {'LOG':>5s} {'All':>6s}")
-    print("-" * 60)
+    print(f"{'System':<25s} {'AR':>5s} {'ALG':>5s} {'WP':>5s} {'LOG':>5s} {'All':>6s} {'Lat(ms)':>8s} {'mWh':>8s}")
+    print("-" * 80)
     for name, key in [("RPNI (passive)", "rpni"),
                        ("L* (feature oracle)", "lstar_feature"),
                        ("L* (SLM oracle)", "lstar_slm"),
@@ -397,7 +494,11 @@ def run_experiments(args):
                 parts.append(f"{acc:5.0%}")
             else:
                 parts.append("  N/A")
-        print(f"{name:<25s} {'  '.join(parts)}  {r['total_accuracy']:5.1%}")
+        lat = r.get('avg_latency_ms')
+        lat_str = f"{lat:8.3f}" if lat is not None else "     N/A"
+        epp = r.get('energy_per_prompt_mwh')
+        epp_str = f"{epp:8.3f}" if epp is not None else "     N/A"
+        print(f"{name:<25s} {'  '.join(parts)}  {r['total_accuracy']:5.1%}  {lat_str}  {epp_str}")
 
     if 'rpni' in results:
         print(f"\nDFA sizes (states):")
@@ -411,19 +512,26 @@ def evaluate(mc, test_data, name):
     """Evaluate a MultiClassDFA on test data."""
     correct = 0
     by_cat = defaultdict(lambda: {'correct': 0, 'total': 0})
+    latencies = []
 
     for toks, cat, pid in test_data:
+        t0 = time.time()
         pred = mc.classify(toks) or 'UNKNOWN'
+        latencies.append((time.time() - t0) * 1000)  # ms
         by_cat[cat]['total'] += 1
         if pred == cat:
             correct += 1
             by_cat[cat]['correct'] += 1
 
     total = len(test_data)
+    avg_latency = sum(latencies) / len(latencies) if latencies else 0
+    median_latency = sorted(latencies)[len(latencies)//2] if latencies else 0
+
     for cat in by_cat:
         by_cat[cat]['accuracy'] = by_cat[cat]['correct'] / by_cat[cat]['total']
 
     print(f"  {name}: {correct}/{total} = {correct/total:.1%}")
+    print(f"  Avg classification latency: {avg_latency:.3f} ms (median: {median_latency:.3f} ms)")
     for cat in ('AR', 'ALG', 'WP', 'LOG'):
         if cat in by_cat:
             bc = by_cat[cat]
@@ -434,6 +542,8 @@ def evaluate(mc, test_data, name):
         'correct': correct,
         'total': total,
         'per_category': dict(by_cat),
+        'avg_latency_ms': avg_latency,
+        'median_latency_ms': median_latency,
     }
 
 
