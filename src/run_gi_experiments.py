@@ -409,7 +409,11 @@ def run_experiments(args):
 
     # ---- Experiments 5 & 6: End-to-end with learned routing → V5 solver ----
     if not args.no_slm:
-        from src.router_v5 import RouterV5
+        # RouterV5 uses bare imports (from router_v3 import ...), so we need
+        # src/ on sys.path for those to resolve when run as python3 -m src.run_gi_experiments
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+        from router_v5 import RouterV5
 
         SYSTEM_MSG_NUMERIC = "You are a math assistant. Return only the final numeric answer, nothing else."
         SYSTEM_MSG_YESNO = "You are a logic assistant. Return only Yes or No, nothing else."
