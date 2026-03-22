@@ -299,7 +299,7 @@ All 100 prompts are sent directly to the SLM with no routing or symbolic solvers
     \item \textbf{Grammar constraints}: \textit{grammar} constrains the output format via a BNF grammar; \textit{nogrammar} allows free-form generation.
 \end{itemize}
 
-The best baseline (C2 with grammar, Phi-4-mini) achieves 37.3\% overall accuracy: 48\% on AR, 40\% on ALG, 53\% on LOG, and 8\% on WP. Parse failures (E8) account for 17\% of all trials.
+The best baseline (C2 with grammar, Phi-4-mini) achieves 37.3\% overall accuracy: 48\% on AR, 40\% on ALG, 53.3\% on LOG, and 8\% on WP. Parse failures (E8) account for 17\% of all trials.
 
 \subsection{V1: Add Arithmetic Solver (+A5)}
 
@@ -339,21 +339,7 @@ Two changes address the remaining bottlenecks:
 
 \textbf{Result}: 99.0\% overall accuracy. AR, ALG, and LOG all achieve 100\%. WP reaches 96\% at 512 tokens. The single remaining failure is analyzed in Section~\ref{sec:error_analysis}.
 
-Fig.~\ref{fig:progression} shows the full system progression from baseline through V5, and Fig.~\ref{fig:progression_by_cat} breaks this down by category.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig1_system_progression.png}
-    \caption{System progression from baseline (37.3\%) through V5 (99.0\%), showing the accuracy gain from each added component. The plateau at V3--V4 (70.7\%) reflects the token-budget bottleneck that V5 resolves.}
-    \label{fig:progression}
-\end{figure}
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig7_progression_by_category.png}
-    \caption{Per-category accuracy across system versions. Each symbolic solver produces an immediate accuracy jump in its target category: A5 for AR (V1), A4 for ALG (V2), A6 for LOG (V5). WP accuracy remains low until the token budget is increased in V5.}
-    \label{fig:progression_by_cat}
-\end{figure}
+Fig.~\ref{fig:version_categories} shows the full system progression from baseline through V5, including the new learned-routing systems and the tool-calling agent baseline.
 
 % ======================================================================
 \section{Results}
@@ -403,19 +389,19 @@ Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
 
 \begin{table}[t]
 \centering
-\caption{Efficiency Comparison on T2 (Same Hardware, Same Model). V5 (hardcoded) latency is from a prior run under identical conditions; the dash indicates it was not re-measured in the current experiment batch.}
+\caption{Efficiency Comparison on T2 (Same Hardware, Same Model)}
 \label{tab:efficiency}
 \begin{tabular}{lrrr}
 \hline
-\textbf{System} & \textbf{Mean Lat.\ (ms)} & \textbf{Energy (mWh/p)} & \textbf{Route Acc.\ (\%)} \\
+\textbf{System} & \textbf{Lat.\ (ms)} & \textbf{mWh/p} & \textbf{Route (\%)} \\
 \hline
-L* routing $\to$ V5 & 6,907 & 33.1 & 100.0 \\
-RPNI routing $\to$ V5 & 6,567 & 30.2 & 95.0 \\
+L* $\to$ V5 & 6,907 & 33.1 & 100.0 \\
+RPNI $\to$ V5 & 6,567 & 30.2 & 86.0 \\
 Tool-calling agent & 16,439 & 75.0 & --- \\
 \hline
 V5 (hardcoded, 30tok) & $\dagger$ & 30.6 & 100.0 \\
 \hline
-\multicolumn{4}{l}{\footnotesize $\dagger$ Not re-measured; prior run median: 6\,ms (Table~\ref{tab:main_results}).}
+\multicolumn{4}{l}{\footnotesize $\dagger$ Prior run median: 6\,ms (Table~\ref{tab:main_results}).}
 \end{tabular}
 \end{table}
 
@@ -497,14 +483,7 @@ V5 (512 tokens) & 99.0 & 6 & 211.1 \\
 
 \subsection{Per-Category Accuracy}
 
-Table~\ref{tab:per_category} and Fig.~\ref{fig:category} show accuracy by problem category. Symbolic solvers achieve perfect accuracy on their respective domains.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig2_category_accuracy.png}
-    \caption{Per-category accuracy: baseline (C2) vs.\ V5 (512 tokens). Green annotations show the percentage-point gain per category. AR, ALG, and LOG reach 100\% via symbolic solvers; WP improves from 8\% to 96\% via chain-of-thought prompting.}
-    \label{fig:category}
-\end{figure}
+Table~\ref{tab:per_category} shows accuracy by problem category for both the learned-routing systems and the V1--V5 ablation. Symbolic solvers achieve perfect accuracy on their respective domains.
 
 % OLD per-category table (preserved for reference)
 % \begin{table}[t]
@@ -538,8 +517,8 @@ RPNI routing $\to$ V5 & 96 & 96 & 13 & 92 & 74.3 \\
 Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
 \hline
 \multicolumn{6}{l}{\textit{V1--V5 ablation (hand-coded routing)}} \\
-SLM-only baseline & 48 & 40 & 8 & 53 & 37.3 \\
-V5 (30 tokens) & 100 & 100 & 19 & 100 & 79.7 \\
+SLM-only baseline & 48 & 40 & 8 & 53.3 & 37.3 \\
+V5 (30 tokens) & 100 & 100 & 18.7 & 100 & 79.7 \\
 V5 (512 tokens) & 100 & 100 & 96 & 100 & 99.0 \\
 \hline
 \end{tabular}
@@ -556,9 +535,9 @@ V5 (512 tokens) & 100 & 100 & 96 & 100 & 99.0 \\
 
 Table~\ref{tab:latency} shows median latency by category for V5 (512 tokens) versus the best baseline. Symbolic solvers achieve three orders-of-magnitude speedups on structured categories:
 \begin{itemize}
-    \item AR: \textbf{1\,ms} (vs.\ 6.3\,s baseline, 6,300$\times$ speedup)
-    \item ALG: \textbf{11\,ms} (vs.\ 5.8\,s baseline, 530$\times$ speedup)
-    \item LOG: \textbf{2\,ms} (vs.\ 2.7\,s baseline, 1,350$\times$ speedup)
+    \item AR: \textbf{1\,ms} (vs.\ 6.3\,s baseline, 6,288$\times$ speedup)
+    \item ALG: \textbf{11\,ms} (vs.\ 5.8\,s baseline, 531$\times$ speedup)
+    \item LOG: \textbf{2\,ms} (vs.\ 2.7\,s baseline, 1,336$\times$ speedup)
     \item WP: \textbf{137\,s} (increased from 25\,s due to higher token budget)
 \end{itemize}
 
@@ -567,7 +546,7 @@ The system-wide median of 6\,ms reflects the dominance of symbolic routes (75\% 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/fig3_latency.png}
-    \caption{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 530--6,300$\times$ speedups on structured categories. WP latency increases due to the higher token budget.}
+    \caption{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 531--6,288$\times$ speedups on structured categories. WP latency increases due to the higher token budget.}
     \label{fig:latency}
 \end{figure}
 
@@ -709,7 +688,7 @@ The comparison between L* (100\% classification, 78.0\% task accuracy) and RPNI 
 Our benchmark of 100 prompts (25 per category) is small by modern standards. The 95\% confidence interval on 99.0\% accuracy is [97.1\%, 99.8\%], which is reasonably tight, but per-category confidence intervals are wider (e.g., 96\% WP accuracy on 25 prompts has a 95\% confidence interval of [80.5\%, 99.3\%]). Evaluation on larger subsets of the source benchmarks would strengthen the claims.
 
 \subsection{Energy--Accuracy Tradeoff}
-The best-accuracy system (V5, 512tok) uses 2.8$\times$ more energy than the baseline. The energy savings from symbolic routing on 75\% of queries are real but are outweighed by the 17$\times$ increase in WP generation cost. For battery-powered deployments, adaptive token budgets that start low and escalate only when the model's output indicates insufficient reasoning could reduce average energy while maintaining accuracy.
+The best-accuracy system (V5, 512tok) uses 2.8$\times$ more energy than the baseline. The energy savings from symbolic routing on 75\% of queries are real but are outweighed by the increased WP generation cost at higher token budgets (211.1\,mWh at 512 tokens vs.\ 30.6\,mWh at 30 tokens). For battery-powered deployments, adaptive token budgets that start low and escalate only when the model's output indicates insufficient reasoning could reduce average energy while maintaining accuracy.
 
 \subsection{Scalability of Symbolic Solvers}
 Our solvers handle single-variable linear equations, basic arithmetic, and propositional logic. Extending to nonlinear equations, multi-variable systems, or first-order logic would require more powerful solvers, but the routing architecture would remain unchanged.

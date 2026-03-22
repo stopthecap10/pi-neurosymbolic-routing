@@ -156,9 +156,9 @@ def fig3_latency():
     speedups = ['6,288\u00d7', '531\u00d7', '1,336\u00d7', '']
     for i, s in enumerate(speedups):
         if s:
-            ax.annotate(f'{s}\nfaster', (x[i], 0.03),
-                        ha='center', fontsize=11, fontweight='bold', color=GREEN,
-                        xycoords=('data', 'axes fraction'))
+            ax.text(x[i], baseline_lat[i] * 4.0,
+                    f'{s}\nfaster', ha='center', fontsize=11,
+                    fontweight='bold', color=GREEN)
 
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2,
               frameon=True, edgecolor=GRAY)
@@ -339,7 +339,11 @@ def fig7_progression_by_category():
 
 def fig8_version_categories():
     """Heatmap of accuracy by version x category."""
-    versions = ['Baseline', 'V1 (+A5)', 'V2 (+A4)', 'V3.1 (+A3)', 'V4 (+Cal)', 'V5 Default', 'V5 (512tok)']
+    versions = [
+        'Baseline', 'V1 (+A5)', 'V2 (+A4)', 'V3.1 (+A3)', 'V4 (+Cal)',
+        'V5 Default', 'V5 (512tok)',
+        'Tool-calling agent', 'RPNI routing', 'L* routing',
+    ]
     categories = ['AR', 'ALG', 'LOG', 'WP']
     data = np.array([
         [48.0, 40.0, 53.3,  8.0],
@@ -349,26 +353,50 @@ def fig8_version_categories():
         [100, 100,   64.0, 18.7],
         [100, 100,  100,   18.7],
         [100, 100,  100,   96.0],
+        [95,   76,   59,    5.0],
+        [96,   96,   92,   13.0],
+        [100, 100,  100,   12.0],
     ])
 
-    fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(data, cmap='RdYlGn', vmin=0, vmax=100, aspect='auto')
+    fig, ax = plt.subplots(figsize=(7, 6.5))
 
+    # Draw each cell as a colored rectangle with explicit borders
+    from matplotlib.patches import Rectangle
+    for i in range(len(versions)):
+        for j in range(len(categories)):
+            val = data[i, j]
+            # Get color from colormap
+            norm_val = val / 100.0
+            cell_color = plt.cm.RdYlGn(norm_val)
+            rect = Rectangle((j - 0.5, i - 0.5), 1, 1,
+                              facecolor=cell_color, edgecolor='white', linewidth=1)
+            ax.add_patch(rect)
+            text_color = 'white' if val < 40 else 'black'
+            ax.text(j, i, f'{val:.0f}' if val == int(val) else f'{val:.1f}',
+                    ha='center', va='center', fontsize=12, fontweight='bold', color=text_color)
+
+
+
+    ax.set_xlim(-0.5, len(categories) - 0.5)
+    ax.set_ylim(len(versions) - 0.5, -0.5)
     ax.set_xticks(range(len(categories)))
     ax.set_xticklabels(categories)
     ax.set_yticks(range(len(versions)))
     ax.set_yticklabels(versions)
-
-    for i in range(len(versions)):
-        for j in range(len(categories)):
-            val = data[i, j]
-            color = 'white' if val < 40 else 'black'
-            ax.text(j, i, f'{val:.0f}' if val == int(val) else f'{val:.1f}',
-                    ha='center', va='center', fontsize=12, fontweight='bold', color=color)
-
     ax.set_title('Accuracy (%) by System Version and Category')
-    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+
+    # Add colorbar using a ScalarMappable
+    sm = plt.cm.ScalarMappable(cmap='RdYlGn', norm=plt.Normalize(0, 100))
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, shrink=0.8)
     cbar.set_label('Accuracy (%)')
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.tick_params(left=False, bottom=False)
+
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, 'fig8_version_categories.png'))
     plt.close(fig)

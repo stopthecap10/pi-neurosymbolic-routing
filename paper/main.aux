@@ -84,70 +84,58 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}V2: Add Algebra Solver (+A4)}{5}{subsection.6.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}V3: Add Post-Processing Repair Layer (+A3)}{5}{subsection.6.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-E}}V4: Add Confidence Calibration}{5}{subsection.6.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces System progression from baseline (37.3\%) through V5 (99.0\%), showing the accuracy gain from each added component. The plateau at V3--V4 (70.7\%) reflects the token-budget bottleneck that V5 resolves.}}{5}{figure.1}\protected@file@percent }
-\newlabel{fig:progression}{{1}{5}{System progression from baseline (37.3\%) through V5 (99.0\%), showing the accuracy gain from each added component. The plateau at V3--V4 (70.7\%) reflects the token-budget bottleneck that V5 resolves}{figure.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Per-category accuracy across system versions. Each symbolic solver produces an immediate accuracy jump in its target category: A5 for AR (V1), A4 for ALG (V2), A6 for LOG (V5). WP accuracy remains low until the token budget is increased in V5.}}{5}{figure.2}\protected@file@percent }
-\newlabel{fig:progression_by_cat}{{2}{5}{Per-category accuracy across system versions. Each symbolic solver produces an immediate accuracy jump in its target category: A5 for AR (V1), A4 for ALG (V2), A6 for LOG (V5). WP accuracy remains low until the token budget is increased in V5}{figure.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-F}}V5: Add Logic Engine + Increase Token Budget (+A6, +CoT)}{5}{subsection.6.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {VII}Results}{5}{section.7}\protected@file@percent }
 \newlabel{sec:results}{{VII}{5}{Results}{section.7}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Learned Routing vs.\ Tool-Calling Agent}{5}{subsection.7.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces End-to-end task accuracy by category. L*-learned routing achieves 100\% on AR, ALG, and LOG via symbolic solvers, while the tool-calling agent struggles on all categories, particularly LOG (59\%) and ALG (76\%). Word problems remain challenging for all systems.}}{6}{figure.3}\protected@file@percent }
-\newlabel{fig:e2e_comparison}{{3}{6}{End-to-end task accuracy by category. L*-learned routing achieves 100\% on AR, ALG, and LOG via symbolic solvers, while the tool-calling agent struggles on all categories, particularly LOG (59\%) and ALG (76\%). Word problems remain challenging for all systems}{figure.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces End-to-End Task Accuracy on T2 (300 Trials Per System). Learned routing systems use a 30-token WP budget; see Table~\ref {tab:wp_ablation} for the effect of higher budgets.}}{6}{table.1}\protected@file@percent }
-\newlabel{tab:gi_results}{{I}{6}{End-to-End Task Accuracy on T2 (300 Trials Per System). Learned routing systems use a 30-token WP budget; see Table~\ref {tab:wp_ablation} for the effect of higher budgets}{table.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Efficiency comparison. Learned routing (L* and RPNI) is 2.4$\times $ faster and 2.3$\times $ more energy-efficient than the tool-calling agent, because AR, ALG, and LOG queries bypass the SLM entirely.}}{6}{figure.4}\protected@file@percent }
-\newlabel{fig:efficiency}{{4}{6}{Efficiency comparison. Learned routing (L* and RPNI) is 2.4$\times $ faster and 2.3$\times $ more energy-efficient than the tool-calling agent, because AR, ALG, and LOG queries bypass the SLM entirely}{figure.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Efficiency Comparison on T2 (Same Hardware, Same Model). V5 (hardcoded) latency is from a prior run under identical conditions; the dash indicates it was not re-measured in the current experiment batch.}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:efficiency}{{II}{6}{Efficiency Comparison on T2 (Same Hardware, Same Model). V5 (hardcoded) latency is from a prior run under identical conditions; the dash indicates it was not re-measured in the current experiment batch}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces End-to-end task accuracy by category. L*-learned routing achieves 100\% on AR, ALG, and LOG via symbolic solvers, while the tool-calling agent struggles on all categories, particularly LOG (59\%) and ALG (76\%). Word problems remain challenging for all systems.}}{6}{figure.1}\protected@file@percent }
+\newlabel{fig:e2e_comparison}{{1}{6}{End-to-end task accuracy by category. L*-learned routing achieves 100\% on AR, ALG, and LOG via symbolic solvers, while the tool-calling agent struggles on all categories, particularly LOG (59\%) and ALG (76\%). Word problems remain challenging for all systems}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Efficiency comparison. Learned routing (L* and RPNI) is 2.4$\times $ faster and 2.3$\times $ more energy-efficient than the tool-calling agent, because AR, ALG, and LOG queries bypass the SLM entirely.}}{6}{figure.2}\protected@file@percent }
+\newlabel{fig:efficiency}{{2}{6}{Efficiency comparison. Learned routing (L* and RPNI) is 2.4$\times $ faster and 2.3$\times $ more energy-efficient than the tool-calling agent, because AR, ALG, and LOG queries bypass the SLM entirely}{figure.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Classification Accuracy}{6}{subsection.7.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}V1--V5 Development Ablation}{6}{subsection.7.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Per-Category Accuracy}{6}{subsection.7.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-E}}Latency Analysis}{6}{subsection.7.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Routing classification accuracy on held-out T2. RPNI struggles with WP (64\%) due to the linguistic diversity of word problems, while L* achieves perfect classification across all categories.}}{7}{figure.5}\protected@file@percent }
-\newlabel{fig:classification}{{5}{7}{Routing classification accuracy on held-out T2. RPNI struggles with WP (64\%) due to the linguistic diversity of word problems, while L* achieves perfect classification across all categories}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces End-to-End Task Accuracy on T2 (300 Trials Per System). Learned routing systems use a 30-token WP budget; see Table~\ref {tab:wp_ablation} for the effect of higher budgets.}}{6}{table.1}\protected@file@percent }
+\newlabel{tab:gi_results}{{I}{6}{End-to-End Task Accuracy on T2 (300 Trials Per System). Learned routing systems use a 30-token WP budget; see Table~\ref {tab:wp_ablation} for the effect of higher budgets}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Efficiency Comparison on T2 (Same Hardware, Same Model)}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:efficiency}{{II}{6}{Efficiency Comparison on T2 (Same Hardware, Same Model)}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-F}}Energy--Accuracy Tradeoff}{6}{subsection.7.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-G}}Error Distribution}{6}{subsection.7.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Routing classification accuracy on held-out T2. RPNI struggles with WP (64\%) due to the linguistic diversity of word problems, while L* achieves perfect classification across all categories.}}{7}{figure.3}\protected@file@percent }
+\newlabel{fig:classification}{{3}{7}{Routing classification accuracy on held-out T2. RPNI struggles with WP (64\%) due to the linguistic diversity of word problems, while L* achieves perfect classification across all categories}{figure.3}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Routing Classification Accuracy on T2 (100 Prompts)}}{7}{table.3}\protected@file@percent }
 \newlabel{tab:classify}{{III}{7}{Routing Classification Accuracy on T2 (100 Prompts)}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-F}}Energy--Accuracy Tradeoff}{7}{subsection.7.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-G}}Error Distribution}{7}{subsection.7.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces V1--V5 Development Ablation (300 Trials Each, Hand-Coded Routing)}}{7}{table.4}\protected@file@percent }
-\newlabel{tab:main_results}{{IV}{7}{V1--V5 Development Ablation (300 Trials Each, Hand-Coded Routing)}{table.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Per-category accuracy: baseline (C2) vs.\ V5 (512 tokens). Green annotations show the percentage-point gain per category. AR, ALG, and LOG reach 100\% via symbolic solvers; WP improves from 8\% to 96\% via chain-of-thought prompting.}}{7}{figure.6}\protected@file@percent }
-\newlabel{fig:category}{{6}{7}{Per-category accuracy: baseline (C2) vs.\ V5 (512 tokens). Green annotations show the percentage-point gain per category. AR, ALG, and LOG reach 100\% via symbolic solvers; WP improves from 8\% to 96\% via chain-of-thought prompting}{figure.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {VIII}Analysis}{7}{section.8}\protected@file@percent }
 \newlabel{sec:analysis}{{VIII}{7}{Analysis}{section.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Why Symbolic Routing Works}{7}{subsection.8.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Error Analysis: The Single V5 Failure}{7}{subsection.8.2}\protected@file@percent }
 \newlabel{sec:error_analysis}{{\mbox  {VIII-B}}{7}{Error Analysis: The Single V5 Failure}{subsection.8.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Per-Category Accuracy (\%): Learned Routing vs.\ Development Ablation}}{8}{table.5}\protected@file@percent }
-\newlabel{tab:per_category}{{V}{8}{Per-Category Accuracy (\%): Learned Routing vs.\ Development Ablation}{table.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP).}}{8}{figure.7}\protected@file@percent }
-\newlabel{fig:route_usage}{{7}{8}{Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP)}{figure.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-C}}Model Comparison}{8}{subsection.8.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 530--6,300$\times $ speedups on structured categories. WP latency increases due to the higher token budget.}}{8}{figure.8}\protected@file@percent }
-\newlabel{fig:latency}{{8}{8}{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 530--6,300$\times $ speedups on structured categories. WP latency increases due to the higher token budget}{figure.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces V1--V5 Development Ablation (300 Trials Each, Hand-Coded Routing)}}{7}{table.4}\protected@file@percent }
+\newlabel{tab:main_results}{{IV}{7}{V1--V5 Development Ablation (300 Trials Each, Hand-Coded Routing)}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Per-Category Accuracy (\%): Learned Routing vs.\ Development Ablation}}{7}{table.5}\protected@file@percent }
+\newlabel{tab:per_category}{{V}{7}{Per-Category Accuracy (\%): Learned Routing vs.\ Development Ablation}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-C}}Model Comparison}{7}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Discussion}{7}{section.9}\protected@file@percent }
+\newlabel{sec:discussion}{{IX}{7}{Discussion}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-A}}Generalizability}{7}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-B}}Classifier Robustness}{7}{subsection.9.2}\protected@file@percent }
+\newlabel{sec:classifier_robustness}{{\mbox  {IX-B}}{7}{Classifier Robustness}{subsection.9.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP).}}{8}{figure.4}\protected@file@percent }
+\newlabel{fig:route_usage}{{4}{8}{Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP)}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 531--6,288$\times $ speedups on structured categories. WP latency increases due to the higher token budget.}}{8}{figure.5}\protected@file@percent }
+\newlabel{fig:latency}{{5}{8}{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 531--6,288$\times $ speedups on structured categories. WP latency increases due to the higher token budget}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-C}}Active vs.\ Passive Learning}{8}{subsection.9.3}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Median Latency by Category}}{8}{table.6}\protected@file@percent }
 \newlabel{tab:latency}{{VI}{8}{Median Latency by Category}{table.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Discussion}{8}{section.9}\protected@file@percent }
-\newlabel{sec:discussion}{{IX}{8}{Discussion}{section.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-A}}Generalizability}{8}{subsection.9.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-B}}Classifier Robustness}{8}{subsection.9.2}\protected@file@percent }
-\newlabel{sec:classifier_robustness}{{\mbox  {IX-B}}{8}{Classifier Robustness}{subsection.9.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-C}}Active vs.\ Passive Learning}{8}{subsection.9.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Word-Problem Accuracy vs.\ Token Budget}}{9}{table.7}\protected@file@percent }
-\newlabel{tab:wp_ablation}{{VII}{9}{Word-Problem Accuracy vs.\ Token Budget}{table.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Word-problem token budget ablation for two SLMs: accuracy (left) and energy cost (right) as a function of token budget. Both models converge to 96\% at 512 tokens, but Phi-4-mini is more token-efficient at 300 tokens.}}{9}{figure.9}\protected@file@percent }
-\newlabel{fig:wp_ablation}{{9}{9}{Word-problem token budget ablation for two SLMs: accuracy (left) and energy cost (right) as a function of token budget. Both models converge to 96\% at 512 tokens, but Phi-4-mini is more token-efficient at 300 tokens}{figure.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-D}}Dataset Size}{9}{subsection.9.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-E}}Energy--Accuracy Tradeoff}{9}{subsection.9.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-F}}Scalability of Symbolic Solvers}{9}{subsection.9.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-G}}Practical WP Latency}{9}{subsection.9.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems.}}{9}{figure.10}\protected@file@percent }
-\newlabel{fig:energy_configs}{{10}{9}{Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems}{figure.10}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Error Distribution (300 Trials Each). E0 = Correct}}{9}{table.8}\protected@file@percent }
-\newlabel{tab:errors}{{VIII}{9}{Error Distribution (300 Trials Each). E0 = Correct}{table.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{9}{section.10}\protected@file@percent }
-\newlabel{sec:conclusion}{{X}{9}{Conclusion}{section.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Word-Problem Accuracy vs.\ Token Budget}}{8}{table.7}\protected@file@percent }
+\newlabel{tab:wp_ablation}{{VII}{8}{Word-Problem Accuracy vs.\ Token Budget}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-D}}Dataset Size}{8}{subsection.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-E}}Energy--Accuracy Tradeoff}{8}{subsection.9.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-F}}Scalability of Symbolic Solvers}{8}{subsection.9.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IX-G}}Practical WP Latency}{8}{subsection.9.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{8}{section.10}\protected@file@percent }
+\newlabel{sec:conclusion}{{X}{8}{Conclusion}{section.10}{}}
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{xu2024edgellm}{1}
@@ -162,6 +150,15 @@
 \bibcite{hinton2015distilling}{10}
 \bibcite{llamacpp2023}{11}
 \bibcite{garcez2019neuralsymbolic}{12}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Word-problem token budget ablation for two SLMs: accuracy (left) and energy cost (right) as a function of token budget. Both models converge to 96\% at 512 tokens, but Phi-4-mini is more token-efficient at 300 tokens.}}{9}{figure.6}\protected@file@percent }
+\newlabel{fig:wp_ablation}{{6}{9}{Word-problem token budget ablation for two SLMs: accuracy (left) and energy cost (right) as a function of token budget. Both models converge to 96\% at 512 tokens, but Phi-4-mini is more token-efficient at 300 tokens}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems.}}{9}{figure.7}\protected@file@percent }
+\newlabel{fig:energy_configs}{{7}{9}{Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems}{figure.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Error Distribution (300 Trials Each). E0 = Correct}}{9}{table.8}\protected@file@percent }
+\newlabel{tab:errors}{{VIII}{9}{Error Distribution (300 Trials Each). E0 = Correct}{table.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction.}}{9}{figure.8}\protected@file@percent }
+\newlabel{fig:version_categories}{{8}{9}{Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction}{figure.8}{}}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.1}\protected@file@percent }
 \bibcite{kautz2022third}{13}
 \bibcite{gao2023pal}{14}
 \bibcite{gold1967language}{15}
@@ -173,7 +170,4 @@
 \bibcite{ong2024routellm}{21}
 \bibcite{wei2022cot}{22}
 \bibcite{wang2023selfconsistency}{23}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction.}}{10}{figure.11}\protected@file@percent }
-\newlabel{fig:version_categories}{{11}{10}{Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction}{figure.11}{}}
-\@writefile{toc}{\contentsline {section}{References}{10}{section*.1}\protected@file@percent }
 \gdef \@abspage@last{10}
