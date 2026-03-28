@@ -236,7 +236,7 @@ The benchmark comprises 100 prompts sampled from four established datasets, with
     \item \textbf{WP} (25 prompts): From \textit{GSM8K}~\cite{cobbe2021gsm8k}, multi-step grade-school word problems requiring natural-language comprehension.
 \end{itemize}
 
-Prompts were sampled with a fixed global seed (42) using stratified random sampling from the original dataset splits. No prompts were paraphrased, generated, or modified beyond whitespace normalization.
+Prompts were sampled with a fixed global seed (42) using stratified random sampling from the original dataset splits. No prompts were paraphrased, generated, or modified beyond whitespace normalization. Each prompt's category label is determined by the source dataset it was drawn from: DeepMind Mathematics arithmetic modules map to AR, algebra modules to ALG, RuleTaker queries to LOG, and GSM8K problems to WP.
 
 The prompts are divided into two disjoint tiers, verified by both source key and text hash:
 \begin{itemize}
