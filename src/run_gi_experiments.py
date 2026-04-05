@@ -434,7 +434,7 @@ def run_experiments(args):
             "data/splits/industry_tier2_100.csv",
             server_url=args.server,
             max_tokens=300,
-            repeats=3,
+            repeats=1,
         )
 
         latencies = [r['latency_ms'] for r in react_results['results']]
@@ -490,7 +490,7 @@ def run_experiments(args):
             "data/splits/industry_tier2_100.csv",
             server_url=args.server,
             max_tokens=300,
-            repeats=3,
+            repeats=1,
         )
 
         latencies = [r['latency_ms'] for r in pot_results['results']]
@@ -546,7 +546,7 @@ def run_experiments(args):
             "data/splits/industry_tier2_100.csv",
             server_url=args.server,
             max_tokens=400,
-            repeats=3,
+            repeats=1,
         )
 
         latencies = [r['latency_ms'] for r in ps_results['results']]
