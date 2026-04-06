@@ -468,6 +468,9 @@ def run_experiments(args):
             'energy_end_mwh': react_end_mwh,
             'energy_per_prompt_mwh': react_energy_per_prompt,
         }
+        with open(os.path.join(out_dir, f"results_{timestamp}.json"), 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        print(f"  [saved] ReAct results to results_{timestamp}.json")
 
     # ---- Experiment 4c: Program-of-Thought agent ----
     if not args.no_slm:
@@ -524,6 +527,9 @@ def run_experiments(args):
             'energy_end_mwh': pot_end_mwh,
             'energy_per_prompt_mwh': pot_energy_per_prompt,
         }
+        with open(os.path.join(out_dir, f"results_{timestamp}.json"), 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        print(f"  [saved] PoT results to results_{timestamp}.json")
 
     # ---- Experiment 4d: Plan-and-Solve agent ----
     if not args.no_slm:
@@ -580,6 +586,9 @@ def run_experiments(args):
             'energy_end_mwh': ps_end_mwh,
             'energy_per_prompt_mwh': ps_energy_per_prompt,
         }
+        with open(os.path.join(out_dir, f"results_{timestamp}.json"), 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        print(f"  [saved] Plan-and-Solve results to results_{timestamp}.json")
 
     # ---- Experiments 5 & 6: End-to-end with learned routing → V5 solver ----
     if not args.no_slm and not args.agents_only:
