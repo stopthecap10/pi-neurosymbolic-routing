@@ -44,7 +44,7 @@ Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic
 
 \IEEEPARstart{E}{dge} deployment of language models is motivated by latency, privacy, and connectivity constraints that preclude cloud inference~\cite{xu2024edgellm}. However, small language models (SLMs) achieve limited accuracy on reasoning tasks when constrained to the CPU-only, memory-limited hardware typical of edge devices such as single-board computers.
 
-Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters, consistent with recent usage~\cite{schick2023toolformer}. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
+Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
 
 A key observation is that many ``reasoning'' queries presented to language models are structurally deterministic: arithmetic expressions have unique numeric answers, algebraic equations can be solved symbolically, and formal logic queries admit closed-form evaluation. Routing these structured tasks to purpose-built symbolic solvers, rather than forcing a probabilistic language model to approximate their answers, should yield both higher accuracy and lower latency.
 
@@ -86,7 +86,7 @@ Grammatical inference, the problem of learning formal languages from data, has a
 FrugalGPT~\cite{chen2023frugalgpt} cascades queries through progressively larger models. Router-based systems like RouteLLM~\cite{ong2024routellm} learn to dispatch queries to strong or weak models. Our router operates at a different granularity: rather than choosing between models of different sizes, it chooses between \textit{qualitatively different solvers}: symbolic engines versus neural inference.
 
 \subsection{Mathematical Reasoning}
-Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023selfconsistency} improve mathematical reasoning but remain probabilistic. Tool-augmented approaches~\cite{cobbe2021gsm8k} combine models with calculators. We extend this paradigm by routing entire categories to symbolic solvers, not just individual arithmetic operations within a generation.
+Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023selfconsistency} improve mathematical reasoning but remain probabilistic. Tool-augmented approaches such as PAL~\cite{gao2023pal} and Toolformer~\cite{schick2023toolformer} combine models with external solvers and calculators. We extend this paradigm by routing entire categories to symbolic solvers, not just individual arithmetic operations within a generation.
 
 % ======================================================================
 \section{System Architecture}
