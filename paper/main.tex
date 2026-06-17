@@ -1,6 +1,8 @@
 \documentclass[journal]{IEEEtai}
 \pdfoutput=1
 
+\usepackage{amsthm}
+
 \usepackage[colorlinks,urlcolor=blue,linkcolor=blue,citecolor=blue]{hyperref}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
@@ -12,6 +14,7 @@
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
+\newcommand{\AP}{AP}
 
 \begin{document}
 
@@ -26,7 +29,7 @@
 \maketitle
 
 \begin{abstract}
-Small language models (SLMs) deployed on edge devices suffer from poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic. We present a neurosymbolic routing architecture that classifies each incoming query and dispatches it to the cheapest correct solver, reserving the SLM for open-ended word problems and routing structured tasks to deterministic symbolic engines. Rather than relying on brittle, hand-crafted routing rules, we learn the routing patterns using the L* grammatical inference algorithm (Angluin, 1987). L* learns a deterministic finite automaton (DFA) for query classification by using the SLM itself as a membership oracle and labeled data as an equivalence oracle. We evaluate our system on a Raspberry Pi~4B (8\,GB RAM, no GPU) using 100 held-out prompts (300 trials) drawn from DeepMind Mathematics, GSM8K, and RuleTaker. L*-learned routing achieves 78.0\% end-to-end task accuracy, compared to 58.7\% for a tool-calling agent baseline given access to the same symbolic solvers. The learned router is also 2.4$\times$ faster (6.9\,s vs.\ 16.4\,s mean latency) and 2.3$\times$ more energy-efficient (33.1\,mWh vs.\ 75.0\,mWh per prompt). Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond routing latency, while word problems remain challenging for all systems. We additionally compare against RPNI, a passive grammatical inference method that requires no oracle, which achieves 74.3\% accuracy and still substantially outperforms the tool-calling agent. All experiments, data, and code are publicly available.
+Small language models (SLMs) deployed on edge devices often display poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic problems. We present a neurosymbolic routing architecture that labels each incoming query and routes it to the cheapest correct solver, withholding the SLM for open-ended word problems and routing structured tasks to deterministic symbolic engines. Rather than relying on frail and hand-made routing rules, we learn the routing patterns using the L* grammatical inference algorithm~\cite{Angluin87}. L* learns a deterministic finite automaton (DFA) for query classification by using the SLM itself as a membership oracle and labeled data as an equivalence oracle. We evaluate our system on a Raspberry Pi~4B (8\,GB RAM, no GPU) using 100 held-out prompts (300 trials) drawn from DeepMind Mathematics, GSM8K, and RuleTaker. L*-learned routing achieves 78.0\% end-to-end task accuracy, compared to 72.0\% for the best agent framework baseline (Program-of-Thought) and 58.7\% for a tool-calling agent, both given access to the same symbolic solvers. The learned router is also 8.8$\times$ faster and 2.8$\times$ more energy-efficient than Program-of-Thought (6.9\,s vs.\ 60.9\,s and 33.1\,mWh vs.\ 94.7\,mWh per prompt). Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond routing latency, while word problems remain challenging for all systems. We additionally compare against RPNI, a passive grammatical inference method that requires no oracle, which achieves 74.3\% accuracy and still substantially outperforms the tool-calling agent. All experiments, data, and code are publicly available.
 \end{abstract}
 
 \begin{IEEEImpStatement}
@@ -61,9 +64,9 @@ Only word problems, which require natural-language comprehension and multi-step 
 We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B parameters, Q6\_K quantization) across 100 held-out prompts drawn from three established benchmarks (DeepMind Mathematics~\cite{saxton2019deepmind}, GSM8K~\cite{cobbe2021gsm8k}, and RuleTaker~\cite{clark2020ruletaker}) with three repeats per prompt (300 total trials). Our contributions are:
 
 \begin{enumerate}
-    \item \textbf{Learned routing via grammatical inference.} We apply the L* algorithm~\cite{angluin1987lstar} to learn DFA-based query classifiers using the SLM as a membership oracle and ground-truth data as an equivalence oracle. This replaces brittle hand-coded routing rules with patterns learned from data, achieving 100\% classification accuracy on held-out prompts.
+    \item \textbf{Learned routing via grammatical inference.} We apply the L* algorithm~\cite{Angluin87} to learn DFA-based query classifiers using the SLM as a membership oracle and ground-truth data as an equivalence oracle. This replaces brittle hand-coded routing rules with patterns learned from data, achieving 100\% classification accuracy on held-out prompts.
     \item \textbf{Fair baseline comparison.} We compare against a tool-calling agent that gives the same SLM access to the same symbolic solvers, isolating the routing mechanism as the independent variable. L*-learned routing achieves 78.0\% task accuracy vs.\ 58.7\% for the agent, while being 2.4$\times$ faster and 2.3$\times$ more energy-efficient.
-    \item \textbf{Active vs.\ passive grammatical inference.} We compare L* (active, oracle-guided) against RPNI (passive, example-only), demonstrating that the membership oracle improves classification accuracy from 86\% to 100\% and task accuracy from 74.3\% to 78.0\%.
+    \item \textbf{Comparison with agent reasoning frameworks.} We evaluate three agent frameworks---ReAct~\cite{yao2023react}, Program-of-Thought~\cite{chen2023pot}, and Plan-and-Solve~\cite{wang2023plansolve}---on the same hardware and benchmark, demonstrating that L*-learned routing outperforms the best agent (Program-of-Thought, 72.0\%) by 6 percentage points while requiring 8.8$\times$ lower latency and 2.8$\times$ less energy per prompt.
     \item \textbf{System ablation.} An incremental ablation across five system versions demonstrates the marginal contribution of each symbolic solver and quantifies the accuracy--energy tradeoff on constrained hardware.
     \item Open-source release of all code, data, and experimental logs for reproducibility.
 \end{enumerate}
@@ -74,19 +77,32 @@ We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B para
 % ======================================================================
 
 \subsection{Edge Inference}
-Deploying language models on resource-constrained devices has been explored through quantization~\cite{dettmers2022gptint8, frantar2023gptq}, pruning~\cite{sun2024simpleprune}, and knowledge distillation~\cite{hinton2015distilling}. Frameworks such as llama.cpp~\cite{llamacpp2023} and Ollama enable CPU-only inference for quantized models on commodity hardware. Our work is complementary: we reduce the \textit{number} of queries routed to the SLM rather than optimizing the model itself.
+Deploying language models on resource-constrained devices has been explored through quantization~\cite{dettmers2022gptint8, frantar2023gptq}, pruning~\cite{sun2024simpleprune}, and knowledge distillation~\cite{hinton2015distilling}. Frameworks such as llama.cpp~\cite{llamacpp2023} enable CPU-only inference for quantized models on commodity hardware. Our work is complementary: we reduce the \textit{number} of queries routed to the SLM rather than optimizing the model itself.
 
 \subsection{Neurosymbolic AI}
 Combining neural and symbolic reasoning has a long history~\cite{garcez2019neuralsymbolic, kautz2022third}. Recent work integrates tool use into SLM pipelines: Toolformer~\cite{schick2023toolformer} teaches models to call APIs, while PAL~\cite{gao2023pal} generates executable code. These approaches rely on the model itself to decide when to invoke tools, adding inference latency to every routing decision. Our approach differs in that routing decisions are made \textit{before} the SLM is invoked, using a learned DFA classifier with zero inference cost.
 
+\subsection{Agent Reasoning Framework Baselines}
+\label{sec:agent_frameworks}
+
+We additionally evaluate three agent reasoning frameworks on T2 (100 prompts, 1 trial each) to situate our approach within the broader landscape of tool-augmented inference. Because all systems use greedy decoding (temperature${}=0.0$, top-$k=1$, seed${}=42$), outputs are fully deterministic and a single trial per prompt is sufficient. These frameworks differ structurally from our approach: they require one or more SLM inference steps \emph{per query} to decide which tool to invoke, whereas our learned DFA router makes routing decisions at sub-millisecond cost with zero inference overhead on structured queries.
+
+
+\textbf{ReAct}~\cite{yao2023react} interleaves Thought, Action, and Observation steps in a multi-turn loop (up to 6 steps). The model reasons about the problem, selects one of the four symbolic tools, observes the result, and repeats until it calls \texttt{finish()}.
+
+\textbf{Program-of-Thought (PoT)}~\cite{chen2023pot} prompts the SLM to generate a Python program that solves the problem, which is then executed in a sandboxed environment with a restricted set of builtins. If execution fails, the model retries once with a simpler prompt.
+
+\textbf{Plan-and-Solve}~\cite{wang2023plansolve} first generates an explicit numbered plan, then executes a single tool call based on the plan. We implement it with the same four symbolic tools as the tool-calling agent.
+
 \subsection{Grammatical Inference}
-Grammatical inference, the problem of learning formal languages from data, has a rich history in automata theory~\cite{gold1967language, higuera2010grammatical}. The L* algorithm~\cite{angluin1987lstar} learns the minimal DFA for a regular language using membership and equivalence oracles in polynomial time and queries. RPNI~\cite{oncina1992rpni} takes a passive approach, learning from positive and negative examples without oracles. These methods have been applied to protocol inference~\cite{fiterau2020analysis}, model checking~\cite{peled2001model}, and software testing. To our knowledge, this is the first application of grammatical inference to learn routing patterns for neurosymbolic query dispatch on edge devices.
+Grammatical inference, the problem of learning formal languages from data, has a rich history in automata theory~\cite{gold1967language, higuera2010grammatical}. The L* algorithm~\cite{Angluin87} learns the minimal DFA for a regular language using membership and equivalence oracles in polynomial time and queries. RPNI~\cite{oncina1992rpni} takes a passive approach, learning from positive and negative examples without oracles. These methods have been applied to protocol inference~\cite{fiterau2020analysis}, model checking~\cite{peled2001model}, and software testing. To our knowledge, this is the first application of grammatical inference to learn routing patterns for neurosymbolic query dispatch on edge devices.
 
 \subsection{LLM Routing and Cascading}
 FrugalGPT~\cite{chen2023frugalgpt} cascades queries through progressively larger models. Router-based systems like RouteLLM~\cite{ong2024routellm} learn to dispatch queries to strong or weak models. Our router operates at a different granularity: rather than choosing between models of different sizes, it chooses between \textit{qualitatively different solvers}: symbolic engines versus neural inference.
 
 \subsection{Mathematical Reasoning}
 Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023selfconsistency} improve mathematical reasoning but remain probabilistic. Tool-augmented approaches~\cite{cobbe2021gsm8k} combine models with calculators. We extend this paradigm by routing entire categories to symbolic solvers, not just individual arithmetic operations within a generation.
+
 
 % ======================================================================
 \section{System Architecture}
@@ -95,10 +111,10 @@ Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023self
 
 \subsection{Overview}
 
-The system processes each query $q$ in two stages: (1)~a \textit{classifier} $C(q) \in \{\texttt{AR}, \texttt{ALG}, \texttt{LOG}, \texttt{WP}\}$ determines the problem category, and (2)~a \textit{dispatcher} routes $q$ to the corresponding solver. The classifier is a deterministic, regex-based function with zero inference cost. The dispatcher invokes one of four solver modules.
+The system processes each query $q$ in two stages: (1)~a \textit{classifier} $C(q) \in \{\texttt{AR}, \texttt{ALG}, \texttt{LOG}, \texttt{WP}\}$ determines the problem category, and (2)~a \textit{dispatcher} routes $q$ to the corresponding solver. During development (V1--V5), the classifier is a hand-coded, regex-based function; in the final system it is replaced by a learned DFA with identical zero inference cost (Section~\ref{sec:gi}). The dispatcher invokes one of four solver modules.
 
 \subsubsection{Solver Naming Convention}
-Solvers are labeled A1--A7 following the project's internal development order, not the order of introduction in this paper. For clarity:
+Solvers are labeled A1--A6 following the project's internal development order, not the order of introduction in this paper. For clarity:
 \begin{itemize}
     \item \textbf{A1}: Fast SLM inference (12 tokens, used as fallback).
     \item \textbf{A2}: Extended SLM inference (30--512 tokens, primary for WP).
@@ -114,7 +130,7 @@ A1 and A3 serve as fallback and repair actions respectively; the primary solvers
 
 \begin{itemize}
     \item \textbf{A5: Arithmetic evaluator.} Extracts numeric expressions from the query using regex, parses them into a Python AST, and evaluates using a whitelist of safe operators (\texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}, \texttt{**}, \texttt{\%}, \texttt{//}). Only \texttt{ast.Constant} and \texttt{ast.BinOp} nodes are permitted; exponents are capped at 10{,}000.
-    \item \textbf{A4: Algebra solver.} Extracts equations and target variables, inserts implicit multiplication (e.g., \texttt{3x} $\rightarrow$ \texttt{3*x}), and solves via \texttt{sympy.solve()}. Supports single- and multi-variable linear systems.
+    \item \textbf{A4: Algebra solver.} Extracts equations and target variables, inserts implicit multiplication (e.g., \texttt{3x} $\rightarrow$ \texttt{3*x}), and solves via \texttt{sympy.solve()}~\cite{sympy2023}. Supports single- and multi-variable linear systems.
     \item \textbf{A6: Logic engine.} Parses natural-language facts, rules, and queries from RuleTaker-style prompts into structured representations. Applies forward chaining with a closed-world assumption to derive new facts until a fixed point (bounded at 50 iterations), then evaluates the query against the derived fact set. See Section~\ref{sec:a6}.
     \item \textbf{A2: SLM chain-of-thought.} Constructs a system prompt (``Solve this math problem. Put your final answer in \texttt{\textbackslash boxed\{\}}''), sends the query to a locally served SLM via llama.cpp HTTP API, and extracts the final numeric answer.
 \end{itemize}
@@ -182,12 +198,95 @@ Raw query text has an unbounded vocabulary, making it unsuitable as input to a D
 \end{tabular}
 \end{center}
 
-Each query is tokenized into a sequence over this 12-symbol alphabet, with consecutive \texttt{NARR} tokens collapsed and sequences truncated to 15 tokens. This abstraction preserves the structural signature of each category while reducing the input space to a finite alphabet suitable for DFA learning.
+Each query is tokenized into a sequence over this 12-symbol alphabet, with consecutive \texttt{NARR} tokens collapsed and sequences truncated to 15 tokens. This abstraction preserves the structural signature of each category while reducing the input space to a finite alphabet suitable for DFA learning. Formally, we define the set of atomic propositions as $\AP = \{\texttt{CMD}, \texttt{NUM}, \texttt{VAR}, \texttt{OP}, \texttt{PAREN}, \texttt{ENT}, \texttt{PROP}, \texttt{RULE}, \texttt{QMARK}, \texttt{NARR}, \texttt{UNIT}, \texttt{DOT}\}$, giving $|\AP| = 12$. The alphabet used by $L^\star$ is $\Sigma = 2^{\AP}$, the set of all subsets of $\AP$. Since each token in a query is assigned to exactly one class, each position in the tokenized sequence corresponds to a singleton label $\{\ell\} \subseteq \AP$. A query of length $n$ is thus represented as a word $w = \{\ell_1\}\{\ell_2\}\cdots\{\ell_n\} \in (2^{\AP})^*$. The membership oracle $\mathcal{M}(w)$ operates on such words: given a token sequence $s$ (equivalently, a word $w \in (2^{\AP})^*$), it returns whether $w$ belongs to the target category language $\mathcal{L}_c$.
+
 
 \subsection{L* Algorithm for Route Learning}
 \label{sec:lstar}
 
-We learn a one-vs-rest binary DFA for each category $c \in \{\texttt{AR}, \texttt{ALG}, \texttt{WP}, \texttt{LOG}\}$ using the L* algorithm~\cite{angluin1987lstar}. L* maintains an observation table and iteratively refines a hypothesis DFA through two oracle queries:
+We adopt techniques from grammatical inference to guide our approach of learning the logic of routing as deterministic finite automaton (DFA). In particular, we leverage the $L^\star$ algorithm proposed in the seminal work of \cite{Angluin87}, which learns a regular language $\mathcal{L}$ through the use of a minimally adequate teacher that can answer two types of queries. When the learner executes a membership query, it presents a word $w \in (2^{AP})^*$ to the teacher and the teacher outputs whether $w \in \mathcal{L}$.
+If the learner executes an equivalence query, it presents a hypothesis DFA to the teacher who must then answer whether this automaton encodes the language to be learned.
+If not, the teacher generates a counterexample in the form of a word on which the two languages differ.
+The $L^\star$ algorithm keeps track of state words $S \subseteq ( 2^{AP} )^*$, which are closed under prefix operations (e.g. if $ab \in S$, then $a \in S$) and test words $E \subseteq (2^{AP})^*$, which are closed under suffix operations (e.g. if $ab \in E$, then $b \in E$).
+Initially, we have $S = E = \{\varepsilon\}$, where $\varepsilon$ is the empty string.
+As the algorithm proceeds, there are two critical properties that must be tracked and revolve around the notion of $E$-equivalence.
+
+\newtheorem{definition}{Definition}[section] % Defines the 'definition' environment, numbered by section
+
+
+\begin{definition}[$E$-Equivalence]
+Given $w, w' \in (2^{AP})^*$ and set $E \subseteq (2^{AP})^*$, the words $w$ and $w'$ are $E$-equivalent with respect to the language $\mathcal{L}$, denoted $w \equiv_E w'$, if $w  e \in \mathcal{L} \iff w'  e \in \mathcal{L}$ holds for every $e \in E$.
+\end{definition}
+
+%\begin{definition}[Consistency]
+%Given $(S, E)$, the consistency property holds if and only if there are no two state words in $S$ that are $E$-equivalent. That is $\forall s \in S, \nexists s' \in S, s \equiv_E s'$.
+%\end{definition}
+
+\begin{definition}[Consistency]
+Given $(S, E)$, the consistency property holds if and only if for all $s, s' \in S$, the following implication holds: if $s \equiv_E s'$, then $s \ell \equiv_E s' \ell$ for all $\ell \in 2^{\AP}$.
+
+\end{definition}
+
+\begin{definition}[Closedness]
+Given $(S, E)$, the closedness property holds if and only if for all $s \in S$ and $\ell \in 2^\AP$, there exists some $s' \in S$ such that $s  \ell \equiv_E s'$.
+\end{definition}
+
+For a closed and consistent $(S, E)$, a corresponding automaton can be derived by taking each $E$-equivalence class of $S$ to be a state, with the empty string $\varepsilon$ as the starting state.
+The transition function is defined using the closedness property. That is, whenever we have $s  \ell \equiv_E s'$ per the closedness property, then we also have the transition from $s$ to $s'$ upon observing the label $\ell$ in the DFA.
+Furthermore, it follows from the consistency property that $s'$ is unique.
+The accepting states are those in the language of the teacher.
+
+\begin{table}[t]
+\centering
+\caption{Example observation table $(S, E, T)$ built by $L^\star$ for $\mathcal{L}_{AR}$. $\checkmark$ = word belongs to the language, $\times$ = rejected. Rows above the dashed line are state words $S$; rows below are frontier words $S \cdot \Sigma$.}
+\label{tab:lstar_table}
+\small
+\begin{tabular}{l|ccc}
+\hline
+$S \setminus E$ & $\varepsilon$ & \texttt{CMD} & \texttt{CMD{\tiny·}NUM} \\
+\hline
+$\varepsilon$                    & $\times$ & $\times$ & $\times$ \\
+\texttt{CMD}                     & $\times$ & $\times$ & $\times$ \\
+\texttt{CMD{\tiny·}NUM}          & $\times$ & $\checkmark$ & $\checkmark$ \\
+\hline
+\texttt{CMD{\tiny·}NUM{\tiny·}OP}     & $\times$ & $\times$ & $\checkmark$ \\
+\texttt{CMD{\tiny·}NUM{\tiny·}OP{\tiny·}NUM} & $\times$ & $\checkmark$ & $\checkmark$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Running example.}
+Consider learning $\mathcal{L}_{AR}$, the language of arithmetic queries.
+$L^\star$ begins with $S = E = \{\varepsilon\}$ and an empty observation table.
+It first asks: does $\{\texttt{CMD}\}$ belong to $\mathcal{L}_{AR}$?
+The SLM oracle answers No (a bare command word is not an arithmetic query).
+It then asks: does $\{\texttt{CMD}\}\{\texttt{NUM}\}$ belong to $\mathcal{L}_{AR}$?
+Again No, a command followed by a single number is incomplete.
+After further membership queries, $L^\star$ discovers that
+$\{\texttt{CMD}\}\{\texttt{NUM}\}\{\texttt{OP}\}\{\texttt{NUM}\}$
+(e.g., ``calculate 4 + 3'') is accepted.
+The resulting observation table (Table~\ref{tab:lstar_table}) is closed and consistent,
+so $L^\star$ constructs a hypothesis DFA and submits an equivalence query.
+The equivalence oracle (tested against T1) finds no counterexample,
+confirming the hypothesis. The learned DFA $\mathcal{A}_{AR}$ is shown in
+Fig.~\ref{fig:lstar_illustration}: $q_0$ is the start state, $q_2$ accepts
+sequences matching the arithmetic pattern, and $q_\perp$ rejects all others.
+At query time, a new prompt is tokenized and run through this DFA in
+$<$\,0.05\,ms with no SLM call required.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig_lstar_dfa.png}
+    \caption{DFA $\mathcal{A}_{AR}$ learned by $L^\star$ from the observation table above. States correspond to $E$-equivalence classes of $S$; $q_2$ (double circle) is the accepting state. Red transitions lead to the dead/reject state $q_\perp$.}
+    \label{fig:lstar_illustration}
+\end{figure}
+
+
+
+The $L^\star$ algorithm ensures that $(S, E)$ remains closed and consistent until the target language is learned. This is done by constructing a DFA from $(S, E)$.
+If a counterexample is produced, it is used to modify $(S, E)$ by adding the counterexample and all its prefixes to $S$. Membership queries are then used to determine the values of the new entries.
+
+We learn a one-vs-rest binary DFA for each category $c \in \{\texttt{AR}, \texttt{ALG}, \texttt{WP}, \texttt{LOG}\}$ using the L* algorithm~\cite{Angluin87}. L* maintains an observation table and iteratively refines a hypothesis DFA through two oracle queries:
 
 \begin{itemize}
     \item \textbf{Membership oracle} $\mathcal{M}(s) \to \{0,1\}$: Given a token sequence $s$, returns whether $s$ belongs to category $c$. We implement this using the SLM itself: the query ``Is the following problem [category description]?'' is sent to Phi-4-mini, which responds Yes or No. For synthetic sequences generated during L* exploration (which have no natural-language counterpart), we fall back to a feature-based classifier.
@@ -196,15 +295,15 @@ We learn a one-vs-rest binary DFA for each category $c \in \{\texttt{AR}, \textt
 
 L* converges in polynomial time in the number of states of the target DFA, producing the minimal DFA consistent with the oracle responses.
 
-\subsection{RPNI: Passive Learning Baseline}
+\subsection{RPNI: Passive DFA Learning as a Component Variant}
 \label{sec:rpni}
 
-As a comparison, we also learn classifiers using RPNI (Regular Positive and Negative Inference)~\cite{oncina1992rpni}, which requires no oracle. RPNI builds a prefix tree acceptor from positive examples and iteratively merges states, checking each merge against negative examples. This tests whether the SLM oracle (the novel component) actually contributes to classification quality.
+RPNI (Regular Positive and Negative Inference)~\cite{oncina1992rpni} is a passive grammatical inference algorithm that requires no oracle. RPNI builds a prefix tree acceptor from positive examples and iteratively merges states, rejecting any merge that would accept a negative example. In our system, RPNI serves as a \emph{replaceable component}: it can substitute for L* as the DFA learning module without changing the routing architecture, dispatcher, or solvers. This comparison isolates the contribution of the SLM membership oracle---the novel element of our approach---to overall classification and task accuracy.
 
 \subsection{Multi-Class Classification}
 \label{sec:multiclass}
 
-The four binary DFAs are composed into a multi-class classifier with priority ordering: \texttt{LOG} $>$ \texttt{ALG} $>$ \texttt{AR} $>$ \texttt{WP}. A query is classified by the highest-priority DFA that accepts it; if no DFA accepts, it defaults to \texttt{WP} (the most common fallback). This mirrors the priority ordering used in the hand-coded classifier.
+The four binary DFAs are composed into a multi-class classifier with priority ordering: \texttt{LOG} $>$ \texttt{ALG} $>$ \texttt{AR} $>$ \texttt{WP}. A query is classified by the highest-priority DFA that accepts it; if no DFA accepts, it defaults to \texttt{WP} (the most common fallback).
 
 % ======================================================================
 \section{Experimental Setup}
@@ -219,16 +318,16 @@ All experiments run on a single Raspberry Pi~4 Model B with 8\,GB RAM, a quad-co
 
 We evaluate two quantized SLMs:
 \begin{itemize}
-    \item \textbf{Phi-4-mini} (Microsoft, 3.8B parameters, Q6\_K quantization, 2.4\,GB)
-    \item \textbf{Qwen2.5-Math-1.5B} (Alibaba, 1.5B parameters, Q6\_K quantization)
+    \item \textbf{Phi-4-mini}~\cite{abdin2024phi4} (Microsoft, 3.8B parameters, Q6\_K quantization, 2.4\,GB)
+    \item \textbf{Qwen2.5-Math-1.5B}~\cite{qwen2025} (Alibaba, 1.5B parameters, Q6\_K quantization)
 \end{itemize}
 
-All SLM calls use greedy decoding: temperature${}=0.0$, top-$k=1$, top-$p=1.0$, seed${}=42$. Generation stops at the first newline character. These settings ensure deterministic, reproducible outputs.
+All SLM calls use greedy decoding (temperature${}=0.0$, seed${}=42$), stopping at the first newline.
 
 \subsection{Dataset}
 \label{sec:dataset}
 
-The benchmark comprises 100 prompts sampled from four established datasets, with full provenance tracking (source dataset, record ID, and field mapping version recorded for every prompt):
+The benchmark comprises 140 prompts sampled from three established datasets, with full provenance tracking (source dataset, record ID, and field mapping version recorded for every prompt):
 \begin{itemize}
     \item \textbf{AR} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including addition/subtraction, multiplication, division, and mixed operations.
     \item \textbf{ALG} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including linear 1D, linear 2D, and polynomial roots.
@@ -246,7 +345,7 @@ The prompts are divided into two disjoint tiers, verified by both source key and
 
 This train/test split ensures that routing accuracy is measured on prompts \emph{never seen during DFA learning}, addressing potential overfitting concerns. The benchmark is intentionally small (100 test prompts, 300 trials) due to the slow inference speed on the Pi (approximately 2 minutes per word problem at 512 tokens). We acknowledge this limits statistical power; the 3 repeats are primarily useful for measuring SLM variance on WP, as the symbolic solvers are deterministic. Larger-scale evaluation is an important direction for future work.
 
-Each prompt is run 3 times per system configuration, yielding 300 trials per system. Evaluation uses \textit{exact match}: a trial is correct if and only if the extracted numeric answer (or yes/no for LOG) matches the ground truth.
+Each prompt is run 3 times per system configuration, yielding 300 trials per system. Evaluation uses \textit{exact match}: extracted answer must equal ground truth.
 
 \subsection{Tool-Calling Agent Baseline}
 \label{sec:agent_baseline}
@@ -271,25 +370,15 @@ The SLM receives each query along with tool descriptions and few-shot examples, 
 
 \subsection{Error Taxonomy}
 
-We classify errors by category and failure mode:
-\begin{itemize}
-    \item \textbf{E0}: Correct answer.
-    \item \textbf{E1}: Arithmetic error (wrong numeric result on AR).
-    \item \textbf{E2}: Logic error (wrong yes/no on LOG).
-    \item \textbf{E3}: Algebra error (wrong numeric result on ALG).
-    \item \textbf{E4}: Reserved (misclassification error; unused because V1--V5 use ground-truth routing labels).
-    \item \textbf{E5}: Word problem error (wrong numeric result on WP).
-    \item \textbf{E6}: Reserved (multi-step reasoning error; not distinguished from E5 in current taxonomy).
-    \item \textbf{E7}: Timeout (model exceeded time limit before producing output).
-    \item \textbf{E8}: Parse failure (could not extract a valid answer from model output).
-\end{itemize}
+We classify errors by failure mode: \textbf{E0} correct; \textbf{E1} arithmetic error; \textbf{E2} logic error; \textbf{E3} algebra error; \textbf{E5} word problem error; \textbf{E7} timeout; \textbf{E8} parse failure.
+
 
 % ======================================================================
 \section{System Versions and Ablation}
 \label{sec:versions}
 % ======================================================================
 
-We developed the system incrementally across five versions, each adding or modifying a single component. This progression serves as a natural ablation study.
+We developed the system incrementally across five versions, each adding or modifying a single component.
 
 \subsection{Baseline: SLM-Only}
 
@@ -325,9 +414,7 @@ An answer-repair module (A3) attempts to extract and correct answers from verbos
 
 \subsection{V4: Add Confidence Calibration}
 
-A logistic regression calibrator estimates $P(\text{correct})$ for each SLM response based on features (response length, parse success, timeout status). If $P(\text{correct}) < \tau = 0.70$, the response is escalated to A3 repair.
-
-\textbf{Result}: 70.7\% accuracy, identical to V3.1. The calibrator correctly flags low-confidence answers, but the repair layer cannot produce correct alternatives from truncated 30-token responses. In retrospect, this is expected: if the model lacks sufficient tokens to reason through a problem, identifying the answer as probably wrong does not produce a correct one. The correct intervention is to remove the bottleneck (increase token budget), not to add detection around it.
+\textbf{Result}: 70.7\% accuracy, identical to V3.1. The calibrator correctly flags low-confidence responses, but detecting likely-wrong answers does not produce correct ones when the model lacks sufficient tokens to reason. The bottleneck was token budget, not confidence estimation.
 
 \subsection{V5: Add Logic Engine + Increase Token Budget (+A6, +CoT)}
 
@@ -339,7 +426,7 @@ Two changes address the remaining bottlenecks:
 
 \textbf{Result}: 99.0\% overall accuracy. AR, ALG, and LOG all achieve 100\%. WP reaches 96\% at 512 tokens. The single remaining failure is analyzed in Section~\ref{sec:error_analysis}.
 
-Fig.~\ref{fig:version_categories} shows the full system progression from baseline through V5, including the new learned-routing systems and the tool-calling agent baseline.
+Table~\ref{tab:main_results} summarizes the V1--V5 ablation; Table~\ref{tab:per_category} compares learned-routing systems against selected configurations.
 
 % ======================================================================
 \section{Results}
@@ -358,6 +445,13 @@ Note that all learned-routing results in Table~\ref{tab:gi_results} use the 30-t
 
 RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle during training, demonstrating that even passive grammatical inference produces effective routing. The 3.7 percentage-point gap between L* and RPNI reflects the value of the SLM membership oracle: L* achieves 100\% routing accuracy on T2 versus 86\% for RPNI (which misclassifies 9 of 25 word problems due to their linguistic variety). Fig.~\ref{fig:e2e_comparison} visualizes the per-category comparison, and Fig.~\ref{fig:efficiency} shows the efficiency gap.
 
+\subsection{Comparison with Agent Reasoning Frameworks}
+
+Table~\ref{tab:gi_results} also includes three agent reasoning baselines evaluated on the same hardware. Program-of-Thought achieves the highest accuracy among agents (72.0\%), but still trails L*-learned routing by 6 percentage points. PoT's strength is word problems (88\%) and algebra (88\%), where generating executable Python code is effective, but it fails on logic problems (16\%), as the model struggles to translate natural-language rules into correct Python. ReAct achieves 63.0\% overall, performing reasonably on WP (68\%) but poorly on ALG (52\%) due to tool-call format errors when equations become complex. Plan-and-Solve performs worst at 43.0\%, suggesting that Phi-4-mini (3.8B parameters) lacks the capacity to reliably follow the two-stage plan-then-execute format.
+
+The efficiency gap between agent frameworks and learned routing is substantial (Table~\ref{tab:efficiency}). ReAct averages 2.43 SLM calls per query---a multi-turn loop that compounds latency and energy---reaching 97.2\,s and 150.3\,mWh per prompt. L*-learned routing, by contrast, routes 75\% of queries to symbolic solvers in under 12\,ms with no SLM call at all. This structural advantage---routing \emph{before} inference rather than \emph{during} it---is the key differentiator.
+
+
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/fig9_e2e_comparison.png}
@@ -374,7 +468,7 @@ RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle
 
 \begin{table}[t]
 \centering
-\caption{End-to-End Task Accuracy on T2 (300 Trials Per System). Learned routing systems use a 30-token WP budget; see Table~\ref{tab:wp_ablation} for the effect of higher budgets.}
+\caption{End-to-End Task Accuracy on T2 (300 trials for routing systems; 100 trials, 1 repeat, for agent frameworks). Learned routing systems use a 30-token WP budget; see Table~\ref{tab:wp_ablation} for the effect of higher budgets.}
 \label{tab:gi_results}
 \begin{tabular}{lccccc}
 \hline
@@ -382,7 +476,12 @@ RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle
 \hline
 \textbf{L* routing $\to$ V5} & \textbf{100} & \textbf{100} & 12 & \textbf{100} & \textbf{78.0} \\
 RPNI routing $\to$ V5 & 96 & 96 & 13 & 92 & 74.3 \\
+\hline
+\multicolumn{6}{l}{\textit{Agent framework baselines}} \\
+Program-of-Thought~\cite{chen2023pot} & 96 & 88 & 88 & 16 & 72.0 \\
+ReAct~\cite{yao2023react} & 92 & 52 & 68 & 40 & 63.0 \\
 Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
+Plan-and-Solve~\cite{wang2023plansolve} & 52 & 44 & 20 & 56 & 43.0 \\
 \hline
 \end{tabular}
 \end{table}
@@ -397,24 +496,19 @@ Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
 \hline
 L* $\to$ V5 & 6,907 & 33.1 & 100.0 \\
 RPNI $\to$ V5 & 6,567 & 30.2 & 86.0 \\
+\hline
+Program-of-Thought & 60,870 & 94.7 & --- \\
+ReAct & 97,193 & 150.3 & --- \\
 Tool-calling agent & 16,439 & 75.0 & --- \\
+Plan-and-Solve & 82,521 & 123.9 & --- \\
 \hline
-V5 (hardcoded, 30tok) & $\dagger$ & 30.6 & 100.0 \\
-\hline
-\multicolumn{4}{l}{\footnotesize $\dagger$ Prior run median: 6\,ms (Table~\ref{tab:main_results}).}
 \end{tabular}
 \end{table}
 
+
 \subsection{Classification Accuracy}
 
-Table~\ref{tab:classify} and Fig.~\ref{fig:classification} show routing classification accuracy (independent of task solving) for the learned classifiers. L* with both the SLM oracle and the feature-based oracle achieve 100\% on held-out T2, while RPNI achieves 86\%, primarily due to word-problem misclassification (64\% WP routing accuracy).
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig11_classification.png}
-    \caption{Routing classification accuracy on held-out T2. RPNI struggles with WP (64\%) due to the linguistic diversity of word problems, while L* achieves perfect classification across all categories.}
-    \label{fig:classification}
-\end{figure}
+Table~\ref{tab:classify} shows routing classification accuracy (independent of task solving) for the learned classifiers. L* with both the SLM oracle and the feature-based oracle achieve 100\% on held-out T2, while RPNI achieves 86\%, primarily due to word-problem misclassification (64\% WP routing accuracy).
 
 \begin{table}[t]
 \centering
@@ -524,13 +618,6 @@ V5 (512 tokens) & 100 & 100 & 96 & 100 & 99.0 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.85\columnwidth]{figures/fig5_route_usage.png}
-    \caption{Route distribution in V5: 75\% of queries are dispatched to deterministic symbolic solvers (A5, A4, A6), with only 25\% requiring SLM inference (A2 for WP).}
-    \label{fig:route_usage}
-\end{figure}
-
 \subsection{Latency Analysis}
 
 Table~\ref{tab:latency} shows median latency by category for V5 (512 tokens) versus the best baseline. Symbolic solvers achieve three orders-of-magnitude speedups on structured categories:
@@ -568,8 +655,6 @@ V5 (512tok) & 1 & 11 & 2 & 137.2 \\
 
 Table~\ref{tab:wp_ablation} shows the effect of token budget on word-problem accuracy and energy. The tradeoff is substantial: 512 tokens yields 96\% WP accuracy but costs 6.9$\times$ more energy per prompt than 30 tokens.
 
-\textbf{Note on identical ``V5 Default'' numbers for Phi and Qwen.} Both models show 18.7\% WP accuracy at 30 tokens with identical latency and energy. This is because V5 Default routes 75\% of queries to deterministic solvers (identical results regardless of model), and the remaining WP queries at 30 tokens mostly time out or parse-fail, meaning the model barely generates useful output and both models fail on the same prompts. At higher token budgets where the models can actually reason, performance diverges: Phi achieves 92\% at 300 tokens versus Qwen's 64\%.
-
 \begin{table}[t]
 \centering
 \caption{Word-Problem Accuracy vs.\ Token Budget}
@@ -596,14 +681,7 @@ Qwen-1.5B & 512 & Yes & 96.0 & 128.2 & 147.6 \\
     \label{fig:wp_ablation}
 \end{figure}
 
-Note that the best system (V5, Phi, 512tok) uses \textit{more} energy per prompt (211.1\,mWh) than the baseline (75.0\,mWh). The energy savings from symbolic routing on AR/ALG/LOG are outweighed by the increased token budget for WP. This tradeoff between higher accuracy and higher energy is fundamental and is discussed further in Section~\ref{sec:discussion}. Fig.~\ref{fig:energy_configs} compares energy consumption across all system configurations.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/fig6_energy_configs.png}
-    \caption{Energy per prompt (mWh) across system configurations. Higher token budgets (300, 512) dramatically increase energy cost. V5 Default (30 tokens) achieves the lowest energy among hybrid systems.}
-    \label{fig:energy_configs}
-\end{figure}
+Note that the best system (V5, Phi, 512tok) uses \textit{more} energy per prompt (211.1\,mWh) than the baseline (75.0\,mWh). The energy savings from symbolic routing on AR/ALG/LOG are outweighed by the increased token budget for WP. This tradeoff between higher accuracy and higher energy is fundamental and is discussed further in Section~\ref{sec:discussion}. 
 
 \subsection{Error Distribution}
 
