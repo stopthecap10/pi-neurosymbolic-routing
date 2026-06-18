@@ -29,7 +29,11 @@
 \maketitle
 
 \begin{abstract}
+<<<<<<< HEAD
 Small language models (SLMs) deployed on edge devices often display poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic problems. We present a neurosymbolic routing architecture that labels each incoming query and routes it to the cheapest correct solver, withholding the SLM for open-ended word problems and routing structured tasks to deterministic symbolic engines. Rather than relying on frail and hand-made routing rules, we learn the routing patterns using the L* grammatical inference algorithm~\cite{Angluin87}. L* learns a deterministic finite automaton (DFA) for query classification by using the SLM itself as a membership oracle and labeled data as an equivalence oracle. We evaluate our system on a Raspberry Pi~4B (8\,GB RAM, no GPU) using 100 held-out prompts (300 trials) drawn from DeepMind Mathematics, GSM8K, and RuleTaker. L*-learned routing achieves 78.0\% end-to-end task accuracy, compared to 72.0\% for the best agent framework baseline (Program-of-Thought) and 58.7\% for a tool-calling agent, both given access to the same symbolic solvers. The learned router is also 8.8$\times$ faster and 2.8$\times$ more energy-efficient than Program-of-Thought (6.9\,s vs.\ 60.9\,s and 33.1\,mWh vs.\ 94.7\,mWh per prompt). Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond routing latency, while word problems remain challenging for all systems. We additionally compare against RPNI, a passive grammatical inference method that requires no oracle, which achieves 74.3\% accuracy and still substantially outperforms the tool-calling agent. All experiments, data, and code are publicly available.
+=======
+Small language models (SLMs) deployed on edge devices often display poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic problems. We present a neurosymbolic routing architecture that labels each incoming query and routes it to the cheapest correct solver, withholding the SLM for open-ended word problems and routing structured tasks to deterministic symbolic engines. Rather than relying on frail and hand-made routing rules, we learn the routing patterns using the L* grammatical inference algorithm~\cite{Angluin87}. L* learns a deterministic finite automaton (DFA) for query classification by using the SLM itself as a membership oracle and labeled data as an equivalence oracle. We evaluate our system on a Raspberry Pi~4B (8\,GB RAM, no GPU) using 100 held-out prompts (300 trials) drawn from DeepMind Mathematics, GSM8K, and RuleTaker. L*-learned routing achieves 78.0\% end-to-end task accuracy with a 30-token word-problem budget, and 98.3\% with a 512-token chain-of-thought budget (93.3\% on word problems), compared to 72.0\% for the best agent framework baseline (Program-of-Thought) and 58.7\% for a tool-calling agent, both given access to the same symbolic solvers. The learned router is also 8.8$\times$ faster and 2.8$\times$ more energy-efficient than Program-of-Thought (6.9\,s vs.\ 60.9\,s and 33.1\,mWh vs.\ 94.7\,mWh per prompt). Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond routing latency, while word problems remain challenging for all systems. We additionally compare against RPNI, a passive grammatical inference method that requires no oracle, which achieves 74.3\% accuracy and still substantially outperforms the tool-calling agent. All experiments, data, and code are publicly available.
+>>>>>>> 44307b53f2019b242eec857818f71df28caf9ba5
 \end{abstract}
 
 \begin{IEEEImpStatement}
@@ -441,7 +445,7 @@ The L*-learned router achieves 78.0\% task accuracy, outperforming the tool-call
 
 The efficiency gap is equally significant: the learned router is 2.4$\times$ faster (6,907\,ms vs.\ 16,439\,ms mean latency) and 2.3$\times$ more energy-efficient (33.1\,mWh vs.\ 75.0\,mWh per prompt). This is because AR, ALG, and LOG queries are resolved by symbolic solvers in 1--11\,ms without invoking the SLM, while the tool-calling agent requires a full SLM inference for every query.
 
-Note that all learned-routing results in Table~\ref{tab:gi_results} use the 30-token default budget for WP; with 512 tokens and hand-coded routing, V5 achieves 96\% WP accuracy (Table~\ref{tab:wp_ablation}), suggesting that combining L*-learned routing with higher token budgets would yield further gains. The 78\% vs.\ 99\% gap between L*-learned and V5 (512tok) is entirely a token-budget choice, not a routing failure, since L* achieves 100\% routing accuracy.
+We evaluate L*-learned routing at both token budgets. With 30 tokens, the learned router achieves 78.0\% overall (12\% WP). With 512-token chain-of-thought, it achieves \textbf{98.3\% overall} (93.3\% WP, 141.3\,mWh/prompt), closing the gap with hand-coded V5 (99.0\%). This confirms that the prior gap was entirely a token-budget choice, not a routing failure: L* achieves 100\% routing accuracy at both budgets.
 
 RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle during training, demonstrating that even passive grammatical inference produces effective routing. The 3.7 percentage-point gap between L* and RPNI reflects the value of the SLM membership oracle: L* achieves 100\% routing accuracy on T2 versus 86\% for RPNI (which misclassifies 9 of 25 word problems due to their linguistic variety). Fig.~\ref{fig:e2e_comparison} visualizes the per-category comparison, and Fig.~\ref{fig:efficiency} shows the efficiency gap.
 
@@ -468,13 +472,18 @@ The efficiency gap between agent frameworks and learned routing is substantial (
 
 \begin{table}[t]
 \centering
+<<<<<<< HEAD
 \caption{End-to-End Task Accuracy on T2 (300 trials for routing systems; 100 trials, 1 repeat, for agent frameworks). Learned routing systems use a 30-token WP budget; see Table~\ref{tab:wp_ablation} for the effect of higher budgets.}
+=======
+\caption{End-to-End Task Accuracy on T2 (300 trials, 3 repeats). The 512-token result uses chain-of-thought prompting for WP; agent baselines use 1 repeat.}
+>>>>>>> 44307b53f2019b242eec857818f71df28caf9ba5
 \label{tab:gi_results}
 \begin{tabular}{lccccc}
 \hline
 \textbf{System} & \textbf{AR} & \textbf{ALG} & \textbf{WP} & \textbf{LOG} & \textbf{All} \\
 \hline
-\textbf{L* routing $\to$ V5} & \textbf{100} & \textbf{100} & 12 & \textbf{100} & \textbf{78.0} \\
+\textbf{L* routing $\to$ V5 (512tok)} & \textbf{100} & \textbf{100} & \textbf{93} & \textbf{100} & \textbf{98.3} \\
+L* routing $\to$ V5 (30tok) & 100 & 100 & 12 & 100 & 78.0 \\
 RPNI routing $\to$ V5 & 96 & 96 & 13 & 92 & 74.3 \\
 \hline
 \multicolumn{6}{l}{\textit{Agent framework baselines}} \\
@@ -606,7 +615,8 @@ Table~\ref{tab:per_category} shows accuracy by problem category for both the lea
 \textbf{System} & \textbf{AR} & \textbf{ALG} & \textbf{WP} & \textbf{LOG} & \textbf{All} \\
 \hline
 \multicolumn{6}{l}{\textit{Learned routing (this work)}} \\
-\textbf{L* routing $\to$ V5} & \textbf{100} & \textbf{100} & 12 & \textbf{100} & \textbf{78.0} \\
+\textbf{L* routing $\to$ V5 (512tok)} & \textbf{100} & \textbf{100} & \textbf{93} & \textbf{100} & \textbf{98.3} \\
+L* routing $\to$ V5 (30tok) & 100 & 100 & 12 & 100 & 78.0 \\
 RPNI routing $\to$ V5 & 96 & 96 & 13 & 92 & 74.3 \\
 Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
 \hline
