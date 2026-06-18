@@ -47,7 +47,7 @@ Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic
 
 \IEEEPARstart{E}{dge} deployment of language models is motivated by latency, privacy, and connectivity constraints that preclude cloud inference~\cite{xu2024edgellm}. However, small language models (SLMs) achieve limited accuracy on reasoning tasks when constrained to the CPU-only, memory-limited hardware typical of edge devices such as single-board computers.
 
-Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters, consistent with recent usage~\cite{schick2023toolformer}. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
+Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
 
 A key observation is that many ``reasoning'' queries presented to language models are structurally deterministic: arithmetic expressions have unique numeric answers, algebraic equations can be solved symbolically, and formal logic queries admit closed-form evaluation. Routing these structured tasks to purpose-built symbolic solvers, rather than forcing a probabilistic language model to approximate their answers, should yield both higher accuracy and lower latency.
 
@@ -59,7 +59,7 @@ We propose a \textit{neurosymbolic adaptive router} that classifies each query i
     \item \textbf{WP} $\rightarrow$ SLM with chain-of-thought prompting.
 \end{itemize}
 
-Only word problems, which require natural-language comprehension and multi-step reasoning, are routed to the language model. The remaining 75\% of queries are handled by deterministic solvers that are both faster and provably correct for their input domains.
+Only word problems, which require natural-language comprehension and multi-step reasoning, are routed to the language model. The remaining 75\% of queries are handled by deterministic solvers that are both faster and exact for well-formed inputs in their target domains.
 
 We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B parameters, Q6\_K quantization) across 100 held-out prompts drawn from three established benchmarks (DeepMind Mathematics~\cite{saxton2019deepmind}, GSM8K~\cite{cobbe2021gsm8k}, and RuleTaker~\cite{clark2020ruletaker}) with three repeats per prompt (300 total trials). Our contributions are:
 
@@ -198,16 +198,16 @@ Raw query text has an unbounded vocabulary, making it unsuitable as input to a D
 \end{tabular}
 \end{center}
 
-Each query is tokenized into a sequence over this 12-symbol alphabet, with consecutive \texttt{NARR} tokens collapsed and sequences truncated to 15 tokens. This abstraction preserves the structural signature of each category while reducing the input space to a finite alphabet suitable for DFA learning. Formally, we define the set of atomic propositions as $\AP = \{\texttt{CMD}, \texttt{NUM}, \texttt{VAR}, \texttt{OP}, \texttt{PAREN}, \texttt{ENT}, \texttt{PROP}, \texttt{RULE}, \texttt{QMARK}, \texttt{NARR}, \texttt{UNIT}, \texttt{DOT}\}$, giving $|\AP| = 12$. The alphabet used by $L^\star$ is $\Sigma = 2^{\AP}$, the set of all subsets of $\AP$. Since each token in a query is assigned to exactly one class, each position in the tokenized sequence corresponds to a singleton label $\{\ell\} \subseteq \AP$. A query of length $n$ is thus represented as a word $w = \{\ell_1\}\{\ell_2\}\cdots\{\ell_n\} \in (2^{\AP})^*$. The membership oracle $\mathcal{M}(w)$ operates on such words: given a token sequence $s$ (equivalently, a word $w \in (2^{\AP})^*$), it returns whether $w$ belongs to the target category language $\mathcal{L}_c$.
+Each query is tokenized into a sequence over this 12-symbol alphabet, with consecutive \texttt{NARR} tokens collapsed and sequences truncated to 15 tokens. This abstraction preserves the structural signature of each category while reducing the input space to a finite alphabet suitable for DFA learning. Formally, we define the set of atomic propositions as $\AP = \{\texttt{CMD}, \texttt{NUM}, \texttt{VAR}, \texttt{OP}, \texttt{PAREN}, \texttt{ENT}, \texttt{PROP}, \texttt{RULE}, \texttt{QMARK}, \texttt{NARR}, \texttt{UNIT}, \texttt{DOT}\}$, giving $|\AP| = 12$. Since each token in a query is assigned to exactly one class, the alphabet used by $L^\star$ is the set of singleton labels $\Sigma = \{\{\ell\} : \ell \in \AP\}$, with $|\Sigma| = 12$. A query of length $n$ is thus represented as a word $w = \{\ell_1\}\{\ell_2\}\cdots\{\ell_n\} \in \Sigma^*$. The membership oracle $\mathcal{M}(w)$ operates on such words: given a token sequence $s$ (equivalently, a word $w \in \Sigma^*$), it returns whether $w$ belongs to the target category language $\mathcal{L}_c$.
 
 
 \subsection{L* Algorithm for Route Learning}
 \label{sec:lstar}
 
-We adopt techniques from grammatical inference to guide our approach of learning the logic of routing as deterministic finite automaton (DFA). In particular, we leverage the $L^\star$ algorithm proposed in the seminal work of \cite{Angluin87}, which learns a regular language $\mathcal{L}$ through the use of a minimally adequate teacher that can answer two types of queries. When the learner executes a membership query, it presents a word $w \in (2^{AP})^*$ to the teacher and the teacher outputs whether $w \in \mathcal{L}$.
+We adopt techniques from grammatical inference to guide our approach of learning the logic of routing as deterministic finite automaton (DFA). In particular, we leverage the $L^\star$ algorithm proposed in the seminal work of \cite{Angluin87}, which learns a regular language $\mathcal{L}$ through the use of a minimally adequate teacher that can answer two types of queries. When the learner executes a membership query, it presents a word $w \in \Sigma^*$ to the teacher and the teacher outputs whether $w \in \mathcal{L}$.
 If the learner executes an equivalence query, it presents a hypothesis DFA to the teacher who must then answer whether this automaton encodes the language to be learned.
 If not, the teacher generates a counterexample in the form of a word on which the two languages differ.
-The $L^\star$ algorithm keeps track of state words $S \subseteq ( 2^{AP} )^*$, which are closed under prefix operations (e.g. if $ab \in S$, then $a \in S$) and test words $E \subseteq (2^{AP})^*$, which are closed under suffix operations (e.g. if $ab \in E$, then $b \in E$).
+The $L^\star$ algorithm keeps track of state words $S \subseteq \Sigma^*$, which are closed under prefix operations (e.g. if $ab \in S$, then $a \in S$) and test words $E \subseteq \Sigma^*$, which are closed under suffix operations (e.g. if $ab \in E$, then $b \in E$).
 Initially, we have $S = E = \{\varepsilon\}$, where $\varepsilon$ is the empty string.
 As the algorithm proceeds, there are two critical properties that must be tracked and revolve around the notion of $E$-equivalence.
 
@@ -215,7 +215,7 @@ As the algorithm proceeds, there are two critical properties that must be tracke
 
 
 \begin{definition}[$E$-Equivalence]
-Given $w, w' \in (2^{AP})^*$ and set $E \subseteq (2^{AP})^*$, the words $w$ and $w'$ are $E$-equivalent with respect to the language $\mathcal{L}$, denoted $w \equiv_E w'$, if $w  e \in \mathcal{L} \iff w'  e \in \mathcal{L}$ holds for every $e \in E$.
+Given $w, w' \in \Sigma^*$ and set $E \subseteq \Sigma^*$, the words $w$ and $w'$ are $E$-equivalent with respect to the language $\mathcal{L}$, denoted $w \equiv_E w'$, if $w  e \in \mathcal{L} \iff w'  e \in \mathcal{L}$ holds for every $e \in E$.
 \end{definition}
 
 %\begin{definition}[Consistency]
@@ -223,12 +223,12 @@ Given $w, w' \in (2^{AP})^*$ and set $E \subseteq (2^{AP})^*$, the words $w$ and
 %\end{definition}
 
 \begin{definition}[Consistency]
-Given $(S, E)$, the consistency property holds if and only if for all $s, s' \in S$, the following implication holds: if $s \equiv_E s'$, then $s \ell \equiv_E s' \ell$ for all $\ell \in 2^{\AP}$.
+Given $(S, E)$, the consistency property holds if and only if for all $s, s' \in S$, the following implication holds: if $s \equiv_E s'$, then $s \ell \equiv_E s' \ell$ for all $\ell \in \Sigma$.
 
 \end{definition}
 
 \begin{definition}[Closedness]
-Given $(S, E)$, the closedness property holds if and only if for all $s \in S$ and $\ell \in 2^\AP$, there exists some $s' \in S$ such that $s  \ell \equiv_E s'$.
+Given $(S, E)$, the closedness property holds if and only if for all $s \in S$ and $\ell \in \Sigma$, there exists some $s' \in S$ such that $s  \ell \equiv_E s'$.
 \end{definition}
 
 For a closed and consistent $(S, E)$, a corresponding automaton can be derived by taking each $E$-equivalence class of $S$ to be a state, with the empty string $\varepsilon$ as the starting state.
@@ -327,7 +327,7 @@ All SLM calls use greedy decoding (temperature${}=0.0$, seed${}=42$), stopping a
 \subsection{Dataset}
 \label{sec:dataset}
 
-The benchmark comprises 140 prompts sampled from three established datasets, with full provenance tracking (source dataset, record ID, and field mapping version recorded for every prompt):
+The evaluation benchmark comprises 100 held-out test prompts (25 per category) sampled from three established datasets, with full provenance tracking (source dataset, record ID, and field mapping version recorded for every prompt):
 \begin{itemize}
     \item \textbf{AR} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including addition/subtraction, multiplication, division, and mixed operations.
     \item \textbf{ALG} (25 prompts): From the \textit{DeepMind Mathematics Dataset}~\cite{saxton2019deepmind}, modules including linear 1D, linear 2D, and polynomial roots.
