@@ -45,7 +45,7 @@ Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic
 \label{sec:intro}
 % ======================================================================
 
-\IEEEPARstart{R}{unning} a language model at the edge, whether on a phone, a sensor node, or a single-board computer, is attractive for the same reasons that the cloud is sometimes unacceptable, since it keeps data private, removes network latency, and works where there is no connectivity at all~\cite{xu2024edgellm}. The difficulty is capability. The models small enough to run on a CPU-only device with a few gigabytes of memory perform poorly on structured reasoning tasks with unambiguous answers, such as adding numbers, solving equations, and evaluating logical rules, as our baseline experiments confirm (Section~\ref{sec:versions}).
+\IEEEPARstart{R}{unning} a language model entirely on a Raspberry Pi makes it possible to answer questions in a rural clinic with no internet, on a farm sensor beyond cellular range, or on a device that must never send a user's data off the premises. This is the appeal of edge inference, and it explains why interest in local deployment has grown in step with the latency, privacy, and connectivity constraints that often rule out the cloud~\cite{xu2024edgellm}. The appeal comes with a hard limit. A model small enough to fit in a few gigabytes of memory on a CPU-only board has modest capacity, and it struggles most on the questions that have a single correct answer, such as adding numbers, solving equations, and checking whether a set of facts entails a conclusion. In our experiments, the strongest such configuration answers only 37\% of a balanced reasoning benchmark correctly (Section~\ref{sec:versions}).
 
 Throughout this paper, we use \textit{SLM} (small language model) for models with fewer than 10 billion parameters; our ``SLM-only baselines'' and ``neural inference'' all refer to this class.
 
@@ -70,6 +70,8 @@ We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B para
     \item \textbf{System ablation.} An incremental ablation across five system versions demonstrates the marginal contribution of each symbolic solver and quantifies the accuracy--energy tradeoff on constrained hardware.
     \item Open-source release of all code, data, and experimental logs for reproducibility.
 \end{enumerate}
+
+The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work on edge inference, neurosymbolic systems, grammatical inference, and model routing. Section~\ref{sec:architecture} describes the router and its symbolic solvers, and Section~\ref{sec:gi} explains how the routing automaton is learned with L*. Section~\ref{sec:setup} details the experimental setup, Section~\ref{sec:versions} traces the incremental construction of the system, and Section~\ref{sec:results} reports the main results. Section~\ref{sec:analysis} examines why the approach works, Section~\ref{sec:discussion} discusses its limitations, and Section~\ref{sec:conclusion} concludes.
 
 % ======================================================================
 \section{Related Work}
