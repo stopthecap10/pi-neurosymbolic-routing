@@ -421,13 +421,28 @@ The router is also the more efficient system. Structured queries, which make up 
 
 What separates the two operating points is the token budget rather than the routing. The same learned router scores 78.0\% at 30 tokens and 98.3\% at 512 tokens, while its routing accuracy remains at 100\% throughout, and the gap to the hand-coded V5 system (99.0\%) nearly closes. Learning the router therefore costs essentially nothing in end-to-end accuracy.
 
-RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle during training, demonstrating that even passive grammatical inference produces effective routing. The 3.7 percentage-point gap between L* and RPNI reflects the value of the SLM membership oracle: L* achieves 100\% routing accuracy on T2 versus 86\% for RPNI (which misclassifies 9 of 25 word problems due to their linguistic variety).
+RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle during training, demonstrating that even passive grammatical inference produces effective routing. The 3.7 percentage-point gap between L* and RPNI reflects the value of the SLM membership oracle: L* achieves 100\% routing accuracy on T2 versus 86\% for RPNI (which misclassifies 9 of 25 word problems due to their linguistic variety). Fig.~\ref{fig:e2e_comparison} visualizes the per-category comparison, and Fig.~\ref{fig:efficiency} shows the efficiency gap.
 
 \subsection{Comparison with Agent Reasoning Frameworks}
 
 Table~\ref{tab:gi_results} also includes three agent reasoning baselines evaluated on the same hardware. Program-of-Thought achieves the highest accuracy among agents (72.0\%), but still trails L*-learned routing by 6 percentage points. PoT's strength is word problems (88\%) and algebra (88\%), where generating executable Python code is effective, but it fails on logic problems (16\%), as the model struggles to translate natural-language rules into correct Python. ReAct achieves 63.0\% overall, performing reasonably on WP (68\%) but poorly on ALG (52\%) due to tool-call format errors when equations become complex. Plan-and-Solve performs worst at 43.0\%, suggesting that Phi-4-mini (3.8B parameters) lacks the capacity to reliably follow the two-stage plan-then-execute format.
 
 The efficiency gap between agent frameworks and learned routing is substantial (Table~\ref{tab:efficiency}). ReAct averages 2.43 SLM calls per query, a multi-turn loop that compounds latency and energy, reaching 97.2\,s and 150.3\,mWh per prompt. L*-learned routing, by contrast, routes 75\% of queries to symbolic solvers in under 12\,ms with no SLM call at all. This structural advantage, routing \emph{before} inference rather than \emph{during} it, is the key differentiator.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig9_e2e_comparison.png}
+    \caption{End-to-end task accuracy by category. L*-learned routing achieves 100\% on AR, ALG, and LOG via symbolic solvers, while the tool-calling agent struggles on all categories, particularly LOG (59\%) and ALG (76\%). Word problems remain challenging for all systems.}
+    \label{fig:e2e_comparison}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig10_efficiency.png}
+    \caption{Efficiency comparison. Learned routing (L* and RPNI) is 2.4$\times$ faster and 2.3$\times$ more energy-efficient than the tool-calling agent, because AR, ALG, and LOG queries bypass the SLM entirely.}
+    \label{fig:efficiency}
+\end{figure}
 
 \begin{table}[t]
 \centering
@@ -539,9 +554,68 @@ V5 (512 tokens) & 99.0 & 6 & 211.1 \\
 \end{tabular}
 \end{table}
 
+\subsection{Per-Category Accuracy}
+
+Table~\ref{tab:per_category} shows accuracy by problem category for both the learned-routing systems and the V1--V5 ablation. Symbolic solvers achieve perfect accuracy on their respective domains.
+
+% OLD per-category table (preserved for reference)
+% \begin{table}[t]
+% \centering
+% \caption{Per-Category Accuracy (\%) Across Key Systems (Old)}
+% \begin{tabular}{lccccc}
+% \hline
+% \textbf{System} & \textbf{AR} & \textbf{ALG} & \textbf{LOG} & \textbf{WP} & \textbf{All} \\
+% \hline
+% Baseline (best) & 48.0 & 40.0 & 53.3 & 8.0 & 37.3 \\
+% V1 (+A5) & 100 & 40.0 & 64.0 & 8.0 & 53.0 \\
+% V2 (+A4) & 100 & 96.0 & 64.0 & 8.0 & 67.0 \\
+% V3.1 (+A3) & 100 & 100 & 64.0 & 18.7 & 70.7 \\
+% V5 Default & 100 & 100 & 100 & 18.7 & 79.7 \\
+% V5 (512tok) & 100 & 100 & 100 & 96.0 & 99.0 \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+\begin{table}[t]
+\centering
+\caption{Per-Category Accuracy (\%): Learned Routing vs.\ Development Ablation}
+\label{tab:per_category}
+\begin{tabular}{lccccc}
+\hline
+\textbf{System} & \textbf{AR} & \textbf{ALG} & \textbf{WP} & \textbf{LOG} & \textbf{All} \\
+\hline
+\multicolumn{6}{l}{\textit{Learned routing (this work)}} \\
+\textbf{L* routing $\to$ V5 (512tok)} & \textbf{100} & \textbf{100} & \textbf{93} & \textbf{100} & \textbf{98.3} \\
+L* routing $\to$ V5 (30tok) & 100 & 100 & 12 & 100 & 78.0 \\
+RPNI routing $\to$ V5 & 96 & 96 & 13 & 92 & 74.3 \\
+Tool-calling agent & 95 & 76 & 5 & 59 & 58.7 \\
+\hline
+\multicolumn{6}{l}{\textit{V1--V5 ablation (hand-coded routing)}} \\
+SLM-only baseline & 48 & 40 & 8 & 53.3 & 37.3 \\
+V5 (30 tokens) & 100 & 100 & 18.7 & 100 & 79.7 \\
+V5 (512 tokens) & 100 & 100 & 96 & 100 & 99.0 \\
+\hline
+\end{tabular}
+\end{table}
+
 \subsection{Latency Analysis}
 
-Table~\ref{tab:latency} shows median latency by category for V5 (512 tokens) versus the best baseline. The symbolic solvers achieve three orders-of-magnitude speedups on the structured categories, reducing AR from 6.3\,s to 1\,ms (6{,}288$\times$), ALG from 5.8\,s to 11\,ms (531$\times$), and LOG from 2.7\,s to 2\,ms (1{,}336$\times$). The system-wide median of 6\,ms reflects the dominance of symbolic routes, while word problems rise to roughly 137\,s per prompt under the larger token budget, which is a significant practical limitation for real-time use.
+Table~\ref{tab:latency} shows median latency by category for V5 (512 tokens) versus the best baseline. Symbolic solvers achieve three orders-of-magnitude speedups on structured categories:
+\begin{itemize}
+    \item AR: \textbf{1\,ms} (vs.\ 6.3\,s baseline, 6,288$\times$ speedup)
+    \item ALG: \textbf{11\,ms} (vs.\ 5.8\,s baseline, 531$\times$ speedup)
+    \item LOG: \textbf{2\,ms} (vs.\ 2.7\,s baseline, 1,336$\times$ speedup)
+    \item WP: \textbf{137\,s} (increased from 25\,s due to higher token budget)
+\end{itemize}
+
+The system-wide median of 6\,ms reflects the dominance of symbolic routes (75\% of queries). However, the WP latency of approximately 137\,s per prompt is a significant practical limitation for real-time applications. Fig.~\ref{fig:latency} visualizes this on a log scale.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig3_latency.png}
+    \caption{Per-category median latency on a log scale: baseline vs.\ V5. Symbolic solvers achieve 531--6,288$\times$ speedups on structured categories. WP latency increases due to the higher token budget.}
+    \label{fig:latency}
+\end{figure}
 
 \begin{table}[t]
 \centering
@@ -619,7 +693,14 @@ V5 (512) & 297 & 0 & 0 & 0 & 3 & 0 & 0 \\
 
 The most notable feature of the ablation is that the gains are not gradual but abrupt, since each solver produces a sharp jump in its own category at the moment it is introduced. A5 takes arithmetic from 48\% to 100\%, A4 takes algebra from 40\% to 96--100\%, and A6 takes logic from 64\% to 100\%. These are not the smooth improvements one expects from tuning a model. They are what happens when probabilistic approximation is replaced outright by exact computation.
 
-The principle behind the architecture follows directly. Once the structure of a problem is known, a symbolic solver dominates neural inference in both accuracy and efficiency, and the SLM is needed only on inputs whose structure is not known in advance, which in this domain means word problems and little else.
+The principle behind the architecture follows directly. Once the structure of a problem is known, a symbolic solver dominates neural inference in both accuracy and efficiency, and the SLM is needed only on inputs whose structure is not known in advance, which in this domain means word problems and little else. Fig.~\ref{fig:version_categories} shows the category-level accuracy across every version and configuration we tested.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig8_version_categories.png}
+    \caption{Accuracy by category across all system versions and configurations. Each column is a category; each row is a system version. Symbolic solvers (A5, A4, A6) produce immediate 100\% accuracy in their target categories upon introduction.}
+    \label{fig:version_categories}
+\end{figure}
 
 \subsection{Error Analysis: The Single V5 Failure}
 \label{sec:error_analysis}
