@@ -45,7 +45,7 @@ Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic
 \label{sec:intro}
 % ======================================================================
 
-\IEEEPARstart{R}{unning} a language model at the edge, whether on a phone, a sensor node, or a single-board computer, is attractive for the same reasons that the cloud is sometimes unacceptable, since it keeps data private, removes network latency, and works where there is no connectivity at all~\cite{xu2024edgellm}. The difficulty is capability. The models small enough to run on a CPU-only device with a few gigabytes of memory reason markedly worse than their datacenter-scale counterparts, and they fail most visibly on the tasks that have unambiguous answers, such as adding numbers, solving equations, and evaluating logical rules.
+\IEEEPARstart{R}{unning} a language model at the edge, whether on a phone, a sensor node, or a single-board computer, is attractive for the same reasons that the cloud is sometimes unacceptable, since it keeps data private, removes network latency, and works where there is no connectivity at all~\cite{xu2024edgellm}. The difficulty is capability. The models small enough to run on a CPU-only device with a few gigabytes of memory perform poorly on structured reasoning tasks with unambiguous answers, such as adding numbers, solving equations, and evaluating logical rules, as our baseline experiments confirm (Section~\ref{sec:versions}).
 
 Throughout this paper, we use \textit{SLM} (small language model) for models with fewer than 10 billion parameters; our ``SLM-only baselines'' and ``neural inference'' all refer to this class.
 
@@ -95,10 +95,10 @@ We additionally evaluate three agent reasoning frameworks on T2 (100 prompts, 1 
 \textbf{Plan-and-Solve}~\cite{wang2023plansolve} first generates an explicit numbered plan, then executes a single tool call based on the plan. We implement it with the same four symbolic tools as the tool-calling agent.
 
 \subsection{Grammatical Inference}
-Grammatical inference, the problem of learning formal languages from data, has a rich history in automata theory~\cite{gold1967language, higuera2010grammatical}. The L* algorithm~\cite{Angluin87} learns the minimal DFA for a regular language using membership and equivalence oracles in polynomial time and queries. RPNI~\cite{oncina1992rpni} takes a passive approach, learning from positive and negative examples without oracles. These methods have been applied to protocol inference~\cite{fiterau2020analysis}, model checking~\cite{peled2001model}, and software testing. To our knowledge, this is the first application of grammatical inference to learn routing patterns for neurosymbolic query dispatch on edge devices.
+Grammatical inference, the problem of learning formal languages from data, has a rich history in automata theory~\cite{gold1967language, higuera2010grammatical}. The L* algorithm~\cite{Angluin87} learns the minimal DFA for a regular language using membership and equivalence oracles in polynomial time and queries. RPNI~\cite{oncina1992rpni} takes a passive approach, learning from positive and negative examples without oracles. These methods have been applied to problems such as protocol inference~\cite{fiterau2020analysis} and model checking~\cite{peled2001model}. To our knowledge, this is the first application of grammatical inference to learn routing patterns for neurosymbolic query dispatch on edge devices.
 
 \subsection{LLM Routing and Cascading}
-FrugalGPT~\cite{chen2023frugalgpt} cascades queries through progressively larger models. Router-based systems like RouteLLM~\cite{ong2024routellm} learn to dispatch queries to strong or weak models. Our router operates at a different granularity: rather than choosing between models of different sizes, it chooses between \textit{qualitatively different solvers}: symbolic engines versus neural inference.
+FrugalGPT~\cite{chen2023frugalgpt} cascades queries through progressively larger models. Router-based systems like RouteLLM~\cite{ong2024routellm} learn to dispatch queries to strong or weak models. Our router operates at a different granularity. Rather than choosing between models of different sizes, it chooses between \textit{qualitatively different solvers}, namely symbolic engines and neural inference.
 
 \subsection{Mathematical Reasoning}
 Chain-of-thought prompting~\cite{wei2022cot} and its variants~\cite{wang2023selfconsistency} improve mathematical reasoning but remain probabilistic. Tool-augmented approaches~\cite{cobbe2021gsm8k} combine models with calculators. We extend this paradigm by routing entire categories to symbolic solvers, not just individual arithmetic operations within a generation.
@@ -298,7 +298,7 @@ L* converges in polynomial time in the number of states of the target DFA, produ
 \subsection{RPNI: Passive DFA Learning as a Component Variant}
 \label{sec:rpni}
 
-RPNI (Regular Positive and Negative Inference)~\cite{oncina1992rpni} is a passive grammatical inference algorithm that requires no oracle. RPNI builds a prefix tree acceptor from positive examples and iteratively merges states, rejecting any merge that would accept a negative example. In our system, RPNI serves as a \emph{replaceable component}: it can substitute for L* as the DFA learning module without changing the routing architecture, dispatcher, or solvers. This comparison isolates the contribution of the SLM membership oracle, the novel element of our approach, to overall classification and task accuracy.
+RPNI (Regular Positive and Negative Inference)~\cite{oncina1992rpni} is a passive grammatical inference algorithm that requires no oracle. RPNI builds a prefix tree acceptor from positive examples and iteratively merges states, rejecting any merge that would accept a negative example. In our system, RPNI serves as a \emph{replaceable component} that can substitute for L* as the DFA learning module without changing the routing architecture, dispatcher, or solvers. This comparison isolates the contribution of the SLM membership oracle, the novel element of our approach, to overall classification and task accuracy.
 
 \subsection{Multi-Class Classification}
 \label{sec:multiclass}
@@ -345,7 +345,7 @@ The prompts are divided into two disjoint tiers, verified by both source key and
 
 This train/test split ensures that routing accuracy is measured on prompts \emph{never seen during DFA learning}, addressing potential overfitting concerns. The benchmark is intentionally small (100 test prompts, 300 trials) due to the slow inference speed on the Pi (approximately 2 minutes per word problem at 512 tokens). We acknowledge this limits statistical power; the 3 repeats are primarily useful for measuring SLM variance on WP, as the symbolic solvers are deterministic. Larger-scale evaluation is an important direction for future work.
 
-Each prompt is run 3 times per system configuration, yielding 300 trials per system. Evaluation uses \textit{exact match}: extracted answer must equal ground truth.
+Each prompt is run 3 times per system configuration, yielding 300 trials per system. Evaluation uses \textit{exact match}, meaning the extracted answer must equal the ground truth.
 
 \subsection{Tool-Calling Agent Baseline}
 \label{sec:agent_baseline}
@@ -358,7 +358,7 @@ To provide a fair comparison, we implement a tool-calling agent that gives the s
     \item \texttt{direct\_answer(number)}: Direct numeric response
 \end{itemize}
 
-The SLM receives each query along with tool descriptions and few-shot examples, then generates a single tool call. The output is parsed and the corresponding tool is executed. This mirrors the Toolformer~\cite{schick2023toolformer} paradigm: the model decides which tool to use at inference time. Unlike our learned router, the agent requires a full SLM inference step for \emph{every} query, even simple arithmetic that the symbolic solver could handle in 1\,ms.
+The SLM receives each query along with tool descriptions and few-shot examples, then generates a single tool call. The output is parsed and the corresponding tool is executed. This mirrors the Toolformer~\cite{schick2023toolformer} paradigm, in which the model decides which tool to use at inference time. Unlike our learned router, the agent requires a full SLM inference step for \emph{every} query, even simple arithmetic that the symbolic solver could handle in 1\,ms.
 
 \subsection{Metrics}
 
@@ -741,7 +741,7 @@ The L*-learned classifier achieves 100\% routing accuracy on held-out T2 prompts
 The comparison between L* (100\% classification, 78.0\% task accuracy) and RPNI (86\% classification, 74.3\% task accuracy) demonstrates the value of the SLM membership oracle. RPNI's lower performance stems from word-problem misclassification: WP prompts have diverse linguistic structure that is difficult to capture from 10 positive examples alone. The SLM oracle allows L* to generalize beyond the training distribution by answering membership queries on novel token sequences. This suggests that even weak oracles (a 3.8B parameter model) can meaningfully improve grammatical inference when the target language has high variance.
 
 \subsection{Dataset Size}
-Our benchmark of 100 prompts (25 per category) is small by modern standards. The 95\% confidence interval on 99.0\% accuracy is [97.1\%, 99.8\%], which is reasonably tight, but per-category confidence intervals are wider (e.g., 96\% WP accuracy on 25 prompts has a 95\% confidence interval of [80.5\%, 99.3\%]). Evaluation on larger subsets of the source benchmarks would strengthen the claims.
+Our benchmark of 100 prompts (25 per category) is small by modern standards. The 95\% Wilson score interval on 99.0\% accuracy is [97.1\%, 99.8\%], which is reasonably tight, but per-category intervals are wider (for example, 96\% WP accuracy on 25 prompts has a 95\% Wilson interval of [80.5\%, 99.3\%]). Evaluation on larger subsets of the source benchmarks would strengthen the claims.
 
 \subsection{Energy--Accuracy Tradeoff}
 The best-accuracy system (V5, 512tok) uses 2.8$\times$ more energy than the baseline. The energy savings from symbolic routing on 75\% of queries are real but are outweighed by the increased WP generation cost at higher token budgets (211.1\,mWh at 512 tokens vs.\ 30.6\,mWh at 30 tokens). For battery-powered deployments, adaptive token budgets that start low and escalate only when the model's output indicates insufficient reasoning could reduce average energy while maintaining accuracy.
