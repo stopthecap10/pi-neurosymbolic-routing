@@ -29,11 +29,11 @@
 \maketitle
 
 \begin{abstract}
-Running a language model on edge hardware promises private, low-latency reasoning without a network connection, yet the small models that fit on such devices are unreliable on precisely the tasks users expect a computer to get right: arithmetic, algebra, and formal logic. We argue that this unreliability is largely self-inflicted. Many queries that appear to require reasoning are in fact structurally deterministic and admit fast, exact symbolic solutions; forcing a probabilistic model to approximate them sacrifices accuracy and energy for nothing. We present a neurosymbolic router that classifies each incoming query and dispatches it to the cheapest solver that can answer it correctly---deterministic engines for structured tasks, and the small language model (SLM) only for genuinely open-ended word problems. Crucially, the routing logic is not hand-coded but \emph{learned} as a deterministic finite automaton (DFA) via the L* grammatical inference algorithm~\cite{Angluin87}, with the SLM itself as a membership oracle and labeled data as an equivalence oracle. On a Raspberry Pi~4B (8\,GB RAM, no GPU), evaluated on 100 held-out prompts from DeepMind Mathematics, GSM8K, and RuleTaker, learned routing attains 100\% routing accuracy and 98.3\% end-to-end task accuracy with a 512-token reasoning budget (93.3\% on word problems, the hardest category), against 72.0\% for the strongest agent baseline, Program-of-Thought, and 58.7\% for a tool-calling agent given the same solvers. Because structured queries never reach the model, the router resolves them in 1--11\,ms and, at its efficient 30-token operating point, runs 8.8$\times$ faster and 2.8$\times$ cheaper than Program-of-Thought. We release all code, data, and logs.
+Small language models (SLMs) deployed on edge devices often display poor accuracy on structured reasoning tasks such as arithmetic, algebra, and formal logic problems. We present a neurosymbolic routing architecture that labels each incoming query and routes it to the cheapest correct solver, withholding the SLM for open-ended word problems and routing structured tasks to deterministic symbolic engines. Rather than relying on frail and hand-made routing rules, we learn the routing patterns using the L* grammatical inference algorithm~\cite{Angluin87}. L* learns a deterministic finite automaton (DFA) for query classification by using the SLM itself as a membership oracle and labeled data as an equivalence oracle. We evaluate our system on a Raspberry Pi~4B (8\,GB RAM, no GPU) using 100 held-out prompts (300 trials) drawn from DeepMind Mathematics, GSM8K, and RuleTaker. L*-learned routing achieves 78.0\% end-to-end task accuracy with a 30-token word-problem budget, and 98.3\% with a 512-token chain-of-thought budget (93.3\% on word problems), compared to 72.0\% for the best agent framework baseline (Program-of-Thought) and 58.7\% for a tool-calling agent, both given access to the same symbolic solvers. The learned router is 8.8$\times$ faster and 2.8$\times$ more energy-efficient than Program-of-Thought. Structured categories (arithmetic, algebra, logic) reach 100\% accuracy with sub-millisecond routing latency, while word problems remain challenging for all systems. We additionally compare against RPNI, a passive grammatical inference method that requires no oracle, which achieves 74.3\% accuracy and still substantially outperforms the tool-calling agent. All experiments, data, and code are publicly available.
 \end{abstract}
 
 \begin{IEEEImpStatement}
-Edge devices such as Raspberry Pi computers increasingly host intelligent applications in healthcare, agriculture, and education, where cloud connectivity is often unavailable or undesirable for privacy reasons. The small language models that run on such hardware, however, are unreliable on structured reasoning: the strongest small-model baseline we evaluated answered only 37\% of our benchmark correctly. Our router sidesteps this limitation by sending structured queries to purpose-built symbolic solvers and reserving the language model for genuinely open-ended problems. Because the routing logic is \emph{learned} through grammatical inference rather than hand-coded, it can be extended to new problem types from data alone. Against a tool-calling agent with access to the same solvers, the learned router is both more accurate (78\% vs.\ 59\%) and 2.3$\times$ more energy-efficient on a Raspberry Pi~4B, and it resolves structured queries in under 12 milliseconds. The architecture is model-agnostic and could underpin offline tutoring systems, field calculators, or decision-support tools where correctness and latency matter more than open-ended fluency.
+Edge devices such as Raspberry Pi computers increasingly serve as platforms for intelligent applications in healthcare, agriculture, and education, yet cloud connectivity may be unavailable or undesirable for privacy reasons in these contexts. However, small language models running on such devices achieve only 37\% accuracy on structured reasoning tasks. Our neurosymbolic routing architecture dispatches queries to purpose-built symbolic solvers when appropriate, reserving the language model for genuinely open-ended problems. Critically, the routing patterns are \emph{learned} via grammatical inference rather than hand-coded, making the approach adaptive and extensible. Compared to a tool-calling agent given the same solvers, our learned router achieves higher accuracy (78\% vs.\ 59\%) while using 2.3$\times$ less energy on a Raspberry Pi~4B. This approach enables reliable offline reasoning on hardware costing under \$100, with three categories of queries resolved in under 12 milliseconds. The architecture is model-agnostic and could be integrated into educational tutoring systems, offline scientific calculators, or field-deployed decision support tools where correctness and low latency are critical.
 \end{IEEEImpStatement}
 
 \begin{IEEEkeywords}
@@ -45,13 +45,13 @@ Edge inference, language model routing, neurosymbolic AI, Raspberry Pi, symbolic
 \label{sec:intro}
 % ======================================================================
 
-\IEEEPARstart{R}{unning} a language model at the edge---on a phone, a sensor node, or a single-board computer---is attractive for the same reasons the cloud is sometimes unacceptable: it keeps data private, removes network latency, and works where there is no connectivity at all~\cite{xu2024edgellm}. The catch is capability. The models small enough to run on a CPU-only device with a few gigabytes of memory reason markedly worse than their datacenter-scale counterparts, and they fail most visibly on the tasks that have unambiguous right answers: adding numbers, solving equations, evaluating logical rules.
+\IEEEPARstart{E}{dge} deployment of language models is motivated by latency, privacy, and connectivity constraints that preclude cloud inference~\cite{xu2024edgellm}. However, small language models (SLMs) achieve limited accuracy on reasoning tasks when constrained to the CPU-only, memory-limited hardware typical of edge devices such as single-board computers.
 
-Throughout this paper, we use \textit{SLM} (small language model) for models with fewer than 10 billion parameters; our ``SLM-only baselines'' and ``neural inference'' all refer to this class.
+Throughout this paper, we use \textit{SLM} (small language model) to refer to models with fewer than 10 billion parameters. All ``SLM-only baselines'' and ``neural inference'' refer to the same class of models.
 
-Our starting point is an observation that is easy to overlook: many of the queries we ask language models to ``reason'' about are not open-ended at all. An arithmetic expression has exactly one correct value; a linear system has a closed-form solution; a propositional-logic query is decidable by forward chaining. For problems like these, a deterministic solver is not merely competitive with a language model---it is exact, faster by orders of magnitude, and far cheaper in energy. The probabilistic machinery of an SLM is wasted, and often actively harmful, on inputs whose structure is already known. The difficulty is not solving such problems but \emph{recognizing} them reliably before any expensive inference takes place.
+A key observation is that many ``reasoning'' queries presented to language models are structurally deterministic: arithmetic expressions have unique numeric answers, algebraic equations can be solved symbolically, and formal logic queries admit closed-form evaluation. Routing these structured tasks to purpose-built symbolic solvers, rather than forcing a probabilistic language model to approximate their answers, should yield both higher accuracy and lower latency.
 
-We propose a \textit{neurosymbolic adaptive router} that classifies each query into one of four categories---arithmetic (AR), algebra (ALG), formal logic (LOG), and word problems (WP)---and dispatches it to the appropriate solver:
+We propose a \textit{neurosymbolic adaptive router} that classifies each query into one of four categories (arithmetic (AR), algebra (ALG), formal logic (LOG), and word problems (WP)) and dispatches it to the appropriate solver:
 \begin{itemize}
     \item \textbf{AR} $\rightarrow$ safe arithmetic evaluator (Python \texttt{ast}),
     \item \textbf{ALG} $\rightarrow$ SymPy symbolic algebra solver,
@@ -59,7 +59,7 @@ We propose a \textit{neurosymbolic adaptive router} that classifies each query i
     \item \textbf{WP} $\rightarrow$ SLM with chain-of-thought prompting.
 \end{itemize}
 
-Of the four categories, only word problems---which demand natural-language comprehension and multi-step reasoning---genuinely require the language model. The three structured categories are handled by deterministic solvers that are exact on well-formed inputs and answer in milliseconds. In our balanced benchmark these account for three-quarters of all queries, so the model is invoked on only a minority of inputs; the exact fraction in deployment depends on the workload.
+Only word problems, which require natural-language comprehension and multi-step reasoning, are routed to the language model. The remaining 75\% of queries are handled by deterministic solvers that are both faster and exact for well-formed inputs in their target domains.
 
 We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B parameters, Q6\_K quantization) across 100 held-out prompts drawn from three established benchmarks (DeepMind Mathematics~\cite{saxton2019deepmind}, GSM8K~\cite{cobbe2021gsm8k}, and RuleTaker~\cite{clark2020ruletaker}) with three repeats per prompt (300 total trials). Our contributions are:
 
@@ -318,7 +318,7 @@ All experiments run on a single Raspberry Pi~4 Model B with 8\,GB RAM, a quad-co
 
 We evaluate two quantized SLMs:
 \begin{itemize}
-    \item \textbf{Phi-4-mini}~\cite{abdin2024phi4} (Microsoft, 3.8B parameters, Q6\_K quantization, 3.16\,GB)
+    \item \textbf{Phi-4-mini}~\cite{abdin2024phi4} (Microsoft, 3.8B parameters, Q6\_K quantization, 2.4\,GB)
     \item \textbf{Qwen2.5-Math-1.5B}~\cite{qwen2025} (Alibaba, 1.5B parameters, Q6\_K quantization)
 \end{itemize}
 
@@ -378,31 +378,55 @@ We classify errors by failure mode: \textbf{E0} correct; \textbf{E1} arithmetic 
 \label{sec:versions}
 % ======================================================================
 
-Before learning the router, we built the symbolic backend incrementally across five versions, each adding or modifying exactly one component. This progression doubles as an ablation: because the versions differ by a single change, the accuracy and energy deltas between them isolate the contribution of each solver. We summarize the trajectory here; Table~\ref{tab:main_results} collects the numbers.
+We developed the system incrementally across five versions, each adding or modifying a single component.
 
 \subsection{Baseline: SLM-Only}
 
-The natural starting point is the SLM alone, with no routing and no symbolic solvers. We swept four configurations over two factors: a token budget of either 12 tokens (A1) or 30 tokens (A2), crossed with either grammar-constrained decoding (a BNF grammar that fixes the output format) or free-form generation. Even the best of the four---30 tokens with grammar constraints, on Phi-4-mini---reaches only 37.3\% overall (48\% AR, 40\% ALG, 53.3\% LOG, 8\% WP), and 17\% of all trials fail simply because the answer cannot be parsed from the model's output. This is the gap the rest of the system closes.
+All 100 prompts are sent directly to the SLM with no routing or symbolic solvers. We tested four baseline configurations varying two factors:
+\begin{itemize}
+    \item \textbf{Token budget}: C1 uses A1 (12 tokens); C2 uses A2 (30 tokens).
+    \item \textbf{Grammar constraints}: \textit{grammar} constrains the output format via a BNF grammar; \textit{nogrammar} allows free-form generation.
+\end{itemize}
 
-\subsection{V1: Arithmetic Solver (+A5)}
+The best baseline (C2 with grammar, Phi-4-mini) achieves 37.3\% overall accuracy: 48\% on AR, 40\% on ALG, 53.3\% on LOG, and 8\% on WP. Parse failures (E8) account for 17\% of all trials.
 
-Routing AR queries to the safe arithmetic evaluator produces the first and largest jump: AR accuracy climbs from 48\% to a perfect 100\%, its latency collapses from 6.2\,s to 1\,ms, and overall accuracy rises to 53.0\%. Replacing approximation with exact computation, in one category, recovers more than fifteen points.
+\subsection{V1: Add Arithmetic Solver (+A5)}
 
-\subsection{V2: Algebra Solver (+A4)}
+AR queries are routed to the safe arithmetic evaluator.
 
-Adding the SymPy-based algebra solver for ALG repeats the pattern: ALG accuracy rises from 40\% to 96--100\% and its latency drops from 5.8\,s to 11\,ms, lifting the system to 67.0\% overall.
+\textbf{Result}: AR accuracy jumps from 48\% to \textbf{100\%}, latency drops from 6.2\,s to \textbf{1\,ms}. Overall accuracy rises to 53.0\%.
 
-\subsection{V3: Post-Processing Repair Layer (+A3)}
+\subsection{V2: Add Algebra Solver (+A4)}
 
-V3 introduces an answer-repair module (A3) that extracts and corrects answers from verbose SLM output. Applied to word problems it helps modestly (WP rises from 8\% to 18.7\%), but our first attempt applied it to logic queries as well, and there it backfired: a repair layer built to recover numbers corrupts yes/no answers by pulling spurious figures out of the reasoning text, dragging LOG from 64\% down to 36.7\%. Restricting A3 to numeric categories restores LOG to 64\% and brings the system to 70.7\%. The lesson is narrow but practical---post-processing is format-sensitive and must not be applied blindly across output types---and we report it because it shaped the final design.
+ALG queries are additionally routed to SymPy.
 
-\subsection{V4: Confidence Calibration}
+\textbf{Result}: ALG accuracy jumps from 40\% to \textbf{96--100\%}, overall accuracy reaches 67.0\%. ALG latency drops from 5.8\,s to \textbf{11\,ms}.
 
-V4 adds a confidence calibrator, and its result is instructive precisely because it is null: accuracy stays at 70.7\%. The calibrator flags low-confidence answers accurately, but flagging a likely-wrong answer does not make it right when the model simply lacks the tokens to reason through the problem. The bottleneck, it turns out, is the reasoning budget itself, not the system's ability to detect failure.
+\subsection{V3: Add Post-Processing Repair Layer (+A3)}
 
-\subsection{V5: Logic Engine and a Larger Reasoning Budget (+A6, +CoT)}
+An answer-repair module (A3) attempts to extract and correct answers from verbose SLM outputs. In V3.0, this was applied to \textit{both} WP and LOG.
 
-V5 addresses the two remaining bottlenecks directly. First, a forward-chaining logic engine (A6) replaces SLM inference for LOG, reaching 100\% accuracy in under 1\,ms. Second, word problems---the one category that genuinely needs the model---are given a 512-token chain-of-thought budget in place of the 30-token cap, prompted to place the final answer in \texttt{\textbackslash boxed\{\}}. Together these lift the system to 99.0\% overall: AR, ALG, and LOG are perfect, and WP reaches 96\%. A single word problem fails consistently across all three repeats; we dissect it in Section~\ref{sec:error_analysis}.
+\textbf{Result}: WP accuracy improves modestly (8\% $\rightarrow$ 18.7\%). However, applying A3 to LOG causes a regression: LOG accuracy \textit{drops} from 64\% to 36.7\%. The repair layer, designed for numeric extraction, corrupts yes/no logic answers (e.g., by extracting spurious numbers from reasoning text).
+
+\textbf{V3.1 fix}: Disabling A3 for LOG restores LOG accuracy to 64\%. Overall: 70.7\%.
+
+\textbf{Observation}: This is an engineering error (applying a numeric extractor to yes/no outputs) rather than a deep methodological insight, but it illustrates that post-processing layers are format-sensitive and should not be applied across output types without validation.
+
+\subsection{V4: Add Confidence Calibration}
+
+\textbf{Result}: 70.7\% accuracy, identical to V3.1. The calibrator correctly flags low-confidence responses, but detecting likely-wrong answers does not produce correct ones when the model lacks sufficient tokens to reason. The bottleneck was token budget, not confidence estimation.
+
+\subsection{V5: Add Logic Engine + Increase Token Budget (+A6, +CoT)}
+
+Two changes address the remaining bottlenecks:
+\begin{enumerate}
+    \item \textbf{A6 forward-chaining logic engine} replaces SLM inference for LOG, achieving 100\% accuracy with $<$\,1\,ms latency.
+    \item \textbf{Chain-of-thought prompting with 512 tokens} replaces the 30-token budget for WP, with the system prompt: ``Solve this math problem. Put your final answer in \texttt{\textbackslash boxed\{\}}.''
+\end{enumerate}
+
+\textbf{Result}: 99.0\% overall accuracy. AR, ALG, and LOG all achieve 100\%. WP reaches 96\% at 512 tokens. The single remaining failure is analyzed in Section~\ref{sec:error_analysis}.
+
+Table~\ref{tab:main_results} summarizes the V1--V5 ablation; Table~\ref{tab:per_category} compares learned-routing systems against selected configurations.
 
 % ======================================================================
 \section{Results}
@@ -411,13 +435,13 @@ V5 addresses the two remaining bottlenecks directly. First, a forward-chaining l
 
 \subsection{Learned Routing vs.\ Tool-Calling Agent}
 
-Table~\ref{tab:gi_results} presents our central comparison: learned routing against a tool-calling agent given the very same SLM and the very same symbolic solvers, so that the routing mechanism is the only variable. All systems run Phi-4-mini on identical hardware with identical decoding parameters, end-to-end on T2 (100 prompts, 3 repeats, 300 trials).
+Table~\ref{tab:gi_results} presents the central comparison: L*-learned routing versus the tool-calling agent baseline, both evaluated end-to-end on T2 (100 prompts, 3 repeats, 300 trials). All systems use Phi-4-mini on the same hardware with identical decoding parameters.
 
-At its full 512-token reasoning budget, the L*-learned router answers \textbf{98.3\%} of trials correctly---100\% on arithmetic, algebra, and logic, and 93.3\% on word problems---against 58.7\% for the tool-calling agent, a gap of nearly forty points. The agent's failures cluster exactly where it must decide to call a tool and call it correctly: it falls to 59\% on logic, where it frequently never invokes the engine, and 76\% on algebra, where it emits malformed tool calls. The learned router never faces that decision at inference time, because routing is settled in advance by the DFA, and it dispatches all three structured categories with perfect accuracy.
+The L*-learned router achieves 78.0\% task accuracy, outperforming the tool-calling agent (58.7\%) by 19.3 percentage points. The advantage is consistent across all four categories: the agent struggles particularly on LOG (59\%) where it often fails to invoke the logic engine, and on ALG (76\%) where it generates malformed tool calls. The learned router dispatches these categories to symbolic solvers with 100\% accuracy.
 
-The router is also the more frugal system. Structured queries---three-quarters of the benchmark---are answered by symbolic solvers in 1--11\,ms with no model call at all, so at its efficient 30-token operating point the router runs 2.4$\times$ faster than the agent (6{,}907\,ms vs.\ 16{,}439\,ms mean latency) and draws 2.3$\times$ less energy (33.1 vs.\ 75.0\,mWh per prompt). Raising the word-problem budget to 512 tokens buys the accuracy above at a higher cost on that single category (141.3\,mWh per prompt overall)---a trade-off we revisit in Section~\ref{sec:discussion}.
+The efficiency gap is equally significant: the learned router is 2.4$\times$ faster (6,907\,ms vs.\ 16,439\,ms mean latency) and 2.3$\times$ more energy-efficient (33.1\,mWh vs.\ 75.0\,mWh per prompt). This is because AR, ALG, and LOG queries are resolved by symbolic solvers in 1--11\,ms without invoking the SLM, while the tool-calling agent requires a full SLM inference for every query.
 
-What separates the two operating points is the token budget, never the routing. The same learned router scores 78.0\% at 30 tokens and 98.3\% at 512, while its routing accuracy holds at 100\% throughout, and the gap to the hand-coded V5 system (99.0\%) all but vanishes. Learning the router, in other words, costs essentially nothing in end-to-end accuracy.
+We evaluate L*-learned routing at both token budgets. With 30 tokens, the learned router achieves 78.0\% overall (12\% WP). With 512-token chain-of-thought, it achieves \textbf{98.3\% overall} (93.3\% WP, 141.3\,mWh/prompt), closing the gap with hand-coded V5 (99.0\%). This confirms that the prior gap was entirely a token-budget choice, not a routing failure: L* achieves 100\% routing accuracy at both budgets.
 
 RPNI-learned routing (74.3\%) also outperforms the agent despite using no oracle during training, demonstrating that even passive grammatical inference produces effective routing. The 3.7 percentage-point gap between L* and RPNI reflects the value of the SLM membership oracle: L* achieves 100\% routing accuracy on T2 versus 86\% for RPNI (which misclassifies 9 of 25 word problems due to their linguistic variety). Fig.~\ref{fig:e2e_comparison} visualizes the per-category comparison, and Fig.~\ref{fig:efficiency} shows the efficiency gap.
 
@@ -689,9 +713,9 @@ V5 (512) & 297 & 0 & 0 & 0 & 3 & 0 & 0 \\
 
 \subsection{Why Symbolic Routing Works}
 
-What is striking about the ablation is that the gains are not gradual but discontinuous: each solver produces a step change in its own category at the moment it is introduced. A5 takes arithmetic from 48\% to 100\%, A4 takes algebra from 40\% to 96--100\%, and A6 takes logic from 64\% to 100\%. These are not the smooth improvements one expects from tuning a model; they are what happens when probabilistic approximation is replaced outright by exact computation.
+The accuracy gains from symbolic routing are not incremental: each solver produces an \textit{immediate jump} in its category. Adding A5 moves AR from 48\% to 100\%; adding A4 moves ALG from 40\% to 96--100\%; adding A6 moves LOG from 64\% to 100\%. These reflect the replacement of probabilistic approximation with deterministic computation.
 
-The principle behind the architecture follows directly: \textit{once the structure of a problem is known, a symbolic solver dominates neural inference on both accuracy and efficiency.} The SLM earns its place only on inputs whose structure is \emph{not} known in advance---which, in this domain, means word problems and little else. Fig.~\ref{fig:version_categories} shows the category-level accuracy across every version and configuration we tested.
+This suggests a design principle: \textit{when the structure of a problem is known, symbolic solvers dominate neural inference in both accuracy and efficiency.} The SLM's value lies in handling queries whose structure is not known in advance. Fig.~\ref{fig:version_categories} visualizes the category-level accuracy across all system versions and configurations tested.
 
 \begin{figure}[t]
     \centering
@@ -757,11 +781,11 @@ Word problems take approximately 137\,s per prompt at 512 tokens on the Pi~4B's 
 \label{sec:conclusion}
 % ======================================================================
 
-We set out to make a small, CPU-bound language model reliable on structured reasoning, and found that the most effective move is to use it less. Our neurosymbolic router learns, via the L* grammatical inference algorithm with the SLM as a membership oracle, which queries can be settled exactly by a symbolic engine and which genuinely need the model. On a Raspberry Pi~4B with no GPU, the learned router reaches 98.3\% end-to-end accuracy at a 512-token reasoning budget and 78.0\% at a 30-token budget, against 58.7\% for a tool-calling agent with access to the same solvers---and at its efficient operating point it is 2.4$\times$ faster and 2.3$\times$ more energy-efficient, because structured queries are dispatched in 1--11\,ms without ever invoking the SLM.
+We presented a neurosymbolic routing architecture for edge devices that learns query classification patterns via the L* grammatical inference algorithm, using the SLM as a membership oracle. Evaluated on a Raspberry Pi~4B with no GPU, L*-learned routing achieves 78.0\% end-to-end task accuracy on 100 held-out prompts, outperforming a tool-calling agent baseline (58.7\%) that has access to the same symbolic solvers. The learned router is 2.4$\times$ faster and 2.3$\times$ more energy-efficient, because structured queries (arithmetic, algebra, logic) are dispatched directly to symbolic solvers in 1--11\,ms without invoking the SLM.
 
-Two secondary findings sharpen the picture. Comparing L* (active, oracle-guided) against RPNI (passive, example-only) shows that even a 3.8B-parameter oracle meaningfully improves routing on linguistically diverse categories, lifting word-problem routing well beyond what positive examples alone can capture. And the five-version ablation shows that each symbolic solver contributes a clean, discontinuous gain in its target category, with no interaction effects to untangle.
+A comparison between L* (active, oracle-guided) and RPNI (passive, example-only) demonstrates that even a weak SLM oracle significantly improves routing accuracy (100\% vs.\ 86\%), particularly for linguistically diverse categories like word problems. An incremental ablation across five system versions further shows that each symbolic solver contributes a clear accuracy gain in its target category.
 
-The honest remaining limitation is the cost of the word-problem path: it is the one category that still needs the model, and reaching 93--96\% on it requires a 512-token budget that consumes roughly seven times the energy of the 30-token setting and over two minutes of CPU time per prompt. Closing that gap---through adaptive token budgets that escalate only when a short answer looks unreliable, faster edge accelerators, and larger evaluations---is the natural next step. More broadly, our results suggest that trustworthy reasoning on edge hardware is less a matter of bigger models or cloud access than of learning to send each query to the solver that can actually answer it.
+The system's remaining weakness is word problems, which are challenging for all approaches tested (12\% for learned routing at 30 tokens, 5\% for the tool-calling agent). With increased token budgets (512 tokens) and hand-coded routing, WP accuracy reaches 96\%, but at 6.9$\times$ higher energy. Future work will explore adaptive token allocation, larger evaluation benchmarks, and extending grammatical inference to richer language classes. More broadly, this work demonstrates that trustworthy reasoning on edge devices does not require larger models or cloud connectivity; it requires learning to route each query to the right solver.
 
 % Acknowledgment section removed for double-anonymous review.
 % Will be restored in camera-ready version.
