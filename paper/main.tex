@@ -52,7 +52,7 @@ Throughout this paper, we use \textit{SLM} (small language model) for models wit
 
 Our approach begins from an observation that is easy to overlook. Many of the queries we ask language models to ``reason'' about are not open-ended at all. An arithmetic expression has exactly one correct value, a linear system has a closed-form solution, and a propositional-logic query is decidable by forward chaining. For problems of this kind, a deterministic solver is not merely competitive with a language model but exact, faster by orders of magnitude, and far cheaper in energy. Running an SLM on inputs whose structure is already known wastes computation and often introduces errors that a solver would not make. The difficulty is therefore not solving such problems but \emph{recognizing} them reliably before any expensive inference takes place.
 
-We propose a \textit{neurosymbolic adaptive router} that classifies each query into one of four categories, namely arithmetic (AR), algebra (ALG), formal logic (LOG), and word problems (WP), and dispatches it to the appropriate solver:
+We propose a \textit{neurosymbolic adaptive router}, shown in Fig.~\ref{fig:dfa-routing}, that classifies each query into one of four categories, namely arithmetic (AR), algebra (ALG), formal logic (LOG), and word problems (WP), and dispatches it to the appropriate solver:
 \begin{itemize}
     \item \textbf{AR} $\rightarrow$ safe arithmetic evaluator (Python \texttt{ast}),
     \item \textbf{ALG} $\rightarrow$ SymPy symbolic algebra solver,
@@ -69,10 +69,17 @@ We evaluate this architecture on a Raspberry Pi~4B running Phi-4-mini (3.8B para
     \item \textbf{Fair baseline comparison.} We compare against a tool-calling agent that gives the same SLM access to the same symbolic solvers, isolating the routing mechanism as the independent variable. L*-learned routing achieves 78.0\% task accuracy vs.\ 58.7\% for the agent, while being 2.4$\times$ faster and 2.3$\times$ more energy-efficient.
     \item \textbf{Comparison with agent reasoning frameworks.} We evaluate three agent frameworks (ReAct~\cite{yao2023react}, Program-of-Thought~\cite{chen2023pot}, and Plan-and-Solve~\cite{wang2023plansolve}) on the same hardware and benchmark, demonstrating that L*-learned routing outperforms the best agent (Program-of-Thought, 72.0\%) by 6 percentage points while requiring 8.8$\times$ lower latency and 2.8$\times$ less energy per prompt.
     \item \textbf{System ablation.} An incremental ablation across five system versions demonstrates the marginal contribution of each symbolic solver and quantifies the accuracy--energy tradeoff on constrained hardware.
-    \item Open-source release of all code, data, and experimental logs for reproducibility.
+    \item Open-source release of the benchmark splits with full provenance, the learned routing automata, and per-trial result logs, together with a script that reproduces every reported number.\footnote{Anonymized repository for review: \url{https://anonymous.4open.science/r/NeurosymbolicRouting_Data-F701/}.}
 \end{enumerate}
 
 The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work on edge inference, neurosymbolic systems, grammatical inference, and model routing. Section~\ref{sec:architecture} describes the router and its symbolic solvers, and Section~\ref{sec:gi} explains how the routing automaton is learned with L*. Section~\ref{sec:setup} details the experimental setup, Section~\ref{sec:versions} traces the incremental construction of the system, and Section~\ref{sec:results} reports the main results. Section~\ref{sec:analysis} examines why the approach works, Section~\ref{sec:discussion} discusses its limitations, and Section~\ref{sec:conclusion} concludes.
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/dfa-routing.pdf}
+    \caption{Overview of the proposed learned neurosymbolic routing architecture for reliable reasoning on resource-constrained edge devices. A local SLM running on a Raspberry Pi struggles with structured reasoning tasks, while an $L^{\ast}$-learned DFA router classifies incoming queries into arithmetic (AR), algebra (ALG), logic (LOG), or word-problem (WP) categories. Structured queries are dispatched to deterministic symbolic solvers, whereas open-ended word problems are routed to the local SLM, reducing unnecessary neural inference while preserving flexibility.}
+    \label{fig:dfa-routing}
+\end{figure*}
 
 % ======================================================================
 \section{Related Work}
